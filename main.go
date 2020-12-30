@@ -69,21 +69,23 @@ func (s *State) Commit(pts int) error {
 // Sync to remote pts. If not observed, applyUpdate is called.
 func (s *State) Sync(remoteTimeStamp int, applyUpdate func(upd StateUpdate) error) error {
 	s.mux.Lock()
-	defer s.mux.Unlock()
+	syncNeeded := s.pts < remoteTimeStamp
+	s.mux.Unlock()
 
-	if s.pts >= remoteTimeStamp {
-		// Already applied.
+	if s.pts == 0 {
+		// Got initial state.
+		if err := s.Commit(remoteTimeStamp); err != nil {
+			return xerrors.Errorf("commit init state: %w", err)
+		}
 		return nil
 	}
 
-	if s.pts != 0 {
-		if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.pts}); err != nil {
-			return xerrors.Errorf("apply: %w", err)
-		}
+	if !syncNeeded {
+		return nil
 	}
 
-	if err := s.set(remoteTimeStamp); err != nil {
-		return xerrors.Errorf("set: %w", err)
+	if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.pts}); err != nil {
+		return xerrors.Errorf("apply: %w", err)
 	}
 
 	return nil
@@ -178,7 +180,7 @@ func run(ctx context.Context) (err error) {
 
 	dispatcher := tg.NewUpdateDispatcher()
 	// Creating connection.
-	dialCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	dialCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger,
