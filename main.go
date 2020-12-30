@@ -37,8 +37,8 @@ func sessionFileName(token string) string {
 
 // State represents current state.
 type State struct {
-	mux                 sync.Mutex
-	PersistentTimeStamp int // pts
+	mux sync.Mutex
+	pts int
 
 	db  *pebble.DB
 	log *zap.Logger
@@ -54,14 +54,14 @@ func (s *State) Commit(pts int) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if s.PersistentTimeStamp >= pts {
+	if s.pts >= pts {
 		return nil
 	}
 
 	if err := s.set(pts); err != nil {
 		return xerrors.Errorf("set: %w", err)
 	}
-	s.PersistentTimeStamp = pts
+	s.pts = pts
 
 	return nil
 }
@@ -71,13 +71,13 @@ func (s *State) Sync(remoteTimeStamp int, applyUpdate func(upd StateUpdate) erro
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if s.PersistentTimeStamp >= remoteTimeStamp {
+	if s.pts >= remoteTimeStamp {
 		// Already applied.
 		return nil
 	}
 
-	if s.PersistentTimeStamp != 0 {
-		if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.PersistentTimeStamp}); err != nil {
+	if s.pts != 0 {
+		if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.pts}); err != nil {
 			return xerrors.Errorf("apply: %w", err)
 		}
 	}
@@ -97,7 +97,7 @@ func (s *State) set(pts int) error {
 		return xerrors.Errorf("put: %w", err)
 	}
 
-	s.PersistentTimeStamp = pts
+	s.pts = pts
 	s.log.Info("Updated local state", zap.Int("pts", pts))
 
 	return nil
@@ -107,7 +107,7 @@ func (s *State) Load() error {
 	v, closer, err := s.db.Get([]byte("pts"))
 	if errors.Is(err, pebble.ErrNotFound) {
 		// No state.
-		s.PersistentTimeStamp = 0
+		s.pts = 0
 		return nil
 	}
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *State) Load() error {
 	if err != nil {
 		return xerrors.Errorf("failed to get long")
 	}
-	s.PersistentTimeStamp = n
+	s.pts = n
 
 	return nil
 }
