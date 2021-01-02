@@ -213,13 +213,16 @@ func run(ctx context.Context) (err error) {
 					zap.String("username", user.Username),
 				).Info("Got message")
 
-				if err := client.SendMessage(ctx, &tg.MessagesSendMessageRequest{
-					Message: fmt.Sprintf("Сам ты %s, @%s", m.Message, user.Username),
+				reply := &tg.MessagesSendMessageRequest{
+					Message: fmt.Sprintf("Сам(а) ты %s, @%s >:3", m.Message, user.Username),
 					Peer: &tg.InputPeerUser{
 						UserID:     user.ID,
 						AccessHash: user.AccessHash,
 					},
-				}); err != nil {
+				}
+				reply.SetReplyToMsgID(m.ID)
+
+				if err := client.SendMessage(ctx, reply); err != nil {
 					return xerrors.Errorf("send message: %w", err)
 				}
 			}
