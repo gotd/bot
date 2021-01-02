@@ -63,6 +63,8 @@ func (s *State) Commit(pts int) error {
 	}
 	s.pts = pts
 
+	s.log.Debug("Commit", zap.Int("pts", pts))
+
 	return nil
 }
 
@@ -86,6 +88,9 @@ func (s *State) Sync(remoteTimeStamp int, applyUpdate func(upd StateUpdate) erro
 
 	if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.pts}); err != nil {
 		return xerrors.Errorf("apply: %w", err)
+	}
+	if err := s.Commit(remoteTimeStamp); err != nil {
+		return xerrors.Errorf("commit: %w", err)
 	}
 
 	return nil
@@ -277,6 +282,11 @@ func run(ctx context.Context) (err error) {
 			for _, m := range d.NewMessages {
 				updates = append(updates, &tg.UpdateNewMessage{
 					Message: m,
+
+					// We can't provide pts here.
+
+					Pts:      0,
+					PtsCount: 0,
 				})
 			}
 			if err := dispatcher.Handle(ctx, &tg.Updates{
