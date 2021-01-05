@@ -11,19 +11,17 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/cockroachdb/pebble"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"golang.org/x/net/proxy"
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/bin"
+	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
-	"github.com/gotd/td/transport"
 )
 
 func tokHash(token string) string {
@@ -132,6 +130,23 @@ func (s *State) Load() error {
 	return nil
 }
 
+func withSignal(ctx context.Context) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		select {
+		case <-c:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+	return ctx, func() {
+		signal.Stop(c)
+		cancel()
+	}
+}
+
 func run(ctx context.Context) (err error) {
 	logger, _ := zap.NewDevelopment(
 		zap.IncreaseLevel(zapcore.DebugLevel),
@@ -184,19 +199,13 @@ func run(ctx context.Context) (err error) {
 	}
 
 	dispatcher := tg.NewUpdateDispatcher()
-	// Creating connection.
-	dialCtx, cancel := context.WithTimeout(ctx, time.Second*15)
-	defer cancel()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger,
-		SessionStorage: &telegram.FileSessionStorage{
+		SessionStorage: &session.FileStorage{
 			Path: filepath.Join(sessionDir, sessionFileName(token)),
 		},
-
-		Transport:     transport.Intermediate(transport.DialFunc(proxy.Dial)),
 		UpdateHandler: dispatcher.Handle,
 	})
-
 	dispatcher.OnNewMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
 		switch m := u.Message.(type) {
 		case *tg.Message:
@@ -231,102 +240,91 @@ func run(ctx context.Context) (err error) {
 		if err := state.Commit(u.Pts); err != nil {
 			return xerrors.Errorf("commit: %w", err)
 		}
-
 		return nil
 	})
 
-	if err := client.Connect(ctx); err != nil {
-		return xerrors.Errorf("failed to connect: %w", err)
-	}
-	logger.Info("Connected")
+	return client.Run(ctx, func(ctx context.Context) error {
+		logger.Debug("Client initialized")
 
-	self, err := client.Self(ctx)
-	if err != nil || !self.Bot {
-		if err := client.AuthBot(dialCtx, token); err != nil {
-			return xerrors.Errorf("failed to perform bot login: %w", err)
+		self, err := client.Self(ctx)
+		if err != nil || !self.Bot {
+			if err := client.AuthBot(ctx, token); err != nil {
+				return xerrors.Errorf("failed to perform bot login: %w", err)
+			}
+			logger.Info("New bot login")
+		} else {
+			logger.Info("Bot login  restored",
+				zap.String("name", self.Username),
+			)
 		}
-		logger.Info("New bot login")
-	} else {
-		logger.Info("Bot login  restored",
-			zap.String("name", self.Username),
-		)
-	}
 
-	// Using tg.Client for directly calling RPC.
-	raw := tg.NewClient(client)
+		// Using tg.Client for directly calling RPC.
+		raw := tg.NewClient(client)
 
-	// Syncing with remote state.
-	remoteState, err := raw.UpdatesGetState(ctx)
-	if err != nil {
-		return xerrors.Errorf("failed to get state: %w", err)
-	}
-	if err := state.Sync(remoteState.Pts, func(upd StateUpdate) error {
-		logger.Info("Applying updates",
-			zap.Int("remote_pts", upd.Remote),
-			zap.Int("local_pts", upd.Local),
-		)
-
-		diff, err := raw.UpdatesGetDifference(ctx, &tg.UpdatesGetDifferenceRequest{
-			Date: int(time.Now().Unix()),
-			Pts:  upd.Local,
-			Qts:  0, // No secret chats
-		})
+		// Syncing with remote state.
+		remoteState, err := raw.UpdatesGetState(ctx)
 		if err != nil {
-			return xerrors.Errorf("get difference: %w", err)
+			return xerrors.Errorf("failed to get state: %w", err)
+		}
+		if err := state.Sync(remoteState.Pts, func(upd StateUpdate) error {
+			logger.Info("Applying updates",
+				zap.Int("remote_pts", upd.Remote),
+				zap.Int("local_pts", upd.Local),
+			)
+
+			diff, err := raw.UpdatesGetDifference(ctx, &tg.UpdatesGetDifferenceRequest{
+				Date: int(time.Now().Unix()),
+				Pts:  upd.Local,
+				Qts:  0, // No secret chats
+			})
+			if err != nil {
+				return xerrors.Errorf("get difference: %w", err)
+			}
+
+			switch d := diff.(type) {
+			case *tg.UpdatesDifference:
+				// Adapting update to Handle() input.
+				var updates []tg.UpdateClass
+				for _, u := range d.OtherUpdates {
+					updates = append(updates, u)
+				}
+				for _, m := range d.NewMessages {
+					updates = append(updates, &tg.UpdateNewMessage{
+						Message: m,
+
+						// We can't provide pts here.
+						Pts:      0,
+						PtsCount: 0,
+					})
+				}
+				if err := dispatcher.Handle(ctx, &tg.Updates{
+					Updates: updates,
+					Users:   d.Users,
+					Chats:   d.Chats,
+				}); err != nil {
+					return xerrors.Errorf("handle: %w", err)
+				}
+			case *tg.UpdatesDifferenceSlice:
+				logger.Warn("Ignoring difference slice")
+			default:
+				logger.Warn("Ignoring updates")
+			}
+
+			logger.Info("Update handled")
+
+			return nil
+		}); err != nil {
+			return xerrors.Errorf("sync: %w", err)
 		}
 
-		switch d := diff.(type) {
-		case *tg.UpdatesDifference:
-			// Adapting update to Handle() input.
-			var updates []tg.UpdateClass
-			for _, u := range d.OtherUpdates {
-				updates = append(updates, u)
-			}
-			for _, m := range d.NewMessages {
-				updates = append(updates, &tg.UpdateNewMessage{
-					Message: m,
-
-					// We can't provide pts here.
-
-					Pts:      0,
-					PtsCount: 0,
-				})
-			}
-			if err := dispatcher.Handle(ctx, &tg.Updates{
-				Updates: updates,
-				Users:   d.Users,
-				Chats:   d.Chats,
-			}); err != nil {
-				return xerrors.Errorf("handle: %w", err)
-			}
-		case *tg.UpdatesDifferenceSlice:
-			logger.Warn("Ignoring difference slice")
-		default:
-			logger.Warn("Ignoring updates")
-		}
-
-		logger.Info("Update handled")
-
-		return nil
-	}); err != nil {
-		return xerrors.Errorf("sync: %w", err)
-	}
-
-	// Reading updates until SIGTERM.
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
-	<-c
-	logger.Info("Shutting down")
-	if err := client.Close(); err != nil {
-		return err
-	}
-	logger.Info("Graceful shutdown completed")
-	return nil
+		<-ctx.Done()
+		return ctx.Err()
+	})
 }
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := withSignal(context.Background())
+	defer cancel()
 
 	if err := run(ctx); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "%+v\n", err)
