@@ -223,7 +223,7 @@ func run(ctx context.Context) (err error) {
 				).Info("Got message")
 
 				reply := &tg.MessagesSendMessageRequest{
-					Message: fmt.Sprintf("Сам(а) ты %s, @%s >:3", m.Message, user.Username),
+					Message: fmt.Sprintf("No u %s, @%s", m.Message, user.Username),
 					Peer: &tg.InputPeerUser{
 						UserID:     user.ID,
 						AccessHash: user.AccessHash,
