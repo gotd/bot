@@ -204,7 +204,7 @@ func run(ctx context.Context) (err error) {
 		SessionStorage: &session.FileStorage{
 			Path: filepath.Join(sessionDir, sessionFileName(token)),
 		},
-		UpdateHandler: dispatcher.Handle,
+		UpdateHandler: dispatcher,
 	})
 	dispatcher.OnNewMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
 		switch m := u.Message.(type) {
