@@ -3,15 +3,11 @@ package main
 
 import (
 	"context"
-	"crypto/md5"
-	"errors"
 	"fmt"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/cockroachdb/pebble"
@@ -19,155 +15,10 @@ import (
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/xerrors"
 
-	"github.com/gotd/td/bin"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
 )
-
-func tokHash(token string) string {
-	h := md5.Sum([]byte(token + "gotd-token-salt")) // #nosec
-	return fmt.Sprintf("%x", h[:5])
-}
-
-func sessionFileName(token string) string {
-	return fmt.Sprintf("bot.%s.session.json", tokHash(token))
-}
-
-// State represents current state.
-type State struct {
-	mux sync.Mutex
-	pts int
-
-	db  *pebble.DB
-	log *zap.Logger
-}
-
-type StateUpdate struct {
-	Remote int
-	Local  int
-}
-
-// Commit offset, like in Kafka.
-func (s *State) Commit(pts int) error {
-	s.mux.Lock()
-	defer s.mux.Unlock()
-
-	if s.pts >= pts {
-		return nil
-	}
-
-	if err := s.set(pts); err != nil {
-		return xerrors.Errorf("set: %w", err)
-	}
-	s.pts = pts
-
-	s.log.Debug("Commit", zap.Int("pts", pts))
-
-	return nil
-}
-
-// Sync to remote pts. If not observed, applyUpdate is called.
-func (s *State) Sync(remoteTimeStamp int, applyUpdate func(upd StateUpdate) error) error {
-	s.mux.Lock()
-	syncNeeded := s.pts < remoteTimeStamp
-	s.mux.Unlock()
-
-	if s.pts == 0 {
-		// Got initial state.
-		if err := s.Commit(remoteTimeStamp); err != nil {
-			return xerrors.Errorf("commit init state: %w", err)
-		}
-		return nil
-	}
-
-	if !syncNeeded {
-		return nil
-	}
-
-	if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.pts}); err != nil {
-		return xerrors.Errorf("apply: %w", err)
-	}
-	if err := s.Commit(remoteTimeStamp); err != nil {
-		return xerrors.Errorf("commit: %w", err)
-	}
-
-	return nil
-}
-
-func (s *State) set(pts int) error {
-
-	var b bin.Buffer
-	b.PutInt(pts)
-	if err := s.db.Set([]byte("pts"), b.Buf, nil); err != nil {
-		return xerrors.Errorf("put: %w", err)
-	}
-
-	s.pts = pts
-	s.log.Info("Updated local state", zap.Int("pts", pts))
-
-	return nil
-}
-
-func (s *State) Load() error {
-	v, closer, err := s.db.Get([]byte("pts"))
-	if errors.Is(err, pebble.ErrNotFound) {
-		// No state.
-		s.pts = 0
-		return nil
-	}
-	if err != nil {
-		return xerrors.Errorf("get: %w", err)
-	}
-	defer func() { _ = closer.Close() }()
-
-	b := bin.Buffer{Buf: v}
-	n, err := b.Int()
-	if err != nil {
-		return xerrors.Errorf("failed to get long")
-	}
-	s.pts = n
-
-	return nil
-}
-
-func withSignal(ctx context.Context) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		select {
-		case <-c:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-	return ctx, func() {
-		signal.Stop(c)
-		cancel()
-	}
-}
-
-type loggedDispatcher struct {
-	telegram.UpdateHandler
-	log *zap.Logger
-}
-
-func (d loggedDispatcher) Handle(ctx context.Context, updates *tg.Updates) error {
-	for _, u := range updates.Updates {
-		d.log.Debug("Update",
-			zap.String("t", fmt.Sprintf("%T", u)),
-		)
-	}
-	return d.UpdateHandler.Handle(ctx, updates)
-}
-
-func (d loggedDispatcher) HandleShort(ctx context.Context, u *tg.UpdateShort) error {
-	d.log.Debug("UpdateShort",
-		zap.String("t", fmt.Sprintf("%T", u.Update)),
-	)
-	return d.UpdateHandler.HandleShort(ctx, u)
-}
 
 func run(ctx context.Context) (err error) {
 	logger, _ := zap.NewDevelopment(
@@ -270,49 +121,6 @@ func run(ctx context.Context) (err error) {
 					return xerrors.Errorf("send message: %w", err)
 				}
 			}
-		}
-		return nil
-	})
-	dispatcher.OnNewMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
-		// Direct messages to bot.
-		switch m := u.Message.(type) {
-		case *tg.Message:
-			if m.Out {
-				return nil
-			}
-
-			switch peer := m.PeerID.(type) {
-			case *tg.PeerUser:
-				user := ctx.Users[peer.UserID]
-				logger.With(
-					zap.String("text", m.Message),
-					zap.Int("user_id", user.ID),
-					zap.String("user_first_name", user.FirstName),
-					zap.String("username", user.Username),
-				).Info("Got message")
-
-				reply := &tg.MessagesSendMessageRequest{
-					Message: fmt.Sprintf("No u %s, @%s", m.Message, user.Username),
-					Peer: &tg.InputPeerUser{
-						UserID:     user.ID,
-						AccessHash: user.AccessHash,
-					},
-				}
-				reply.SetReplyToMsgID(m.ID)
-
-				if err := client.SendMessage(ctx, reply); err != nil {
-					if tg.IsUserBlocked(err) {
-						logger.Debug("Bot is blocked by user")
-						return nil
-					}
-
-					return xerrors.Errorf("send message: %w", err)
-				}
-			}
-		}
-
-		if err := state.Commit(u.Pts); err != nil {
-			return xerrors.Errorf("commit: %w", err)
 		}
 		return nil
 	})
