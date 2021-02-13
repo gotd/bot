@@ -19,6 +19,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/bin"
+	"github.com/gotd/td/mtproto"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
@@ -147,6 +148,27 @@ func withSignal(ctx context.Context) (context.Context, context.CancelFunc) {
 	}
 }
 
+type loggedDispatcher struct {
+	telegram.UpdateHandler
+	log *zap.Logger
+}
+
+func (d loggedDispatcher) Handle(ctx context.Context, updates *tg.Updates) error {
+	for _, u := range updates.Updates {
+		d.log.Debug("Update",
+			zap.String("t", fmt.Sprintf("%T", u)),
+		)
+	}
+	return d.UpdateHandler.Handle(ctx, updates)
+}
+
+func (d loggedDispatcher) HandleShort(ctx context.Context, u *tg.UpdateShort) error {
+	d.log.Debug("UpdateShort",
+		zap.String("t", fmt.Sprintf("%T", u.Update)),
+	)
+	return d.UpdateHandler.HandleShort(ctx, u)
+}
+
 func run(ctx context.Context) (err error) {
 	logger, _ := zap.NewDevelopment(
 		zap.IncreaseLevel(zapcore.DebugLevel),
@@ -204,7 +226,10 @@ func run(ctx context.Context) (err error) {
 		SessionStorage: &session.FileStorage{
 			Path: filepath.Join(sessionDir, sessionFileName(token)),
 		},
-		UpdateHandler: dispatcher,
+		UpdateHandler: loggedDispatcher{
+			log:           logger.Named("updates"),
+			UpdateHandler: dispatcher,
+		},
 	})
 
 	dispatcher.OnNewChannelMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewChannelMessage) error {
@@ -246,6 +271,11 @@ func run(ctx context.Context) (err error) {
 				reply.SetReplyToMsgID(m.ID)
 
 				if err := client.SendMessage(ctx, reply); err != nil {
+					if mtproto.IsErr(err, tg.ErrUserIsBlocked) {
+						logger.Debug("Bot is blocked by user")
+						return nil
+					}
+
 					return xerrors.Errorf("send message: %w", err)
 				}
 			}
