@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -232,18 +233,48 @@ func run(ctx context.Context) (err error) {
 	})
 
 	dispatcher.OnNewChannelMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewChannelMessage) error {
+		// Groups.
 		switch m := u.Message.(type) {
 		case *tg.Message:
 			if m.Out {
 				return nil
 			}
+
+			var channelID int
+			switch id := m.PeerID.(type) {
+			case *tg.PeerChannel:
+				channelID = id.ChannelID
+			}
+
 			logger.With(
 				zap.String("text", m.Message),
+				zap.Int("channel_id", channelID),
 			).Info("Got message from channel")
+
+			if ch, ok := ctx.Channels[channelID]; ok && strings.HasPrefix(m.Message, "/bot") {
+				reply := &tg.MessagesSendMessageRequest{
+					Message: "What?",
+					Peer: &tg.InputPeerChannel{
+						ChannelID:  channelID,
+						AccessHash: ch.AccessHash,
+					},
+				}
+				reply.SetReplyToMsgID(m.ID)
+
+				if err := client.SendMessage(ctx, reply); err != nil {
+					if tg.IsUserBlocked(err) {
+						logger.Debug("Bot is blocked by user")
+						return nil
+					}
+
+					return xerrors.Errorf("send message: %w", err)
+				}
+			}
 		}
 		return nil
 	})
 	dispatcher.OnNewMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
+		// Direct messages to bot.
 		switch m := u.Message.(type) {
 		case *tg.Message:
 			if m.Out {
