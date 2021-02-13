@@ -19,7 +19,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/bin"
-	"github.com/gotd/td/mtproto"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
@@ -271,7 +270,7 @@ func run(ctx context.Context) (err error) {
 				reply.SetReplyToMsgID(m.ID)
 
 				if err := client.SendMessage(ctx, reply); err != nil {
-					if mtproto.IsErr(err, tg.ErrUserIsBlocked) {
+					if tg.IsUserBlocked(err) {
 						logger.Debug("Bot is blocked by user")
 						return nil
 					}
