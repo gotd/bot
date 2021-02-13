@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/gotd/td/telegram"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/telegram"
 
 	"github.com/gotd/td/tg"
 )
@@ -91,6 +93,11 @@ func (b *Bot) handleChannel(ctx tg.UpdateContext, peer *tg.Channel, m *tg.Messag
 		zap.String("text", m.Message),
 		zap.Int("channel_id", peer.ID),
 	).Info("Got message from channel")
+
+	if !strings.HasPrefix(m.Message, "/bot") {
+		// Ignoring.
+		return nil
+	}
 
 	return b.answerWhat(ctx, &tg.InputPeerChannel{
 		ChannelID:  peer.ID,
