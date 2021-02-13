@@ -1,4 +1,4 @@
-// Binary gotdecho provides example of Telegram echo bot.
+// Binary bot provides implementation of gotd bot.
 package main
 
 import (
