@@ -176,7 +176,7 @@ func run(ctx context.Context) (err error) {
 		return err
 	}
 	sessionDir := filepath.Join(home, ".td")
-	if err := os.MkdirAll(sessionDir, 0600); err != nil {
+	if err := os.MkdirAll(sessionDir, 0700); err != nil {
 		return err
 	}
 
@@ -206,12 +206,26 @@ func run(ctx context.Context) (err error) {
 		},
 		UpdateHandler: dispatcher,
 	})
+
+	dispatcher.OnNewChannelMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewChannelMessage) error {
+		switch m := u.Message.(type) {
+		case *tg.Message:
+			if m.Out {
+				return nil
+			}
+			logger.With(
+				zap.String("text", m.Message),
+			).Info("Got message from channel")
+		}
+		return nil
+	})
 	dispatcher.OnNewMessage(func(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
 		switch m := u.Message.(type) {
 		case *tg.Message:
 			if m.Out {
-				break
+				return nil
 			}
+
 			switch peer := m.PeerID.(type) {
 			case *tg.PeerUser:
 				user := ctx.Users[peer.UserID]
