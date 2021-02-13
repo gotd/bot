@@ -17,6 +17,16 @@ type Bot struct {
 	logger *zap.Logger
 }
 
+func NewBot(state *State, client *telegram.Client) *Bot {
+	return &Bot{state: state, client: client, logger: zap.NewNop()}
+}
+
+// WithLogger sets logger.
+func (b *Bot) WithLogger(logger *zap.Logger) *Bot {
+	b.logger = logger
+	return b
+}
+
 func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) error {
 	b.logger.With(
 		zap.String("text", m.Message),
