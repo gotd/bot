@@ -112,6 +112,8 @@ github.com/gotd/td v0.23.1-0.20210213155803-06a540fde264 h1:Wept9JO7+A8ojLEgGRlX
 github.com/gotd/td v0.23.1-0.20210213155803-06a540fde264/go.mod h1:NdtnKGilDWADXHjCOS475mJ8vdkIkt+un7Un2wqt6t8=
 github.com/gotd/td v0.23.1-0.20210214082917-b62e9785f7f3 h1:UtQuU982Za3RBRsAYkETMYqj/NmcW9jSuarvcq9cxag=
 github.com/gotd/td v0.23.1-0.20210214082917-b62e9785f7f3/go.mod h1:NdtnKGilDWADXHjCOS475mJ8vdkIkt+un7Un2wqt6t8=
+github.com/gotd/td v0.23.1-0.20210214175526-984075cbb9b5 h1:ZZt8eRf/jwPHNb5nlvHvRG6rqUQ4TEYk5hrgFeT666k=
+github.com/gotd/td v0.23.1-0.20210214175526-984075cbb9b5/go.mod h1:NdtnKGilDWADXHjCOS475mJ8vdkIkt+un7Un2wqt6t8=
 github.com/gotd/tl v0.3.0/go.mod h1:9xGV9pH5N+LDoNmbeuOor9AjJaQzlj4KP5EguI1LMM8=
 github.com/gotd/xor v0.1.0/go.mod h1:ZTmdgqf6SOHder8/MFp9CNkXIadzID5lIiaZxRZICH0=
 github.com/gotd/xor v0.1.1 h1:LSPEeuf7noTo4fi4PrEsAaWXOSwjsY2e+IINPiR+c7s=
