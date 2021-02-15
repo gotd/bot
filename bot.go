@@ -38,13 +38,13 @@ func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) err
 	).Info("Got message")
 
 	reply := &tg.MessagesSendMessageRequest{
-		Message: fmt.Sprintf("No u %s, @%s", m.Message, user.Username),
+		Message:      fmt.Sprintf("No u %s, @%s", m.Message, user.Username),
+		ReplyToMsgID: m.ID,
 		Peer: &tg.InputPeerUser{
 			UserID:     user.ID,
 			AccessHash: user.AccessHash,
 		},
 	}
-	reply.SetReplyToMsgID(m.ID)
 
 	if err := b.client.SendMessage(ctx, reply); err != nil {
 		if tg.IsUserBlocked(err) {
@@ -58,14 +58,12 @@ func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) err
 	return nil
 }
 
-func (b *Bot) answerWhat(ctx tg.UpdateContext, peer tg.InputPeerClass, to int) error {
-	reply := &tg.MessagesSendMessageRequest{
-		Message: "What?",
-		Peer:    peer,
-	}
-	reply.SetReplyToMsgID(to)
-
-	if err := b.client.SendMessage(ctx, reply); err != nil {
+func (b *Bot) answerWhat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgID int) error {
+	if err := b.client.SendMessage(ctx, &tg.MessagesSendMessageRequest{
+		Message:      "What?",
+		Peer:         peer,
+		ReplyToMsgID: replyMsgID,
+	}); err != nil {
 		if tg.IsUserBlocked(err) {
 			b.logger.Debug("Bot is blocked by user")
 			return nil
