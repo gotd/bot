@@ -81,7 +81,9 @@ func run(ctx context.Context) (err error) {
 			UpdateHandler: dispatcher,
 		},
 	})
-	bot := NewBot(state, client).WithLogger(logger.Named("bot"))
+	bot := NewBot(state, client).
+		WithLogger(logger.Named("bot")).
+		WithStart(time.Now())
 	dispatcher.OnNewMessage(bot.OnNewMessage)
 	dispatcher.OnNewChannelMessage(bot.OnNewChannelMessage)
 
