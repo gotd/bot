@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -16,7 +14,7 @@ import (
 type Bot struct {
 	state  *State
 	client *telegram.Client
-
+	rpc    *tg.Client
 	logger *zap.Logger
 
 	m Metrics
@@ -26,6 +24,7 @@ func NewBot(state *State, client *telegram.Client) *Bot {
 	return &Bot{
 		state:  state,
 		client: client,
+		rpc:    tg.NewClient(client),
 		logger: zap.NewNop(),
 	}
 }
@@ -57,6 +56,26 @@ func (b *Bot) sendMessage(ctx tg.UpdateContext, m *tg.MessagesSendMessageRequest
 	return nil
 }
 
+// sendMedia calls SendMedia and handles IsUserBlocked error.
+func (b *Bot) sendMedia(ctx tg.UpdateContext, m *tg.MessagesSendMediaRequest) error {
+	if m.RandomID == 0 {
+		id, err := b.client.RandInt64()
+		if err != nil {
+			return xerrors.Errorf("gen id: %w", err)
+		}
+		m.RandomID = id
+	}
+
+	_, err := b.rpc.MessagesSendMedia(ctx, m)
+	if err != nil {
+		return xerrors.Errorf("send: %w", err)
+	}
+	// Increasing total response count metric.
+	b.m.Responses.Inc()
+
+	return nil
+}
+
 func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) error {
 	b.logger.Info("Got message",
 		zap.String("text", m.Message),
@@ -75,35 +94,6 @@ func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) err
 	}
 
 	if err := b.sendMessage(ctx, reply); err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-
-	return nil
-}
-
-func (b *Bot) answerWhat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgID int) error {
-	if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
-		Message:      "What?",
-		Peer:         peer,
-		ReplyToMsgID: replyMsgID,
-	}); err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-	return nil
-}
-
-func (b *Bot) answerStat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgID int) error {
-	var w bytes.Buffer
-	fmt.Fprintf(&w, "Statistics:\n\n")
-	fmt.Fprintln(&w, "Messages:", b.m.Messages.Load())
-	fmt.Fprintln(&w, "Responses:", b.m.Responses.Load())
-	fmt.Fprintln(&w, "Uptime:", time.Since(b.m.Start).Round(time.Second))
-
-	if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
-		Message:      w.String(),
-		Peer:         peer,
-		ReplyToMsgID: replyMsgID,
-	}); err != nil {
 		return xerrors.Errorf("send: %w", err)
 	}
 
@@ -131,18 +121,6 @@ func (b *Bot) handleChannel(ctx tg.UpdateContext, peer *tg.Channel, m *tg.Messag
 		ChannelID:  peer.ID,
 		AccessHash: peer.AccessHash,
 	}, m.ID)
-}
-
-func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass, replyMsgID int) error {
-	switch {
-	case strings.HasPrefix(m.Message, "/bot"):
-		return b.answerWhat(ctx, peer, replyMsgID)
-	case strings.HasPrefix(m.Message, "/stat"):
-		return b.answerStat(ctx, peer, replyMsgID)
-	default:
-		// Ignoring.
-		return nil
-	}
 }
 
 func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
