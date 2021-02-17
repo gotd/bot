@@ -64,7 +64,7 @@ func (b *Bot) answerDice(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgI
 }
 
 func (b *Bot) getMessage(ctx context.Context, id int) (*tg.Message, error) {
-	r, err := b.rpc.MessagesGetMessages(ctx, []tg.InputMessageClass{&tg.InputMessageID{ID: id}})
+	r, err := b.rpc.MessagesGetMessages(ctx, []tg.InputMessageClass{&tg.InputMessageReplyTo{ID: id}})
 	if err != nil {
 		return nil, xerrors.Errorf("get message: %w", err)
 	}
@@ -103,14 +103,22 @@ func (b *Bot) answerInspect(ctx tg.UpdateContext, peer tg.InputPeerClass, m *tg.
 		return nil
 	}
 
-	msg, err := b.getMessage(ctx, h.ReplyToMsgID)
+	msg, err := b.getMessage(ctx, m.ID)
 	if err != nil {
-		return xerrors.Errorf("get message %d: %w", h.ReplyToMsgID, err)
+		if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
+			Message:      fmt.Sprintf("Message %d not found", h.ReplyToMsgID),
+			Peer:         peer,
+			ReplyToMsgID: m.ID,
+		}); err != nil {
+			return xerrors.Errorf("send: %w", err)
+		}
+
+		return nil
 	}
 
 	var w strings.Builder
 	if err := f(&w, msg); err != nil {
-		return xerrors.Errorf("encode message %d: %w", h.ReplyToMsgID, err)
+		return xerrors.Errorf("encode message %d: %w", msg.ID, err)
 	}
 
 	s := w.String()
