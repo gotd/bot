@@ -8,20 +8,6 @@ import (
 )
 
 func formatMessage(s string, format func(offset, limit int) tg.MessageEntityClass) (entities []tg.MessageEntityClass) {
-	offset := 0
-	s = strings.TrimSpace(s)
-	for {
-		idx := strings.IndexRune(s[offset:], '\n')
-		if idx < 0 {
-			lineLength := utf8.RuneCountInString(s[offset:])
-			entities = append(entities, format(offset, lineLength))
-			break
-		}
-		idx++ // Add \n.
-
-		entities = append(entities, format(offset, idx))
-		offset += idx
-	}
-
-	return
+	length := utf8.RuneCountInString(strings.TrimSpace(s))
+	return append(entities, format(0, length))
 }
