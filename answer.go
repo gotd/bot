@@ -65,8 +65,10 @@ func (b *Bot) answerDice(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgI
 	return nil
 }
 
-func (b *Bot) getMessage(ctx context.Context, id int) (*tg.Message, error) {
-	r, err := b.rpc.MessagesGetMessages(ctx, []tg.InputMessageClass{&tg.InputMessageReplyTo{ID: id}})
+func (b *Bot) getMessage(ctx context.Context, msgID int) (*tg.Message, error) {
+	r, err := b.rpc.MessagesGetMessages(ctx, []tg.InputMessageClass{
+		&tg.InputMessageID{ID: msgID},
+	})
 	if err != nil {
 		return nil, xerrors.Errorf("get message: %w", err)
 	}
@@ -105,7 +107,7 @@ func (b *Bot) answerInspect(ctx tg.UpdateContext, peer tg.InputPeerClass, m *tg.
 		return nil
 	}
 
-	msg, err := b.getMessage(ctx, m.ID)
+	msg, err := b.getMessage(ctx, h.ReplyToMsgID)
 	if err != nil {
 		if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
 			Message:      fmt.Sprintf("Message %d not found", h.ReplyToMsgID),
