@@ -127,7 +127,7 @@ func (b *Bot) downloadMedia(ctx tg.UpdateContext, loc tg.InputFileLocationClass)
 	metric := &metricWriter{}
 
 	if _, err := downloader.NewDownloader().
-		Download(tg.NewClient(b.client), loc).
+		Download(b.rpc, loc).
 		Stream(ctx, io.MultiWriter(h, metric)); err != nil {
 		return xerrors.Errorf("stream: %w", err)
 	}
