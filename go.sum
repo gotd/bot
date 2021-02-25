@@ -44,9 +44,12 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/dgraph-io/badger v1.6.0/go.mod h1:zwt7syl517jmP8s94KqSxTlM6IMsdhYy6psNgSztDR4=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
+github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
+github.com/dvyukov/go-fuzz v0.0.0-20201127111758-49e582c6c23d h1:e1v4V9Heb+c4xQCCONROFvlzNs6Gq8aRZRwt+WzSEqY=
 github.com/dvyukov/go-fuzz v0.0.0-20201127111758-49e582c6c23d/go.mod h1:11Gm+ccJnvAhCNLlf5+cS9KjtbaD5I5zaZpFMsTHWTw=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
+github.com/elazarl/go-bindata-assetfs v1.0.1 h1:m0kkaHRKEu7tUIUFVwhGGGYClXvyl4RE03qmvRTNfbw=
 github.com/elazarl/go-bindata-assetfs v1.0.1/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
@@ -101,12 +104,17 @@ github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm4
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gotd/getdoc v0.6.0/go.mod h1:6hb7xxoTyjm+v3ZehmKlOiv6Zfodoff36wEhNqrSP+c=
+github.com/gotd/getdoc v0.6.1/go.mod h1:9+cZ403Gg7vgJ6m/Jbm7oZ6bM9sDrIRoeW2lwdEtxeY=
 github.com/gotd/ige v0.1.5 h1:qITql4hZpqPM/DSeO5IVlxzXJxrs4ZZiKRwPif2K76U=
 github.com/gotd/ige v0.1.5/go.mod h1:LbvqjUuGELVuHcKjfJZ2NPNzegICQU4eqrPAkXy0nTs=
 github.com/gotd/neo v0.1.1 h1:R0+UERZZubPcaQbA0sR6n2EV8uy6tt/0SpfUlKfQq+U=
 github.com/gotd/neo v0.1.1/go.mod h1:9A2a4bn9zL6FADufBdt7tZt+WMhvZoc5gWXihOPoiBQ=
 github.com/gotd/td v0.23.1-0.20210214175526-984075cbb9b5 h1:ZZt8eRf/jwPHNb5nlvHvRG6rqUQ4TEYk5hrgFeT666k=
 github.com/gotd/td v0.23.1-0.20210214175526-984075cbb9b5/go.mod h1:NdtnKGilDWADXHjCOS475mJ8vdkIkt+un7Un2wqt6t8=
+github.com/gotd/td v0.24.1-0.20210217185823-e76f41988035 h1:LI0LbPOC7WGCoIU05k/1wLvN0WqgVO4lb8xbEWTnvqc=
+github.com/gotd/td v0.24.1-0.20210217185823-e76f41988035/go.mod h1:RjW2WN9GH3W819SGcCPLf+7hYbL15hFSKz4DFqtIIXg=
+github.com/gotd/td v0.24.1-0.20210224073335-7ed426268790 h1:V8/wB6kREZkgNZjxySV/Agpvs0WFvBxZOKnBiI+ewlU=
+github.com/gotd/td v0.24.1-0.20210224073335-7ed426268790/go.mod h1:CviCWRfClXmufgLRpCg//mzcs5rEavNjJt8svj2tv70=
 github.com/gotd/tl v0.3.0/go.mod h1:9xGV9pH5N+LDoNmbeuOor9AjJaQzlj4KP5EguI1LMM8=
 github.com/gotd/xor v0.1.0/go.mod h1:ZTmdgqf6SOHder8/MFp9CNkXIadzID5lIiaZxRZICH0=
 github.com/gotd/xor v0.1.1 h1:LSPEeuf7noTo4fi4PrEsAaWXOSwjsY2e+IINPiR+c7s=
@@ -184,6 +192,7 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
+github.com/quasilyte/go-ruleguard/dsl v0.3.1/go.mod h1:KeCP03KrjuSO0H1kTuZQCWlQPulDV6YMIXmpQss17rU=
 github.com/robertkrimen/godocdown v0.0.0-20130622164427-0bfa04905481/go.mod h1:C9WhFzY47SzYBIvzFqSvHIR6ROgDo4TtdTuRaOMjF/s=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
@@ -201,6 +210,7 @@ github.com/spf13/cobra v0.0.5/go.mod h1:3K3wKZymM7VvHMDS9+Akkh4K60UwM26emMESw8tL
 github.com/spf13/jwalterweatherman v1.0.0/go.mod h1:cQK4TGJAtQXfYWX+Ddv3mKDzgVb68N+wFjFa4jdeBTo=
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DMA2s=
+github.com/stephens2424/writerset v1.0.2 h1:znRLgU6g8RS5euYRcy004XeE4W+Tu44kALzy7ghPif8=
 github.com/stephens2424/writerset v1.0.2/go.mod h1:aS2JhsMn6eA7e82oNmW4rfsgAOp9COBTTl8mzkwADnc=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=

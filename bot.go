@@ -1,13 +1,16 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram"
+	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/tg"
 )
 
@@ -100,6 +103,76 @@ func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) err
 	return nil
 }
 
+func maxSize(sizes []tg.PhotoSizeClass) string {
+	var (
+		maxSize string
+		maxH    int
+	)
+
+	for _, size := range sizes {
+		if s, ok := size.(interface {
+			GetH() int
+			GetType() string
+		}); ok && s.GetH() > maxH {
+			maxH = s.GetH()
+			maxSize = s.GetType()
+		}
+	}
+
+	return maxSize
+}
+
+func (b *Bot) downloadMedia(ctx tg.UpdateContext, loc tg.InputFileLocationClass) error {
+	h := sha256.New()
+	metric := &metricWriter{}
+
+	if _, err := downloader.NewDownloader().
+		Download(tg.NewClient(b.client), loc).
+		Stream(ctx, io.MultiWriter(h, metric)); err != nil {
+		return xerrors.Errorf("stream: %w", err)
+	}
+
+	b.logger.Info("Downloaded media",
+		zap.Int64("bytes", metric.Bytes),
+		zap.String("sha256", fmt.Sprintf("%x", h.Sum(nil))),
+	)
+	b.m.MediaBytes.Add(metric.Bytes)
+
+	return nil
+}
+
+func (b *Bot) handleMedia(ctx tg.UpdateContext, msg *tg.Message) error {
+	switch m := msg.Media.(type) {
+	case *tg.MessageMediaDocument:
+		doc, ok := m.Document.AsNotEmpty()
+		if !ok {
+			return nil
+		}
+		if err := b.downloadMedia(ctx, &tg.InputDocumentFileLocation{
+			ID:            doc.ID,
+			AccessHash:    doc.AccessHash,
+			FileReference: doc.FileReference,
+		}); err != nil {
+			return xerrors.Errorf("download: %w", err)
+		}
+	case *tg.MessageMediaPhoto:
+		p, ok := m.Photo.AsNotEmpty()
+		if !ok {
+			return nil
+		}
+		if err := b.downloadMedia(ctx, &tg.InputPhotoFileLocation{
+			ID:            p.ID,
+			AccessHash:    p.AccessHash,
+			FileReference: p.FileReference,
+			ThumbSize:     maxSize(p.Sizes),
+		}); err != nil {
+			return xerrors.Errorf("download: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (b *Bot) handleChat(ctx tg.UpdateContext, peer *tg.Chat, m *tg.Message) error {
 	b.logger.Info("Got message from chat",
 		zap.String("text", m.Message),
@@ -131,6 +204,9 @@ func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
 		}
 
 		b.m.Messages.Inc()
+		if err := b.handleMedia(ctx, m); err != nil {
+			return xerrors.Errorf("handle media: %w", err)
+		}
 
 		switch peer := m.PeerID.(type) {
 		case *tg.PeerUser:

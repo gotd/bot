@@ -8,9 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gotd/td/tg"
+	"github.com/dustin/go-humanize"
 	"github.com/k0kubun/pp/v3"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/tg"
 )
 
 func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass, replyMsgID int) error {
@@ -144,6 +146,7 @@ func (b *Bot) answerStat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgI
 	fmt.Fprintf(&w, "Statistics:\n\n")
 	fmt.Fprintln(&w, "Messages:", b.m.Messages.Load())
 	fmt.Fprintln(&w, "Responses:", b.m.Responses.Load())
+	fmt.Fprintln(&w, "Media:", humanize.IBytes(uint64(b.m.MediaBytes.Load())))
 	fmt.Fprintln(&w, "Uptime:", time.Since(b.m.Start).Round(time.Second))
 
 	if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
