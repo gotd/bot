@@ -176,7 +176,7 @@ func (b *Bot) handleMedia(ctx tg.UpdateContext, msg *tg.Message) error {
 func (b *Bot) handleChat(ctx tg.UpdateContext, peer *tg.Chat, m *tg.Message) error {
 	b.logger.Info("Got message from chat",
 		zap.String("text", m.Message),
-		zap.Int("channel_id", peer.ID),
+		zap.Int("chat_id", peer.ID),
 	)
 
 	return b.answer(ctx, m, &tg.InputPeerChat{

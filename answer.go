@@ -10,6 +10,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/k0kubun/pp/v3"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/tg"
@@ -65,9 +66,10 @@ func (b *Bot) answerDice(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgI
 	return nil
 }
 
-func (b *Bot) getMessage(ctx context.Context, msgID int) (*tg.Message, error) {
-	r, err := b.rpc.MessagesGetMessages(ctx, []tg.InputMessageClass{
-		&tg.InputMessageID{ID: msgID},
+func (b *Bot) getChannelMessage(ctx context.Context, channel *tg.InputChannel, msgID int) (*tg.Message, error) {
+	r, err := b.rpc.ChannelsGetMessages(ctx, &tg.ChannelsGetMessagesRequest{
+		Channel: channel,
+		ID:      []tg.InputMessageClass{&tg.InputMessageID{ID: msgID}},
 	})
 	if err != nil {
 		return nil, xerrors.Errorf("get message: %w", err)
@@ -107,7 +109,22 @@ func (b *Bot) answerInspect(ctx tg.UpdateContext, peer tg.InputPeerClass, m *tg.
 		return nil
 	}
 
-	msg, err := b.getMessage(ctx, h.ReplyToMsgID)
+	channel, ok := peer.(*tg.InputPeerChannel)
+	if !ok {
+		// Skip non-channel messages.
+		return nil
+	}
+
+	b.logger.Info("Fetching message",
+		zap.Int("msg_id", m.ID),
+		zap.Int("reply_to_msg_id", h.ReplyToMsgID),
+		zap.Int("channel_id", channel.ChannelID),
+	)
+
+	msg, err := b.getChannelMessage(ctx, &tg.InputChannel{
+		ChannelID:  channel.ChannelID,
+		AccessHash: channel.AccessHash,
+	}, h.ReplyToMsgID)
 	if err != nil {
 		if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
 			Message:      fmt.Sprintf("Message %d not found", h.ReplyToMsgID),
