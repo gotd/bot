@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/cockroachdb/pebble v0.0.0-20201130172119-f19faf8529d6
 	github.com/dustin/go-humanize v1.0.0
-	github.com/gotd/td v0.24.1-0.20210302103750-3d58e1a99079
+	github.com/gotd/td v0.25.0
 	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b // indirect
