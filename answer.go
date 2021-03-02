@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/k0kubun/pp/v3"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/td/tdp"
 	"github.com/gotd/td/tg"
 )
 
@@ -30,12 +30,13 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 			encoder.SetIndent("", "\t")
 			return encoder.Encode(m)
 		})
-	case strings.HasPrefix(m.Message, "/pprint"):
+	case strings.HasPrefix(m.Message, "/pprint"), strings.HasPrefix(m.Message, "/pp"):
 		return b.answerInspect(ctx, peer, m, func(w io.Writer, m *tg.Message) error {
-			encoder := pp.New()
-			encoder.SetColoringEnabled(false)
-			_, err := encoder.Fprint(w, m)
-			return err
+			if _, err := io.WriteString(w, tdp.Format(m, tdp.WithTypeID)); err != nil {
+				return err
+			}
+
+			return nil
 		})
 	default:
 		// Ignoring.
