@@ -168,6 +168,9 @@ func (b *Bot) answerStat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgI
 	fmt.Fprintln(&w, "Responses:", b.m.Responses.Load())
 	fmt.Fprintln(&w, "Media:", humanize.IBytes(uint64(b.m.MediaBytes.Load())))
 	fmt.Fprintln(&w, "Uptime:", time.Since(b.m.Start).Round(time.Second))
+	if v := getVersion(); v != "" {
+		fmt.Fprintln(&w, "Version:", v)
+	}
 
 	if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
 		Message:      w.String(),
