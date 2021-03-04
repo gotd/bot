@@ -110,6 +110,13 @@ func run(ctx context.Context) (err error) {
 		if err != nil {
 			return xerrors.Errorf("failed to get state: %w", err)
 		}
+		logger.Info("Got state",
+			zap.Int("qts", remoteState.Qts),
+			zap.Int("pts", remoteState.Pts),
+			zap.Int("seq", remoteState.Seq),
+			zap.Int("unread_count", remoteState.UnreadCount),
+		)
+
 		if err := state.Sync(remoteState.Pts, func(upd StateUpdate) error {
 			logger.Info("Applying updates",
 				zap.Int("remote_pts", upd.Remote),
