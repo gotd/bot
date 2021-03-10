@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -13,25 +14,59 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/tdp"
+	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 )
 
-func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass, replyMsgID int) error {
+func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass) error {
+	send := b.sender.Peer(peer).ReplyMsg(m)
 	switch {
 	case strings.HasPrefix(m.Message, "/bot"):
-		return b.answerWhat(ctx, peer, replyMsgID)
+		if _, err := send.Text(ctx, "What?"); err != nil {
+			return xerrors.Errorf("answer text: %w", err)
+		}
+
+		return nil
 	case strings.HasPrefix(m.Message, "/stat"):
-		return b.answerStat(ctx, peer, replyMsgID)
+		if _, err := send.Text(ctx, b.stats()); err != nil {
+			return xerrors.Errorf("answer stats: %w", err)
+		}
+
+		return nil
 	case strings.HasPrefix(m.Message, "/dice"):
-		return b.answerDice(ctx, peer, replyMsgID)
+		if _, err := send.Dice(ctx); err != nil {
+			return xerrors.Errorf("answer dice: %w", err)
+		}
+
+		return nil
+	case strings.HasPrefix(m.Message, "/basketball"):
+		if _, err := send.Basketball(ctx); err != nil {
+			return xerrors.Errorf("answer basketball: %w", err)
+		}
+
+		return nil
+	case strings.HasPrefix(m.Message, "/darts"):
+		if _, err := send.Darts(ctx); err != nil {
+			return xerrors.Errorf("answer darts: %w", err)
+		}
+
+		return nil
+	case strings.HasPrefix(m.Message, "/tts"):
+		lang := "en"
+		cmd := strings.ToLower(m.Message)
+		if strings.HasPrefix(cmd, "/tts_") {
+			lang = strings.TrimSpace(strings.TrimPrefix(cmd, "/tts_"))
+		}
+
+		return b.answerTTS(ctx, send, peer, m, lang)
 	case strings.HasPrefix(m.Message, "/json"):
-		return b.answerInspect(ctx, peer, m, func(w io.Writer, m *tg.Message) error {
+		return b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
 			encoder := json.NewEncoder(w)
 			encoder.SetIndent("", "\t")
 			return encoder.Encode(m)
 		})
 	case strings.HasPrefix(m.Message, "/pprint"), strings.HasPrefix(m.Message, "/pp"):
-		return b.answerInspect(ctx, peer, m, func(w io.Writer, m *tg.Message) error {
+		return b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
 			if _, err := io.WriteString(w, tdp.Format(m, tdp.WithTypeID)); err != nil {
 				return err
 			}
@@ -44,27 +79,18 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 	}
 }
 
-func (b *Bot) answerWhat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgID int) error {
-	if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
-		Message:      "What?",
-		Peer:         peer,
-		ReplyToMsgID: replyMsgID,
-	}); err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-	return nil
-}
-
-func (b *Bot) answerDice(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgID int) error {
-	if err := b.sendMedia(ctx, &tg.MessagesSendMediaRequest{
-		Peer:         peer,
-		ReplyToMsgID: replyMsgID,
-		Media:        &tg.InputMediaDice{Emoticon: "🎲"},
-	}); err != nil {
-		return xerrors.Errorf("send media: %w", err)
+func (b *Bot) stats() string {
+	var w strings.Builder
+	fmt.Fprintf(&w, "Statistics:\n\n")
+	fmt.Fprintln(&w, "Messages:", b.m.Messages.Load())
+	fmt.Fprintln(&w, "Responses:", b.m.Responses.Load())
+	fmt.Fprintln(&w, "Media:", humanize.IBytes(uint64(b.m.MediaBytes.Load())))
+	fmt.Fprintln(&w, "Uptime:", time.Since(b.m.Start).Round(time.Second))
+	if v := getVersion(); v != "" {
+		fmt.Fprintln(&w, "Version:", v)
 	}
 
-	return nil
+	return w.String()
 }
 
 func (b *Bot) getChannelMessage(ctx context.Context, channel *tg.InputChannel, msgID int) (*tg.Message, error) {
@@ -94,19 +120,18 @@ func (b *Bot) getChannelMessage(ctx context.Context, channel *tg.InputChannel, m
 	return msg, nil
 }
 
-type formatter func(io.Writer, *tg.Message) error
-
-func (b *Bot) answerInspect(ctx tg.UpdateContext, peer tg.InputPeerClass, m *tg.Message, f formatter) error {
+func (b *Bot) getReply(
+	ctx tg.UpdateContext,
+	send *message.Builder,
+	peer tg.InputPeerClass,
+	m *tg.Message,
+	cb func(msg *tg.Message) error,
+) error {
 	h, ok := m.GetReplyTo()
 	if !ok {
-		if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
-			Message:      "Message must be a reply",
-			Peer:         peer,
-			ReplyToMsgID: m.ID,
-		}); err != nil {
+		if _, err := send.Text(ctx, "Message must be a reply"); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
-
 		return nil
 	}
 
@@ -127,58 +152,77 @@ func (b *Bot) answerInspect(ctx tg.UpdateContext, peer tg.InputPeerClass, m *tg.
 		AccessHash: channel.AccessHash,
 	}, h.ReplyToMsgID)
 	if err != nil {
-		if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
-			Message:      fmt.Sprintf("Message %d not found", h.ReplyToMsgID),
-			Peer:         peer,
-			ReplyToMsgID: m.ID,
-		}); err != nil {
+		if _, err := send.Text(ctx, fmt.Sprintf("Message %d not found", h.ReplyToMsgID)); err != nil {
+			return xerrors.Errorf("send: %w", err)
+		}
+		return nil
+	}
+
+	return cb(msg)
+}
+
+func (b *Bot) answerTTS(
+	ctx tg.UpdateContext,
+	send *message.Builder,
+	peer tg.InputPeerClass,
+	m *tg.Message,
+	lang string,
+) error {
+	return b.getReply(ctx, send, peer, m, func(msg *tg.Message) error {
+		// TODO(tdakkota): rate limiting.
+		req, err := http.NewRequestWithContext(ctx,
+			http.MethodGet, "https://translate.google.com.vn/translate_tts", nil,
+		)
+		if err != nil {
+			return xerrors.Errorf("create request: %w", err)
+		}
+
+		q := req.URL.Query()
+		q.Add("ie", "UTF-8")
+		q.Add("q", msg.GetMessage())
+		q.Add("tl", lang)
+		q.Add("client", "tw-ob")
+		req.URL.RawQuery = q.Encode()
+
+		resp, err := b.http.Do(req)
+		if err != nil {
+			return xerrors.Errorf("send request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 400 {
+			if _, err := send.Text(ctx, "TTS server request failed"); err != nil {
+				return xerrors.Errorf("send: %w", err)
+			}
+			b.logger.Info("Bad TTS server response code", zap.Int("code", resp.StatusCode))
+			return nil
+		}
+
+		_, err = b.sender.Peer(peer).Upload(message.FromReader("tts.mp3", resp.Body)).
+			ReplyMsg(msg).
+			Voice(ctx)
+		return err
+	})
+}
+
+type formatter func(io.Writer, *tg.Message) error
+
+func (b *Bot) answerInspect(
+	ctx tg.UpdateContext,
+	send *message.Builder,
+	peer tg.InputPeerClass,
+	m *tg.Message, f formatter,
+) error {
+	return b.getReply(ctx, send, peer, m, func(msg *tg.Message) error {
+		var w strings.Builder
+		if err := f(&w, msg); err != nil {
+			return xerrors.Errorf("encode message %d: %w", msg.ID, err)
+		}
+
+		if _, err := send.StyledText(ctx, message.Pre(w.String(), "")); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
 
 		return nil
-	}
-
-	var w strings.Builder
-	if err := f(&w, msg); err != nil {
-		return xerrors.Errorf("encode message %d: %w", msg.ID, err)
-	}
-
-	s := w.String()
-	req := &tg.MessagesSendMessageRequest{
-		Message:      s,
-		Peer:         peer,
-		ReplyToMsgID: msg.ID,
-	}
-
-	req.SetEntities(formatMessage(s, func(offset, limit int) tg.MessageEntityClass {
-		return &tg.MessageEntityPre{Offset: offset, Length: limit}
-	}))
-
-	if err := b.sendMessage(ctx, req); err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-
-	return nil
-}
-
-func (b *Bot) answerStat(ctx tg.UpdateContext, peer tg.InputPeerClass, replyMsgID int) error {
-	var w strings.Builder
-	fmt.Fprintf(&w, "Statistics:\n\n")
-	fmt.Fprintln(&w, "Messages:", b.m.Messages.Load())
-	fmt.Fprintln(&w, "Responses:", b.m.Responses.Load())
-	fmt.Fprintln(&w, "Media:", humanize.IBytes(uint64(b.m.MediaBytes.Load())))
-	fmt.Fprintln(&w, "Uptime:", time.Since(b.m.Start).Round(time.Second))
-	if v := getVersion(); v != "" {
-		fmt.Fprintln(&w, "Version:", v)
-	}
-
-	if err := b.sendMessage(ctx, &tg.MessagesSendMessageRequest{
-		Message:      w.String(),
-		Peer:         peer,
-		ReplyToMsgID: replyMsgID,
-	}); err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-
-	return nil
+	})
 }
