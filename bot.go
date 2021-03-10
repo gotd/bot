@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"go.uber.org/zap"
@@ -11,24 +12,33 @@ import (
 
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
+	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 )
 
 type Bot struct {
 	state  *State
 	client *telegram.Client
-	rpc    *tg.Client
-	logger *zap.Logger
 
-	m Metrics
+	rpc        *tg.Client
+	sender     *message.Sender
+	downloader *downloader.Downloader
+	http       *http.Client
+
+	logger *zap.Logger
+	m      Metrics
 }
 
 func NewBot(state *State, client *telegram.Client) *Bot {
+	raw := tg.NewClient(client)
 	return &Bot{
-		state:  state,
-		client: client,
-		rpc:    tg.NewClient(client),
-		logger: zap.NewNop(),
+		state:      state,
+		client:     client,
+		rpc:        raw,
+		sender:     message.NewSender(raw),
+		downloader: downloader.NewDownloader(),
+		http:       http.DefaultClient,
+		logger:     zap.NewNop(),
 	}
 }
 
@@ -43,42 +53,6 @@ func (b *Bot) WithStart(t time.Time) *Bot {
 	return b
 }
 
-// sendMessage calls SendMessage and handles IsUserBlocked error.
-func (b *Bot) sendMessage(ctx tg.UpdateContext, m *tg.MessagesSendMessageRequest) error {
-	if err := b.client.SendMessage(ctx, m); err != nil {
-		if tg.IsUserBlocked(err) {
-			b.logger.Debug("Bot is blocked by user")
-			return nil
-		}
-		return xerrors.Errorf("send message: %w", err)
-	}
-
-	// Increasing total response count metric.
-	b.m.Responses.Inc()
-
-	return nil
-}
-
-// sendMedia calls SendMedia and handles IsUserBlocked error.
-func (b *Bot) sendMedia(ctx tg.UpdateContext, m *tg.MessagesSendMediaRequest) error {
-	if m.RandomID == 0 {
-		id, err := b.client.RandInt64()
-		if err != nil {
-			return xerrors.Errorf("gen id: %w", err)
-		}
-		m.RandomID = id
-	}
-
-	_, err := b.rpc.MessagesSendMedia(ctx, m)
-	if err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-	// Increasing total response count metric.
-	b.m.Responses.Inc()
-
-	return nil
-}
-
 func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) error {
 	b.logger.Info("Got message",
 		zap.String("text", m.Message),
@@ -87,16 +61,8 @@ func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) err
 		zap.String("username", user.Username),
 	)
 
-	reply := &tg.MessagesSendMessageRequest{
-		Message:      fmt.Sprintf("No u %s, @%s", m.Message, user.Username),
-		ReplyToMsgID: m.ID,
-		Peer: &tg.InputPeerUser{
-			UserID:     user.ID,
-			AccessHash: user.AccessHash,
-		},
-	}
-
-	if err := b.sendMessage(ctx, reply); err != nil {
+	if _, err := b.sender.Peer(user.AsInputPeer()).
+		Text(ctx, fmt.Sprintf("No u %s, @%s", m.Message, user.Username)); err != nil {
 		return xerrors.Errorf("send: %w", err)
 	}
 
@@ -126,8 +92,7 @@ func (b *Bot) downloadMedia(ctx tg.UpdateContext, loc tg.InputFileLocationClass)
 	h := sha256.New()
 	metric := &metricWriter{}
 
-	if _, err := downloader.NewDownloader().
-		Download(b.rpc, loc).
+	if _, err := b.downloader.Download(b.rpc, loc).
 		Stream(ctx, io.MultiWriter(h, metric)); err != nil {
 		return xerrors.Errorf("stream: %w", err)
 	}
@@ -181,7 +146,7 @@ func (b *Bot) handleChat(ctx tg.UpdateContext, peer *tg.Chat, m *tg.Message) err
 
 	return b.answer(ctx, m, &tg.InputPeerChat{
 		ChatID: peer.ID,
-	}, m.ID)
+	})
 }
 
 func (b *Bot) handleChannel(ctx tg.UpdateContext, peer *tg.Channel, m *tg.Message) error {
@@ -193,7 +158,7 @@ func (b *Bot) handleChannel(ctx tg.UpdateContext, peer *tg.Channel, m *tg.Messag
 	return b.answer(ctx, m, &tg.InputPeerChannel{
 		ChannelID:  peer.ID,
 		AccessHash: peer.AccessHash,
-	}, m.ID)
+	})
 }
 
 func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
@@ -235,8 +200,14 @@ func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
 
 func (b *Bot) OnNewMessage(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
 	if err := b.Handle(ctx, u.Message); err != nil {
-		return xerrors.Errorf("handle: %w", err)
+		if tg.IsUserBlocked(err) {
+			b.logger.Debug("Bot is blocked by user")
+			return nil
+		}
+		return xerrors.Errorf("handle message %d: %w", u.Message.GetID(), err)
 	}
+	// Increasing total response count metric.
+	b.m.Responses.Inc()
 
 	if err := b.state.Commit(u.Pts); err != nil {
 		return xerrors.Errorf("commit: %w", err)
