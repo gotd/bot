@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -174,7 +175,7 @@ func run(ctx context.Context) (err error) {
 }
 
 func main() {
-	ctx, cancel := withSignal(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	if err := run(ctx); err != nil {
