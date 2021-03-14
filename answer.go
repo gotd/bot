@@ -44,6 +44,7 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 	case strings.HasPrefix(m.Message, "/tts"):
 		lang := "en"
 		cmd := strings.ToLower(m.Message)
+		cmd = strings.TrimSuffix(strings.TrimSpace(cmd), "@gotd_echo_bot")
 		if strings.HasPrefix(cmd, "/tts_") {
 			lang = strings.TrimSpace(strings.TrimPrefix(cmd, "/tts_"))
 		}
