@@ -3,7 +3,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -11,8 +14,12 @@ import (
 	"time"
 
 	"github.com/cockroachdb/pebble"
+	"github.com/povilasv/prommod"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/session"
@@ -20,24 +27,7 @@ import (
 	"github.com/gotd/td/tg"
 )
 
-func run(ctx context.Context) (err error) {
-	logger, _ := zap.NewDevelopment(
-		zap.IncreaseLevel(zapcore.DebugLevel),
-		zap.AddStacktrace(zapcore.ErrorLevel),
-	)
-	defer func() { _ = logger.Sync() }()
-
-	// Reading app id from env (never hardcode it!).
-	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
-	if err != nil {
-		return xerrors.Errorf("APP_ID not set or invalid: %w", err)
-	}
-
-	appHash := os.Getenv("APP_HASH")
-	if appHash == "" {
-		return xerrors.New("no APP_HASH provided")
-	}
-
+func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
 		return xerrors.New("no BOT_TOKEN provided")
@@ -71,6 +61,17 @@ func run(ctx context.Context) (err error) {
 		return xerrors.Errorf("state load: %w", err)
 	}
 
+	// Reading app id from env (never hardcode it!).
+	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
+	if err != nil {
+		return xerrors.Errorf("APP_ID not set or invalid: %w", err)
+	}
+
+	appHash := os.Getenv("APP_HASH")
+	if appHash == "" {
+		return xerrors.New("no APP_HASH provided")
+	}
+
 	dispatcher := tg.NewUpdateDispatcher()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger,
@@ -82,7 +83,7 @@ func run(ctx context.Context) (err error) {
 			UpdateHandler: dispatcher,
 		},
 	})
-	bot := NewBot(state, client).
+	bot := NewBot(state, client, metrics).
 		WithLogger(logger.Named("bot")).
 		WithStart(time.Now())
 	dispatcher.OnNewMessage(bot.OnNewMessage)
@@ -172,6 +173,74 @@ func run(ctx context.Context) (err error) {
 		<-ctx.Done()
 		return ctx.Err()
 	})
+}
+
+func run(ctx context.Context) (err error) {
+	logger, _ := zap.NewDevelopment(
+		zap.IncreaseLevel(zapcore.DebugLevel),
+		zap.AddStacktrace(zapcore.ErrorLevel),
+	)
+	defer func() { _ = logger.Sync() }()
+
+	registry := prometheus.NewPedanticRegistry()
+	mts := NewMetrics()
+	registry.MustRegister(
+		prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+		prometheus.NewGoCollector(),
+		prommod.NewCollector("gotdbot"),
+		mts,
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return bot(ctx, mts, logger.Named("bot"))
+	})
+
+	g.Go(func() error {
+		return metrics(ctx, registry, logger.Named("metrics"))
+	})
+
+	return g.Wait()
+}
+
+func attachProfiler(router *http.ServeMux) {
+	router.HandleFunc("/debug/pprof/", pprof.Index)
+	router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+
+	// Manually add support for paths linked to by index page at /debug/pprof/
+	router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	router.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	router.Handle("/debug/pprof/block", pprof.Handler("block"))
+}
+
+func metrics(ctx context.Context, registry *prometheus.Registry, logger *zap.Logger) error {
+	metricsAddr := os.Getenv("METRICS_ADDR")
+	if metricsAddr == "" {
+		metricsAddr = "localhost:8081"
+	}
+	mux := http.NewServeMux()
+	attachProfiler(mux)
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	server := &http.Server{Addr: metricsAddr, Handler: mux}
+
+	grp, ctx := errgroup.WithContext(ctx)
+	grp.Go(func() error {
+		logger.Info("ListenAndServe", zap.String("addr", server.Addr))
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
+	})
+	grp.Go(func() error {
+		<-ctx.Done()
+		logger.Debug("Shutting down")
+		return server.Close()
+	})
+
+	return grp.Wait()
 }
 
 func main() {

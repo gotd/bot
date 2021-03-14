@@ -29,7 +29,7 @@ type Bot struct {
 	m      Metrics
 }
 
-func NewBot(state *State, client *telegram.Client) *Bot {
+func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 	raw := tg.NewClient(client)
 	return &Bot{
 		state:      state,
@@ -39,6 +39,7 @@ func NewBot(state *State, client *telegram.Client) *Bot {
 		downloader: downloader.NewDownloader(),
 		http:       http.DefaultClient,
 		logger:     zap.NewNop(),
+		m:          metrics,
 	}
 }
 
@@ -206,8 +207,6 @@ func (b *Bot) OnNewMessage(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
 		}
 		return xerrors.Errorf("handle message %d: %w", u.Message.GetID(), err)
 	}
-	// Increasing total response count metric.
-	b.m.Responses.Inc()
 
 	if err := b.state.Commit(u.Pts); err != nil {
 		return xerrors.Errorf("commit: %w", err)

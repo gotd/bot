@@ -25,32 +25,22 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 		if _, err := send.Text(ctx, "What?"); err != nil {
 			return xerrors.Errorf("answer text: %w", err)
 		}
-
-		return nil
 	case strings.HasPrefix(m.Message, "/stat"):
 		if _, err := send.Text(ctx, b.stats()); err != nil {
 			return xerrors.Errorf("answer stats: %w", err)
 		}
-
-		return nil
 	case strings.HasPrefix(m.Message, "/dice"):
 		if _, err := send.Dice(ctx); err != nil {
 			return xerrors.Errorf("answer dice: %w", err)
 		}
-
-		return nil
 	case strings.HasPrefix(m.Message, "/basketball"):
 		if _, err := send.Basketball(ctx); err != nil {
 			return xerrors.Errorf("answer basketball: %w", err)
 		}
-
-		return nil
 	case strings.HasPrefix(m.Message, "/darts"):
 		if _, err := send.Darts(ctx); err != nil {
 			return xerrors.Errorf("answer darts: %w", err)
 		}
-
-		return nil
 	case strings.HasPrefix(m.Message, "/tts"):
 		lang := "en"
 		cmd := strings.ToLower(m.Message)
@@ -58,25 +48,35 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 			lang = strings.TrimSpace(strings.TrimPrefix(cmd, "/tts_"))
 		}
 
-		return b.answerTTS(ctx, send, peer, m, lang)
+		if err := b.answerTTS(ctx, send, peer, m, lang); err != nil {
+			return xerrors.Errorf("answer tts: %w", err)
+		}
 	case strings.HasPrefix(m.Message, "/json"):
-		return b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
+		if err := b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
 			encoder := json.NewEncoder(w)
 			encoder.SetIndent("", "\t")
 			return encoder.Encode(m)
-		})
+		}); err != nil {
+			return xerrors.Errorf("answer inspect: %w", err)
+		}
 	case strings.HasPrefix(m.Message, "/pprint"), strings.HasPrefix(m.Message, "/pp"):
-		return b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
+		if err := b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
 			if _, err := io.WriteString(w, tdp.Format(m, tdp.WithTypeID)); err != nil {
 				return err
 			}
 
 			return nil
-		})
+		}); err != nil {
+			return xerrors.Errorf("answer inspect: %w", err)
+		}
 	default:
 		// Ignoring.
 		return nil
 	}
+
+	// Increasing total response count metric.
+	b.m.Responses.Inc()
+	return nil
 }
 
 func (b *Bot) stats() string {
@@ -198,8 +198,8 @@ func (b *Bot) answerTTS(
 			return nil
 		}
 
-		_, err = b.sender.Peer(peer).Upload(message.FromReader("tts.mp3", resp.Body)).
-			ReplyMsg(msg).
+		_, err = b.sender.Peer(peer).ReplyMsg(msg).
+			Upload(message.FromReader("tts.mp3", resp.Body)).
 			Voice(ctx)
 		return err
 	})
