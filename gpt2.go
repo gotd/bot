@@ -73,7 +73,7 @@ func (b *Bot) answerGPT2(
 		prompt := msg.GetMessage()
 		result, err := b.requestGPT2(ctx, query{
 			Prompt: prompt,
-			Length: rand.Intn(35) + 5,
+			Length: rand.Intn(b.gpt.MaxLength-b.gpt.MinLength) + b.gpt.MinLength,
 		})
 		if err != nil {
 			if _, err := send.Text(ctx, "GPT2 server request failed"); err != nil {
