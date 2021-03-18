@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -51,6 +50,10 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 
 		if err := b.answerTTS(ctx, send, peer, m, lang); err != nil {
 			return xerrors.Errorf("answer tts: %w", err)
+		}
+	case strings.HasPrefix(m.Message, "/gpt2"):
+		if err := b.answerGPT2(ctx, send, peer, m); err != nil {
+			return xerrors.Errorf("answer gpt2: %w", err)
 		}
 	case strings.HasPrefix(m.Message, "/json"):
 		if err := b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
@@ -160,50 +163,6 @@ func (b *Bot) getReply(
 	}
 
 	return cb(msg)
-}
-
-func (b *Bot) answerTTS(
-	ctx tg.UpdateContext,
-	send *message.Builder,
-	peer tg.InputPeerClass,
-	m *tg.Message,
-	lang string,
-) error {
-	return b.getReply(ctx, send, peer, m, func(msg *tg.Message) error {
-		// TODO(tdakkota): rate limiting.
-		req, err := http.NewRequestWithContext(ctx,
-			http.MethodGet, "https://translate.google.com.vn/translate_tts", nil,
-		)
-		if err != nil {
-			return xerrors.Errorf("create request: %w", err)
-		}
-
-		q := req.URL.Query()
-		q.Add("ie", "UTF-8")
-		q.Add("q", msg.GetMessage())
-		q.Add("tl", lang)
-		q.Add("client", "tw-ob")
-		req.URL.RawQuery = q.Encode()
-
-		resp, err := b.http.Do(req)
-		if err != nil {
-			return xerrors.Errorf("send request: %w", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode >= 400 {
-			if _, err := send.Text(ctx, "TTS server request failed"); err != nil {
-				return xerrors.Errorf("send: %w", err)
-			}
-			b.logger.Info("Bad TTS server response code", zap.Int("code", resp.StatusCode))
-			return nil
-		}
-
-		_, err = b.sender.Peer(peer).ReplyMsg(msg).
-			Upload(message.FromReader("tts.mp3", resp.Body)).
-			Voice(ctx)
-		return err
-	})
 }
 
 type formatter func(io.Writer, *tg.Message) error
