@@ -72,6 +72,23 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 		return xerrors.New("no APP_HASH provided")
 	}
 
+	cfg := GPTConfig{}
+	cfg.SetDefaults()
+	if v := os.Getenv("GPT_MIN_SIZE"); v != "" {
+		min, err := strconv.Atoi(v)
+		if err != nil {
+			return xerrors.Errorf("GPT_MIN_SIZE %q is invalid: %w", v, err)
+		}
+		cfg.MinLength = min
+	}
+	if v := os.Getenv("GPT_MAX_SIZE"); v != "" {
+		max, err := strconv.Atoi(v)
+		if err != nil {
+			return xerrors.Errorf("GPT_MAX_SIZE %q is invalid: %w", v, err)
+		}
+		cfg.MaxLength = max
+	}
+
 	dispatcher := tg.NewUpdateDispatcher()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger,
@@ -85,7 +102,8 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 	})
 	bot := NewBot(state, client, metrics).
 		WithLogger(logger.Named("bot")).
-		WithStart(time.Now())
+		WithStart(time.Now()).
+		WithGPTConfig(cfg)
 	dispatcher.OnNewMessage(bot.OnNewMessage)
 	dispatcher.OnNewChannelMessage(bot.OnNewChannelMessage)
 

@@ -16,6 +16,20 @@ import (
 	"github.com/gotd/td/tg"
 )
 
+type GPTConfig struct {
+	MinLength int
+	MaxLength int
+}
+
+func (c *GPTConfig) SetDefaults() {
+	if c.MinLength == 0 {
+		c.MinLength = 5
+	}
+	if c.MaxLength == 0 {
+		c.MaxLength = 100
+	}
+}
+
 type Bot struct {
 	state  *State
 	client *telegram.Client
@@ -25,12 +39,15 @@ type Bot struct {
 	downloader *downloader.Downloader
 	http       *http.Client
 
+	gpt    GPTConfig
 	logger *zap.Logger
 	m      Metrics
 }
 
 func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 	raw := tg.NewClient(client)
+	cfg := GPTConfig{}
+	cfg.SetDefaults()
 	return &Bot{
 		state:      state,
 		client:     client,
@@ -40,6 +57,7 @@ func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 		http:       http.DefaultClient,
 		logger:     zap.NewNop(),
 		m:          metrics,
+		gpt:        cfg,
 	}
 }
 
@@ -51,6 +69,11 @@ func (b *Bot) WithLogger(logger *zap.Logger) *Bot {
 
 func (b *Bot) WithStart(t time.Time) *Bot {
 	b.m.Start = t
+	return b
+}
+
+func (b *Bot) WithGPTConfig(config GPTConfig) *Bot {
+	b.gpt = config
 	return b
 }
 
