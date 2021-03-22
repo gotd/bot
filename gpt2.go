@@ -9,6 +9,8 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/td/telegram/message/styling"
+
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 )
@@ -35,7 +37,7 @@ func (b *Bot) requestGPT2(ctx context.Context, q query) ([]string, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("create request: %w", err)
 	}
-	defer req.Body.Close()
+	defer ignoreClose(req.Body)
 
 	req.Header.Set("User-Agent",
 		`Mozilla/5.0 (Windows NT 1337.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4000.1`,
@@ -46,7 +48,7 @@ func (b *Bot) requestGPT2(ctx context.Context, q query) ([]string, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer ignoreClose(resp.Body)
 
 	if resp.StatusCode >= 400 {
 		return nil, xerrors.Errorf("bad code %d", resp.StatusCode)
@@ -64,7 +66,7 @@ func (b *Bot) requestGPT2(ctx context.Context, q query) ([]string, error) {
 }
 
 func (b *Bot) answerGPT2(
-	ctx tg.UpdateContext,
+	ctx context.Context,
 	send *message.Builder,
 	peer tg.InputPeerClass,
 	m *tg.Message,
@@ -83,8 +85,8 @@ func (b *Bot) answerGPT2(
 		}
 
 		_, err = b.sender.Peer(peer).ReplyMsg(msg).StyledText(ctx,
-			message.Bold(prompt),
-			message.Plain(result[0]),
+			styling.Bold(prompt),
+			styling.Plain(result[0]),
 		)
 		return err
 	})

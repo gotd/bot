@@ -14,10 +14,11 @@ import (
 
 	"github.com/gotd/td/tdp"
 	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
 )
 
-func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass) error {
+func (b *Bot) answer(ctx context.Context, m *tg.Message, peer tg.InputPeerClass) error {
 	send := b.sender.Peer(peer).ReplyMsg(m)
 	switch {
 	case strings.HasPrefix(m.Message, "/bot"):
@@ -58,7 +59,7 @@ func (b *Bot) answer(ctx tg.UpdateContext, m *tg.Message, peer tg.InputPeerClass
 	case strings.HasPrefix(m.Message, "/json"):
 		if err := b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
 			encoder := json.NewEncoder(w)
-			encoder.SetIndent("", "\t")
+			encoder.SetIndent("", "  ")
 			return encoder.Encode(m)
 		}); err != nil {
 			return xerrors.Errorf("answer inspect: %w", err)
@@ -125,7 +126,7 @@ func (b *Bot) getChannelMessage(ctx context.Context, channel *tg.InputChannel, m
 }
 
 func (b *Bot) getReply(
-	ctx tg.UpdateContext,
+	ctx context.Context,
 	send *message.Builder,
 	peer tg.InputPeerClass,
 	m *tg.Message,
@@ -168,7 +169,7 @@ func (b *Bot) getReply(
 type formatter func(io.Writer, *tg.Message) error
 
 func (b *Bot) answerInspect(
-	ctx tg.UpdateContext,
+	ctx context.Context,
 	send *message.Builder,
 	peer tg.InputPeerClass,
 	m *tg.Message, f formatter,
@@ -179,7 +180,7 @@ func (b *Bot) answerInspect(
 			return xerrors.Errorf("encode message %d: %w", msg.ID, err)
 		}
 
-		if _, err := send.StyledText(ctx, message.Pre(w.String(), "")); err != nil {
+		if _, err := send.StyledText(ctx, styling.Pre(w.String(), "")); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
 

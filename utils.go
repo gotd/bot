@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"fmt"
+	"io"
 )
 
 func tokHash(token string) string {
@@ -12,4 +13,8 @@ func tokHash(token string) string {
 
 func sessionFileName(token string) string {
 	return fmt.Sprintf("bot.%s.session.json", tokHash(token))
+}
+
+func ignoreClose(closer io.Closer) {
+	_ = closer.Close()
 }

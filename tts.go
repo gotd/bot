@@ -42,7 +42,7 @@ func (b *Bot) requestTTS(ctx context.Context, msg, lang string) (io.ReadCloser, 
 }
 
 func (b *Bot) answerTTS(
-	ctx tg.UpdateContext,
+	ctx context.Context,
 	send *message.Builder,
 	peer tg.InputPeerClass,
 	m *tg.Message,
@@ -56,7 +56,7 @@ func (b *Bot) answerTTS(
 			}
 			return xerrors.Errorf("send TTS request: %w", err)
 		}
-		defer body.Close()
+		defer ignoreClose(body)
 
 		_, err = b.sender.Peer(peer).ReplyMsg(msg).
 			Upload(message.FromReader("tts.mp3", body)).

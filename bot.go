@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -77,7 +78,7 @@ func (b *Bot) WithGPTConfig(config GPTConfig) *Bot {
 	return b
 }
 
-func (b *Bot) handleUser(ctx tg.UpdateContext, user *tg.User, m *tg.Message) error {
+func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) error {
 	b.logger.Info("Got message",
 		zap.String("text", m.Message),
 		zap.Int("user_id", user.ID),
@@ -112,7 +113,7 @@ func maxSize(sizes []tg.PhotoSizeClass) string {
 	return maxSize
 }
 
-func (b *Bot) downloadMedia(ctx tg.UpdateContext, loc tg.InputFileLocationClass) error {
+func (b *Bot) downloadMedia(ctx context.Context, loc tg.InputFileLocationClass) error {
 	h := sha256.New()
 	metric := &metricWriter{}
 
@@ -130,7 +131,7 @@ func (b *Bot) downloadMedia(ctx tg.UpdateContext, loc tg.InputFileLocationClass)
 	return nil
 }
 
-func (b *Bot) handleMedia(ctx tg.UpdateContext, msg *tg.Message) error {
+func (b *Bot) handleMedia(ctx context.Context, msg *tg.Message) error {
 	switch m := msg.Media.(type) {
 	case *tg.MessageMediaDocument:
 		doc, ok := m.Document.AsNotEmpty()
@@ -162,7 +163,7 @@ func (b *Bot) handleMedia(ctx tg.UpdateContext, msg *tg.Message) error {
 	return nil
 }
 
-func (b *Bot) handleChat(ctx tg.UpdateContext, peer *tg.Chat, m *tg.Message) error {
+func (b *Bot) handleChat(ctx context.Context, peer *tg.Chat, m *tg.Message) error {
 	b.logger.Info("Got message from chat",
 		zap.String("text", m.Message),
 		zap.Int("chat_id", peer.ID),
@@ -173,7 +174,7 @@ func (b *Bot) handleChat(ctx tg.UpdateContext, peer *tg.Chat, m *tg.Message) err
 	})
 }
 
-func (b *Bot) handleChannel(ctx tg.UpdateContext, peer *tg.Channel, m *tg.Message) error {
+func (b *Bot) handleChannel(ctx context.Context, peer *tg.Channel, m *tg.Message) error {
 	b.logger.Info("Got message from channel",
 		zap.String("text", m.Message),
 		zap.Int("channel_id", peer.ID),
@@ -185,7 +186,7 @@ func (b *Bot) handleChannel(ctx tg.UpdateContext, peer *tg.Channel, m *tg.Messag
 	})
 }
 
-func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
+func (b *Bot) Handle(ctx context.Context, e tg.Entities, msg tg.MessageClass) error {
 	switch m := msg.(type) {
 	case *tg.Message:
 		if m.Out {
@@ -199,19 +200,19 @@ func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
 
 		switch peer := m.PeerID.(type) {
 		case *tg.PeerUser:
-			user, ok := ctx.Users[peer.UserID]
+			user, ok := e.Users[peer.UserID]
 			if !ok {
 				return xerrors.Errorf("unknown user ID %d", peer.UserID)
 			}
 			return b.handleUser(ctx, user, m)
 		case *tg.PeerChat:
-			chat, ok := ctx.Chats[peer.ChatID]
+			chat, ok := e.Chats[peer.ChatID]
 			if !ok {
 				return xerrors.Errorf("unknown chat ID %d", peer.ChatID)
 			}
 			return b.handleChat(ctx, chat, m)
 		case *tg.PeerChannel:
-			channel, ok := ctx.Channels[peer.ChannelID]
+			channel, ok := e.Channels[peer.ChannelID]
 			if !ok {
 				return xerrors.Errorf("unknown channel ID %d", peer.ChannelID)
 			}
@@ -222,8 +223,8 @@ func (b *Bot) Handle(ctx tg.UpdateContext, msg tg.MessageClass) error {
 	return nil
 }
 
-func (b *Bot) OnNewMessage(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
-	if err := b.Handle(ctx, u.Message); err != nil {
+func (b *Bot) OnNewMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewMessage) error {
+	if err := b.Handle(ctx, e, u.Message); err != nil {
 		if tg.IsUserBlocked(err) {
 			b.logger.Debug("Bot is blocked by user")
 			return nil
@@ -237,8 +238,8 @@ func (b *Bot) OnNewMessage(ctx tg.UpdateContext, u *tg.UpdateNewMessage) error {
 	return nil
 }
 
-func (b *Bot) OnNewChannelMessage(ctx tg.UpdateContext, u *tg.UpdateNewChannelMessage) error {
-	if err := b.Handle(ctx, u.Message); err != nil {
+func (b *Bot) OnNewChannelMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewChannelMessage) error {
+	if err := b.Handle(ctx, e, u.Message); err != nil {
 		return xerrors.Errorf("handle: %w", err)
 	}
 
