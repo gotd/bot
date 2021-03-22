@@ -53,8 +53,12 @@ func (b *Bot) answer(ctx context.Context, m *tg.Message, peer tg.InputPeerClass)
 			return xerrors.Errorf("answer tts: %w", err)
 		}
 	case strings.HasPrefix(m.Message, "/gpt2"):
-		if err := b.answerGPT2(ctx, send, peer, m); err != nil {
+		if err := b.answerNet(ctx, send, peer, m, b.gpt2); err != nil {
 			return xerrors.Errorf("answer gpt2: %w", err)
+		}
+	case strings.HasPrefix(m.Message, "/gpt3"):
+		if err := b.answerNet(ctx, send, peer, m, b.gpt3); err != nil {
+			return xerrors.Errorf("answer gpt3: %w", err)
 		}
 	case strings.HasPrefix(m.Message, "/json"):
 		if err := b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {

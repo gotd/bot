@@ -15,21 +15,9 @@ import (
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
+
+	"github.com/gotd/bot/net"
 )
-
-type GPTConfig struct {
-	MinLength int
-	MaxLength int
-}
-
-func (c *GPTConfig) SetDefaults() {
-	if c.MinLength == 0 {
-		c.MinLength = 5
-	}
-	if c.MaxLength == 0 {
-		c.MaxLength = 100
-	}
-}
 
 type Bot struct {
 	state  *State
@@ -40,25 +28,27 @@ type Bot struct {
 	downloader *downloader.Downloader
 	http       *http.Client
 
-	gpt    GPTConfig
+	gpt2 net.Net
+	gpt3 net.Net
+
 	logger *zap.Logger
 	m      Metrics
 }
 
 func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 	raw := tg.NewClient(client)
-	cfg := GPTConfig{}
-	cfg.SetDefaults()
+	httpClient := http.DefaultClient
 	return &Bot{
 		state:      state,
 		client:     client,
 		rpc:        raw,
 		sender:     message.NewSender(raw),
 		downloader: downloader.NewDownloader(),
-		http:       http.DefaultClient,
+		http:       httpClient,
 		logger:     zap.NewNop(),
 		m:          metrics,
-		gpt:        cfg,
+		gpt2:       net.NewGPT2().WithClient(httpClient),
+		gpt3:       net.NewGPT3().WithClient(httpClient),
 	}
 }
 
@@ -73,8 +63,13 @@ func (b *Bot) WithStart(t time.Time) *Bot {
 	return b
 }
 
-func (b *Bot) WithGPTConfig(config GPTConfig) *Bot {
-	b.gpt = config
+func (b *Bot) WithGPT2(g net.Net) *Bot {
+	b.gpt2 = g
+	return b
+}
+
+func (b *Bot) WithGPT3(g net.Net) *Bot {
+	b.gpt3 = g
 	return b
 }
 

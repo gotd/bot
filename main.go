@@ -25,6 +25,8 @@ import (
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
+
+	"github.com/gotd/bot/net"
 )
 
 func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
@@ -72,21 +74,20 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 		return xerrors.New("no APP_HASH provided")
 	}
 
-	cfg := GPTConfig{}
-	cfg.SetDefaults()
+	g := net.NewGPT2()
 	if v := os.Getenv("GPT_MIN_SIZE"); v != "" {
 		min, err := strconv.Atoi(v)
 		if err != nil {
 			return xerrors.Errorf("GPT_MIN_SIZE %q is invalid: %w", v, err)
 		}
-		cfg.MinLength = min
+		g = g.WithMinLength(min)
 	}
 	if v := os.Getenv("GPT_MAX_SIZE"); v != "" {
 		max, err := strconv.Atoi(v)
 		if err != nil {
 			return xerrors.Errorf("GPT_MAX_SIZE %q is invalid: %w", v, err)
 		}
-		cfg.MaxLength = max
+		g = g.WithMaxLength(max)
 	}
 
 	dispatcher := tg.NewUpdateDispatcher()
@@ -103,7 +104,7 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 	bot := NewBot(state, client, metrics).
 		WithLogger(logger.Named("bot")).
 		WithStart(time.Now()).
-		WithGPTConfig(cfg)
+		WithGPT2(g)
 	dispatcher.OnNewMessage(bot.OnNewMessage)
 	dispatcher.OnNewChannelMessage(bot.OnNewChannelMessage)
 
