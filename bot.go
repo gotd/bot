@@ -228,11 +228,11 @@ func (b *Bot) Handle(ctx context.Context, e tg.Entities, msg tg.MessageClass) er
 
 func (b *Bot) OnNewMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewMessage) error {
 	if err := b.Handle(ctx, e, u.Message); err != nil {
-		if tg.IsUserBlocked(err) {
-			b.logger.Debug("Bot is blocked by user")
-			return nil
+		if !tg.IsUserBlocked(err) {
+			return xerrors.Errorf("handle message %d: %w", u.Message.GetID(), err)
 		}
-		return xerrors.Errorf("handle message %d: %w", u.Message.GetID(), err)
+
+		b.logger.Debug("Bot is blocked by user")
 	}
 
 	if err := b.state.Commit(u.Pts); err != nil {
