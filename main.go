@@ -92,14 +92,6 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 		g = g.WithMaxLength(max)
 	}
 
-	githubToken := os.Getenv("GITHUB_TOKEN")
-	if githubToken == "" {
-		return xerrors.New("no GITHUB_TOKEN provided")
-	}
-	gh := github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: githubToken},
-	)))
-
 	dispatcher := tg.NewUpdateDispatcher()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger,
@@ -114,8 +106,16 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 	bot := NewBot(state, client, metrics).
 		WithLogger(logger.Named("bot")).
 		WithStart(time.Now()).
-		WithGPT2(g).
-		WithGH(gh)
+		WithGPT2(g)
+
+	if v := os.Getenv("GITHUB_TOKEN"); v != "" {
+		bot = bot.WithGH(github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
+			&oauth2.Token{
+				AccessToken: v,
+			},
+		))))
+	}
+
 	dispatcher.OnNewMessage(bot.OnNewMessage)
 	dispatcher.OnNewChannelMessage(bot.OnNewChannelMessage)
 

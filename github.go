@@ -18,7 +18,13 @@ func (b *Bot) answerGH(
 	peer tg.InputPeerClass,
 	m *tg.Message,
 ) error {
-	resp, err := b.github.Actions.CreateWorkflowDispatchEventByFileName(
+	gh := b.github
+	if gh == nil {
+		if _, err := send.Text(ctx, "404"); err != nil {
+			return xerrors.Errorf("send: %w", err)
+		}
+	}
+	resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(
 		ctx, "gotd", "td", "bot.yml",
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: "main",
