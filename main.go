@@ -14,11 +14,13 @@ import (
 	"time"
 
 	"github.com/cockroachdb/pebble"
+	"github.com/google/go-github/v33/github"
 	"github.com/povilasv/prommod"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
@@ -105,6 +107,15 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 		WithLogger(logger.Named("bot")).
 		WithStart(time.Now()).
 		WithGPT2(g)
+
+	if v := os.Getenv("GITHUB_TOKEN"); v != "" {
+		bot = bot.WithGH(github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
+			&oauth2.Token{
+				AccessToken: v,
+			},
+		))))
+	}
+
 	dispatcher.OnNewMessage(bot.OnNewMessage)
 	dispatcher.OnNewChannelMessage(bot.OnNewChannelMessage)
 

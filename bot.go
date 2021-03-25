@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/go-github/v33/github"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
@@ -30,6 +31,8 @@ type Bot struct {
 
 	gpt2 net.Net
 	gpt3 net.Net
+
+	github *github.Client
 
 	logger *zap.Logger
 	m      Metrics
@@ -70,6 +73,11 @@ func (b *Bot) WithGPT2(g net.Net) *Bot {
 
 func (b *Bot) WithGPT3(g net.Net) *Bot {
 	b.gpt3 = g
+	return b
+}
+
+func (b *Bot) WithGH(gh *github.Client) *Bot {
+	b.github = gh
 	return b
 }
 
