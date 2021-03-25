@@ -60,6 +60,10 @@ func (b *Bot) answer(ctx context.Context, m *tg.Message, peer tg.InputPeerClass)
 		if err := b.answerNet(ctx, send, peer, m, b.gpt3); err != nil {
 			return xerrors.Errorf("answer gpt3: %w", err)
 		}
+	case strings.HasPrefix(m.Message, "/github"):
+		if err := b.answerGH(ctx, send, peer, m); err != nil {
+			return xerrors.Errorf("answer github: %w", err)
+		}
 	case strings.HasPrefix(m.Message, "/json"):
 		if err := b.answerInspect(ctx, send, peer, m, func(w io.Writer, m *tg.Message) error {
 			encoder := json.NewEncoder(w)
