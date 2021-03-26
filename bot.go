@@ -89,8 +89,8 @@ func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) erro
 		zap.String("username", user.Username),
 	)
 
-	if _, err := b.sender.Peer(user.AsInputPeer()).
-		Text(ctx, fmt.Sprintf("No u %s, @%s", m.Message, user.Username)); err != nil {
+	if _, err := b.sender.To(user.AsInputPeer()).
+		Textf(ctx, "No u %s, @%s", m.Message, user.Username); err != nil {
 		return xerrors.Errorf("send: %w", err)
 	}
 
