@@ -37,7 +37,6 @@ func (b *Bot) answerGH(
 		}
 
 		// Create client with short-lived repository installation token.
-		//
 		inst, _, err := gh.Apps.FindRepositoryInstallation(ctx, githubOwner, githubRepo)
 		if err != nil {
 			return xerrors.Errorf("find repository installation: %w", err)
@@ -46,16 +45,17 @@ func (b *Bot) answerGH(
 		if err != nil {
 			return xerrors.Errorf("create installation token: %w", err)
 		}
-		gh = github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
-			&oauth2.Token{
-				AccessToken: tok.GetToken(),
-			},
-		)))
+		gh = github.NewClient(
+			oauth2.NewClient(ctx,
+				oauth2.StaticTokenSource(&oauth2.Token{
+					AccessToken: tok.GetToken(),
+				}),
+			),
+		)
 
 		// Reply with response header.
-		//
-		resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(
-			ctx, githubOwner, githubRepo, githubWorkflow,
+		resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(ctx,
+			githubOwner, githubRepo, githubWorkflow,
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: githubRef,
 				Inputs: map[string]interface{}{
@@ -75,6 +75,7 @@ func (b *Bot) answerGH(
 		if _, err := send.StyledText(ctx, styling.Pre(string(data), "")); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
+
 		return nil
 	})
 }
