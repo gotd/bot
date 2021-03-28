@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -56,20 +55,19 @@ func (b *Bot) answerGH(
 		)
 
 		// Dispatch workflow. Note that inputs must be strings.
-		var buf bytes.Buffer
-		if err := json.NewEncoder(&buf).Encode(map[string]interface{}{
+		data, err := json.Marshal(map[string]interface{}{
 			"command": m,
 			"replyto": msg,
-		}); err != nil {
+		})
+		if err != nil {
 			return xerrors.Errorf("encode payload: %w", err)
 		}
-		telegramPayload := base64.StdEncoding.EncodeToString(buf.Bytes())
 		resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(ctx,
 			githubOwner, githubRepo, githubWorkflow,
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: githubRef,
 				Inputs: map[string]interface{}{
-					"telegram": telegramPayload,
+					"telegram": base64.StdEncoding.EncodeToString(data),
 				},
 			},
 		)
