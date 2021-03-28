@@ -29,7 +29,7 @@ func (b *Bot) answerGH(
 	return b.getReply(ctx, send, peer, m, func(msg *tg.Message) error {
 		gh := b.github
 		if gh == nil {
-			if _, err := send.Text(ctx, "Github intergration disabled"); err != nil {
+			if _, err := send.Text(ctx, "Github integration disabled"); err != nil {
 				return xerrors.Errorf("send: %w", err)
 			}
 
