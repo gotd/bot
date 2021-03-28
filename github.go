@@ -26,51 +26,53 @@ func (b *Bot) answerGH(
 	peer tg.InputPeerClass,
 	m *tg.Message,
 ) error {
-	gh := b.github
-	if gh == nil {
-		if _, err := send.Text(ctx, "404"); err != nil {
+	return b.getReply(ctx, send, peer, m, func(msg *tg.Message) error {
+		gh := b.github
+		if gh == nil {
+			if _, err := send.Text(ctx, "404"); err != nil {
+				return xerrors.Errorf("send: %w", err)
+			}
+		}
+
+		// Create client with short-lived repository installation token.
+		//
+		inst, _, err := gh.Apps.FindRepositoryInstallation(ctx, githubOwner, githubRepo)
+		if err != nil {
+			return xerrors.Errorf("find repository installation: %w", err)
+		}
+		tok, _, err := gh.Apps.CreateInstallationToken(ctx, inst.GetID(), nil)
+		if err != nil {
+			return xerrors.Errorf("create installation token: %w", err)
+		}
+		gh = github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
+			&oauth2.Token{
+				AccessToken: tok.GetToken(),
+			},
+		)))
+
+		// Reply with response header.
+		//
+		resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(
+			ctx, githubOwner, githubRepo, githubWorkflow,
+			github.CreateWorkflowDispatchEventRequest{
+				Ref: githubRef,
+				Inputs: map[string]interface{}{
+					"telegram": true,
+					"message":  m,
+					"replyto":  msg,
+				},
+			},
+		)
+		if err != nil {
+			return xerrors.Errorf("dispatch workflow: %w", err)
+		}
+		data, err := httputil.DumpResponse(resp.Response, true)
+		if err != nil {
+			return xerrors.Errorf("dump response: %w", err)
+		}
+		if _, err := send.StyledText(ctx, styling.Pre(string(data), "")); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
-	}
-
-	// Create client with short-lived repository installation token.
-	//
-	inst, _, err := gh.Apps.FindRepositoryInstallation(ctx, githubOwner, githubRepo)
-	if err != nil {
-		return xerrors.Errorf("find repository installation: %w", err)
-	}
-	tok, _, err := gh.Apps.CreateInstallationToken(ctx, inst.GetID(), nil)
-	if err != nil {
-		return xerrors.Errorf("create installation token: %w", err)
-	}
-	gh = github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
-		&oauth2.Token{
-			AccessToken: tok.GetToken(),
-		},
-	)))
-
-	// Reply with response header.
-
-	resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(
-		ctx, githubOwner, githubRepo, githubWorkflow,
-		github.CreateWorkflowDispatchEventRequest{
-			Ref: githubRef,
-			Inputs: map[string]interface{}{
-				"telegram": true,
-				"message":  m,
-			},
-		},
-	)
-	if err != nil {
-		return xerrors.Errorf("dispatch workflow: %w", err)
-	}
-	data, err := httputil.DumpResponse(resp.Response, true)
-	if err != nil {
-		return xerrors.Errorf("dump response: %w", err)
-	}
-	if _, err := send.StyledText(ctx, styling.Pre(string(data), "")); err != nil {
-		return xerrors.Errorf("send: %w", err)
-	}
-
-	return nil
+		return nil
+	})
 }
