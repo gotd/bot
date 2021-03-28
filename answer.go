@@ -188,7 +188,7 @@ func (b *Bot) answerInspect(
 			return xerrors.Errorf("encode message %d: %w", msg.ID, err)
 		}
 
-		if _, err := send.StyledText(ctx, styling.Pre(w.String(), "")); err != nil {
+		if _, err := send.StyledText(ctx, styling.Pre(w.String())); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
 

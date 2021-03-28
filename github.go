@@ -78,7 +78,7 @@ func (b *Bot) answerGH(
 		}
 
 		// Reply with response status.
-		if _, err := send.StyledText(ctx, styling.Pre(resp.Status, "")); err != nil {
+		if _, err := send.StyledText(ctx, styling.Pre(resp.Status)); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
 
