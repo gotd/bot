@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"net/http/httputil"
+	"encoding/base64"
+	"encoding/json"
 
 	"github.com/google/go-github/v33/github"
 	"golang.org/x/oauth2"
@@ -53,26 +55,32 @@ func (b *Bot) answerGH(
 			),
 		)
 
-		// Reply with response header.
+		// Dispatch workflow. Note that inputs must be strings.
+		//
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(map[string]interface{}{
+			"command": m,
+			"replyto": msg,
+		}); err != nil {
+			return xerrors.Errorf("encode payload: %w", err)
+		}
+		telegramPayload := base64.StdEncoding.EncodeToString(buf.Bytes())
 		resp, err := gh.Actions.CreateWorkflowDispatchEventByFileName(ctx,
 			githubOwner, githubRepo, githubWorkflow,
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: githubRef,
 				Inputs: map[string]interface{}{
-					"telegram": true,
-					"message":  m,
-					"replyto":  msg,
+					"telegram": telegramPayload,
 				},
 			},
 		)
 		if err != nil {
 			return xerrors.Errorf("dispatch workflow: %w", err)
 		}
-		data, err := httputil.DumpResponse(resp.Response, true)
-		if err != nil {
-			return xerrors.Errorf("dump response: %w", err)
-		}
-		if _, err := send.StyledText(ctx, styling.Pre(string(data), "")); err != nil {
+
+		// Reply with response status.
+		//
+		if _, err := send.StyledText(ctx, styling.Pre(resp.Status, "")); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
 
