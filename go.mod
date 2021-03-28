@@ -3,6 +3,7 @@ module github.com/gotd/bot
 go 1.15
 
 require (
+	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/cockroachdb/pebble v0.0.0-20201130172119-f19faf8529d6
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-github/v33 v33.0.0
