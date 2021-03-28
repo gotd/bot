@@ -28,7 +28,7 @@ func (b *Bot) answerNet(
 			return xerrors.Errorf("send GPT request: %w", err)
 		}
 
-		_, err = b.sender.Peer(peer).ReplyMsg(msg).StyledText(ctx,
+		_, err = b.sender.To(peer).ReplyMsg(msg).StyledText(ctx,
 			styling.Bold(prompt),
 			styling.Plain(result),
 		)

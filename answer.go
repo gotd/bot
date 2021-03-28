@@ -19,7 +19,7 @@ import (
 )
 
 func (b *Bot) answer(ctx context.Context, m *tg.Message, peer tg.InputPeerClass) error {
-	send := b.sender.Peer(peer).ReplyMsg(m)
+	send := b.sender.To(peer).ReplyMsg(m)
 	switch {
 	case strings.HasPrefix(m.Message, "/bot"):
 		if _, err := send.Text(ctx, "What?"); err != nil {

@@ -58,7 +58,7 @@ func (b *Bot) answerTTS(
 		}
 		defer ignoreClose(body)
 
-		_, err = b.sender.Peer(peer).ReplyMsg(msg).
+		_, err = b.sender.To(peer).ReplyMsg(msg).
 			Upload(message.FromReader("tts.mp3", body)).
 			Voice(ctx)
 		return err
