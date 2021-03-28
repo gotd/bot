@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
 	"github.com/povilasv/prommod"
@@ -20,7 +22,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
@@ -108,12 +109,25 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
 		WithStart(time.Now()).
 		WithGPT2(g)
 
-	if v := os.Getenv("GITHUB_TOKEN"); v != "" {
-		bot = bot.WithGH(github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
-			&oauth2.Token{
-				AccessToken: v,
-			},
-		))))
+	if v := os.Getenv("GITHUB_APP_ID"); v != "" {
+		appID, err := strconv.Atoi(v)
+		if err != nil {
+			return xerrors.Errorf("GITHUB_APP_ID is invalid: %w", err)
+		}
+
+		key, err := base64.StdEncoding.DecodeString(os.Getenv("GITHUB_PRIVATE_KEY"))
+		if err != nil {
+			return xerrors.Errorf("GITHUB_PRIVATE_KEY is invalid: %w", err)
+		}
+
+		tr := http.DefaultTransport
+		itr, err := ghinstallation.NewAppsTransport(tr, int64(appID), key)
+		if err != nil {
+			return xerrors.Errorf("create github transport: %w", err)
+		}
+		bot = bot.WithGH(github.NewClient(&http.Client{
+			Transport: itr,
+		}))
 	}
 
 	dispatcher.OnNewMessage(bot.OnNewMessage)
