@@ -56,8 +56,8 @@ func (b *Bot) answerGH(
 
 		// Dispatch workflow. Note that inputs must be strings.
 		data, err := json.Marshal(map[string]interface{}{
-			"command": m,
-			"replyto": msg,
+			"message":  m,
+			"reply_to": msg,
 		})
 		if err != nil {
 			return xerrors.Errorf("encode payload: %w", err)
