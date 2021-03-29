@@ -25,11 +25,10 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/bot/net"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
-
-	"github.com/gotd/bot/net"
 )
 
 func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
