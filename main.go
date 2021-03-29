@@ -31,7 +31,7 @@ import (
 	"github.com/gotd/td/tg"
 )
 
-func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) (err error) {
+func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
 		return xerrors.New("no BOT_TOKEN provided")
