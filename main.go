@@ -108,114 +108,143 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 		WithStart(time.Now()).
 		WithGPT2(g)
 
+	group, ctx := errgroup.WithContext(ctx)
+
 	if v := os.Getenv("GITHUB_APP_ID"); v != "" {
-		appID, err := strconv.Atoi(v)
+		ghAppID, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return xerrors.Errorf("GITHUB_APP_ID is invalid: %w", err)
 		}
-
 		key, err := base64.StdEncoding.DecodeString(os.Getenv("GITHUB_PRIVATE_KEY"))
 		if err != nil {
 			return xerrors.Errorf("GITHUB_PRIVATE_KEY is invalid: %w", err)
 		}
-
-		tr := http.DefaultTransport
-		itr, err := ghinstallation.NewAppsTransport(tr, int64(appID), key)
+		ghTransport, err := ghinstallation.NewAppsTransport(http.DefaultTransport, ghAppID, key)
 		if err != nil {
 			return xerrors.Errorf("create github transport: %w", err)
 		}
-		bot = bot.WithGH(github.NewClient(&http.Client{
-			Transport: itr,
-		}))
-	}
+		ghClient := github.NewClient(&http.Client{
+			Transport: ghTransport,
+		})
+		bot.WithGithub(ghClient)
+		bot.WithGithubSecret(os.Getenv("GITHUB_SECRET"))
 
+		httpAddr := os.Getenv("HTTP_ADDR")
+		if httpAddr == "" {
+			httpAddr = "localhost:8080"
+		}
+		mux := http.NewServeMux()
+		bot.RegisterRoutes(mux)
+		server := http.Server{
+			Addr:    httpAddr,
+			Handler: mux,
+		}
+		group.Go(func() error {
+			return server.ListenAndServe()
+		})
+		group.Go(func() error {
+			<-ctx.Done()
+			shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+
+			if err := server.Shutdown(shutCtx); err != nil {
+				_ = server.Close()
+			}
+
+			return nil
+		})
+	}
 	dispatcher.OnNewMessage(bot.OnNewMessage)
 	dispatcher.OnNewChannelMessage(bot.OnNewChannelMessage)
 
-	return client.Run(ctx, func(ctx context.Context) error {
-		logger.Debug("Client initialized")
+	group.Go(func() error {
+		return client.Run(ctx, func(ctx context.Context) error {
+			logger.Debug("Client initialized")
 
-		self, err := client.Self(ctx)
-		if err != nil || !self.Bot {
-			if err := client.AuthBot(ctx, token); err != nil {
-				return xerrors.Errorf("failed to perform bot login: %w", err)
+			self, err := client.Self(ctx)
+			if err != nil || !self.Bot {
+				if err := client.AuthBot(ctx, token); err != nil {
+					return xerrors.Errorf("failed to perform bot login: %w", err)
+				}
+				logger.Info("New bot login")
+			} else {
+				logger.Info("Bot login  restored",
+					zap.String("name", self.Username),
+				)
 			}
-			logger.Info("New bot login")
-		} else {
-			logger.Info("Bot login  restored",
-				zap.String("name", self.Username),
-			)
-		}
 
-		// Using tg.Client for directly calling RPC.
-		raw := tg.NewClient(client)
+			// Using tg.Client for directly calling RPC.
+			raw := tg.NewClient(client)
 
-		// Syncing with remote state.
-		remoteState, err := raw.UpdatesGetState(ctx)
-		if err != nil {
-			return xerrors.Errorf("failed to get state: %w", err)
-		}
-		logger.Info("Got state",
-			zap.Int("qts", remoteState.Qts),
-			zap.Int("pts", remoteState.Pts),
-			zap.Int("seq", remoteState.Seq),
-			zap.Int("unread_count", remoteState.UnreadCount),
-		)
-
-		if err := state.Sync(remoteState.Pts, func(upd StateUpdate) error {
-			logger.Info("Applying updates",
-				zap.Int("remote_pts", upd.Remote),
-				zap.Int("local_pts", upd.Local),
-			)
-
-			diff, err := raw.UpdatesGetDifference(ctx, &tg.UpdatesGetDifferenceRequest{
-				Date: int(time.Now().Unix()),
-				Pts:  upd.Local,
-				Qts:  0, // No secret chats
-			})
+			// Syncing with remote state.
+			remoteState, err := raw.UpdatesGetState(ctx)
 			if err != nil {
-				return xerrors.Errorf("get difference: %w", err)
+				return xerrors.Errorf("failed to get state: %w", err)
+			}
+			logger.Info("Got state",
+				zap.Int("qts", remoteState.Qts),
+				zap.Int("pts", remoteState.Pts),
+				zap.Int("seq", remoteState.Seq),
+				zap.Int("unread_count", remoteState.UnreadCount),
+			)
+
+			if err := state.Sync(remoteState.Pts, func(upd StateUpdate) error {
+				logger.Info("Applying updates",
+					zap.Int("remote_pts", upd.Remote),
+					zap.Int("local_pts", upd.Local),
+				)
+
+				diff, err := raw.UpdatesGetDifference(ctx, &tg.UpdatesGetDifferenceRequest{
+					Date: int(time.Now().Unix()),
+					Pts:  upd.Local,
+					Qts:  0, // No secret chats
+				})
+				if err != nil {
+					return xerrors.Errorf("get difference: %w", err)
+				}
+
+				switch d := diff.(type) {
+				case *tg.UpdatesDifference:
+					// Adapting update to Handle() input.
+					var updates []tg.UpdateClass
+					for _, u := range d.OtherUpdates {
+						updates = append(updates, u)
+					}
+					for _, m := range d.NewMessages {
+						updates = append(updates, &tg.UpdateNewMessage{
+							Message: m,
+
+							// We can't provide pts here.
+							Pts:      0,
+							PtsCount: 0,
+						})
+					}
+					if err := dispatcher.Handle(ctx, &tg.Updates{
+						Updates: updates,
+						Users:   d.Users,
+						Chats:   d.Chats,
+					}); err != nil {
+						return xerrors.Errorf("handle: %w", err)
+					}
+				case *tg.UpdatesDifferenceSlice:
+					logger.Warn("Ignoring difference slice")
+				default:
+					logger.Warn("Ignoring updates")
+				}
+
+				logger.Info("Update handled")
+
+				return nil
+			}); err != nil {
+				return xerrors.Errorf("sync: %w", err)
 			}
 
-			switch d := diff.(type) {
-			case *tg.UpdatesDifference:
-				// Adapting update to Handle() input.
-				var updates []tg.UpdateClass
-				for _, u := range d.OtherUpdates {
-					updates = append(updates, u)
-				}
-				for _, m := range d.NewMessages {
-					updates = append(updates, &tg.UpdateNewMessage{
-						Message: m,
-
-						// We can't provide pts here.
-						Pts:      0,
-						PtsCount: 0,
-					})
-				}
-				if err := dispatcher.Handle(ctx, &tg.Updates{
-					Updates: updates,
-					Users:   d.Users,
-					Chats:   d.Chats,
-				}); err != nil {
-					return xerrors.Errorf("handle: %w", err)
-				}
-			case *tg.UpdatesDifferenceSlice:
-				logger.Warn("Ignoring difference slice")
-			default:
-				logger.Warn("Ignoring updates")
-			}
-
-			logger.Info("Update handled")
-
-			return nil
-		}); err != nil {
-			return xerrors.Errorf("sync: %w", err)
-		}
-
-		<-ctx.Done()
-		return ctx.Err()
+			<-ctx.Done()
+			return ctx.Err()
+		})
 	})
+
+	return group.Wait()
 }
 
 func run(ctx context.Context) (err error) {

@@ -34,8 +34,9 @@ type Bot struct {
 
 	github *github.Client
 
-	logger *zap.Logger
-	m      Metrics
+	logger       *zap.Logger
+	m            Metrics
+	githubSecret string
 }
 
 func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
@@ -76,8 +77,13 @@ func (b *Bot) WithGPT3(g net.Net) *Bot {
 	return b
 }
 
-func (b *Bot) WithGH(gh *github.Client) *Bot {
+func (b *Bot) WithGithub(gh *github.Client) *Bot {
 	b.github = gh
+	return b
+}
+
+func (b *Bot) WithGithubSecret(secret string) *Bot {
+	b.githubSecret = secret
 	return b
 }
 
