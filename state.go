@@ -47,9 +47,10 @@ func (s *State) Commit(pts int) error {
 func (s *State) Sync(remoteTimeStamp int, applyUpdate func(upd StateUpdate) error) error {
 	s.mux.Lock()
 	syncNeeded := s.pts < remoteTimeStamp
+	initialState := s.pts == 0
 	s.mux.Unlock()
 
-	if s.pts == 0 {
+	if initialState {
 		// Got initial state.
 		if err := s.Commit(remoteTimeStamp); err != nil {
 			return xerrors.Errorf("commit init state: %w", err)
@@ -61,7 +62,11 @@ func (s *State) Sync(remoteTimeStamp int, applyUpdate func(upd StateUpdate) erro
 		return nil
 	}
 
-	if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: s.pts}); err != nil {
+	s.mux.Lock()
+	local := s.pts
+	s.mux.Unlock()
+
+	if err := applyUpdate(StateUpdate{Remote: remoteTimeStamp, Local: local}); err != nil {
 		return xerrors.Errorf("apply: %w", err)
 	}
 	if err := s.Commit(remoteTimeStamp); err != nil {
