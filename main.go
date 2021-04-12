@@ -163,7 +163,7 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 
 			self, err := client.Self(ctx)
 			if err != nil || !self.Bot {
-				if err := client.AuthBot(ctx, token); err != nil {
+				if _, err := client.AuthBot(ctx, token); err != nil {
 					return xerrors.Errorf("failed to perform bot login: %w", err)
 				}
 				logger.Info("New bot login")
