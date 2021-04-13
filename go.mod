@@ -8,6 +8,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-github/v33 v33.0.0
 	github.com/gotd/td v0.34.0
+	github.com/labstack/echo/v4 v4.1.11
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.10.0
 	go.uber.org/atomic v1.7.0
