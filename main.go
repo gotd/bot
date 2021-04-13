@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
+	"github.com/brpaz/echozap"
 	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
@@ -135,7 +136,10 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 		if httpAddr == "" {
 			httpAddr = "localhost:8080"
 		}
+
 		e := echo.New()
+		e.Use(echozap.ZapLogger(logger.Named("http")))
+
 		bot.RegisterRoutes(e)
 		server := http.Server{
 			Addr:    httpAddr,
