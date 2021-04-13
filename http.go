@@ -91,20 +91,48 @@ func (r *ttlResolver) ResolveDomain(ctx context.Context, s string) (tg.InputPeer
 	return p, nil
 }
 
+func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
+	urlName := fmt.Sprintf("%s#%d",
+		e.GetRepo().GetFullName(),
+		e.PullRequest.GetNumber(),
+	)
+
+	return styling.TextURL(urlName, e.GetPullRequest().GetHTMLURL())
+}
+
+func (b *Bot) handlePRClosed(ctx context.Context, e *github.PullRequestEvent) error {
+	if !e.GetPullRequest().GetMerged() {
+		// Ignoring unmerged.
+		return nil
+	}
+
+	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+	if err != nil {
+		return xerrors.Errorf("resolve: %w", err)
+	}
+
+	if _, err := b.sender.To(p).StyledText(ctx,
+		styling.Plain("Pull request "),
+		getPullRequestURL(e),
+		styling.Plain(" merged:\n\n"),
+		styling.Italic(e.GetPullRequest().GetTitle()),
+	); err != nil {
+		return xerrors.Errorf("send: %w", err)
+	}
+
+	return nil
+}
+
 func (b *Bot) handlePROpened(ctx context.Context, e *github.PullRequestEvent) error {
 	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
 	if err != nil {
 		return xerrors.Errorf("resolve: %w", err)
 	}
 
-	urlName := fmt.Sprintf("%s#%d",
-		e.GetRepo().GetFullName(),
-		e.PullRequest.GetNumber(),
-	)
 	if _, err := b.sender.To(p).StyledText(ctx,
 		styling.Plain("New pull request "),
-		styling.TextURL(urlName, e.GetPullRequest().GetHTMLURL()),
-		styling.Plain(" opened:\n"),
+		getPullRequestURL(e),
+		styling.Plain(" opened:\n\n"),
 		styling.Italic(e.GetPullRequest().GetTitle()),
 	); err != nil {
 		return xerrors.Errorf("send: %w", err)
@@ -117,6 +145,8 @@ func (b *Bot) handlePR(ctx context.Context, e *github.PullRequestEvent) error {
 	switch e.GetAction() {
 	case "opened":
 		return b.handlePROpened(ctx, e)
+	case "closed":
+		return b.handlePRClosed(ctx, e)
 	}
 	return nil
 }
