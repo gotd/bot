@@ -14,6 +14,7 @@ import (
 
 	"github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram/message/peer"
+	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
 )
 
@@ -96,7 +97,16 @@ func (b *Bot) handlePROpened(ctx context.Context, e *github.PullRequestEvent) er
 		return xerrors.Errorf("resolve: %w", err)
 	}
 
-	if _, err := b.sender.To(p).Text(ctx, "New pull request created (test)"); err != nil {
+	urlName := fmt.Sprintf("%s#%d",
+		e.GetRepo().GetFullName(),
+		e.PullRequest.GetNumber(),
+	)
+	if _, err := b.sender.To(p).StyledText(ctx,
+		styling.Plain("New pull request "),
+		styling.TextURL(urlName, e.GetPullRequest().GetHTMLURL()),
+		styling.Plain(" opened:\n"),
+		styling.Italic(e.GetPullRequest().GetTitle()),
+	); err != nil {
 		return xerrors.Errorf("send: %w", err)
 	}
 
