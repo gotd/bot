@@ -46,6 +46,8 @@ func (b *Bot) handleHook(e echo.Context) error {
 		return b.handlePR(ctx, event)
 	case *github.ReleaseEvent:
 		return b.handleRelease(ctx, event)
+	case *github.RepositoryEvent:
+		return b.handleRepo(ctx, event)
 	default:
 		log.Info("No handler")
 		return e.String(http.StatusOK, "ok")

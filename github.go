@@ -8,11 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/andres-erbsen/clock"
 	"github.com/google/go-github/v33/github"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/message/styling"
@@ -206,4 +207,27 @@ func (b *Bot) handleRelease(ctx context.Context, e *github.ReleaseEvent) error {
 	}
 
 	return nil
+}
+
+func (b *Bot) handleRepo(ctx context.Context, e *github.RepositoryEvent) error {
+	switch e.GetAction() {
+	case "created", "publicized":
+		p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+		if err != nil {
+			return xerrors.Errorf("resolve: %w", err)
+		}
+
+		if _, err := b.sender.To(p).StyledText(ctx,
+			styling.Plain("New repository "),
+			styling.TextURL(e.GetRepo().GetFullName(), e.GetRepo().GetHTMLURL()),
+		); err != nil {
+			return xerrors.Errorf("send: %w", err)
+		}
+
+		return nil
+	default:
+		b.logger.Info("Action ignored", zap.String("action", e.GetAction()))
+
+		return nil
+	}
 }
