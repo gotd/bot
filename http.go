@@ -49,9 +49,12 @@ func (b *Bot) handleHook(e echo.Context) error {
 		zap.String("type", fmt.Sprintf("%T", event)),
 	)
 	log.Info("Processing event")
+	ctx := e.Request().Context()
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
-		return b.handlePR(e.Request().Context(), event)
+		return b.handlePR(ctx, event)
+	case *github.ReleaseEvent:
+		return b.handleRelease(ctx, event)
 	default:
 		log.Info("No handler")
 		return e.String(http.StatusOK, "ok")
@@ -153,5 +156,26 @@ func (b *Bot) handlePR(ctx context.Context, e *github.PullRequestEvent) error {
 	case "closed":
 		return b.handlePRClosed(ctx, e)
 	}
+	return nil
+}
+
+func (b *Bot) handleRelease(ctx context.Context, e *github.ReleaseEvent) error {
+	if e.GetAction() != "published" {
+		return nil
+	}
+
+	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+	if err != nil {
+		return xerrors.Errorf("resolve: %w", err)
+	}
+
+	if _, err := b.sender.To(p).StyledText(ctx,
+		styling.Plain("New release: "),
+		styling.TextURL(e.GetRelease().GetTagName(), e.GetRelease().GetHTMLURL()),
+		styling.Plain(fmt.Sprintf(" for %s", e.GetRepo().GetFullName())),
+	); err != nil {
+		return xerrors.Errorf("send: %w", err)
+	}
+
 	return nil
 }
