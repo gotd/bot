@@ -12,36 +12,47 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/bot/net"
+	"github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/tg"
-
-	"github.com/gotd/bot/net"
 )
 
 type Bot struct {
-	state  *State
-	client *telegram.Client
-
+	state      *State
+	client     *telegram.Client
 	rpc        *tg.Client
 	sender     *message.Sender
 	downloader *downloader.Downloader
+	resolver   peer.Resolver
 	http       *http.Client
 
 	gpt2 net.Net
 	gpt3 net.Net
 
-	github *github.Client
-
-	logger       *zap.Logger
-	m            Metrics
+	github       *github.Client
 	githubSecret string
+
+	// group to notify on specific events.
+	notifyGroup string
+
+	logger *zap.Logger
+	m      Metrics
 }
 
 func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 	raw := tg.NewClient(client)
 	httpClient := http.DefaultClient
+	resolver := &ttlResolver{
+		clock:    clock.System,
+		resolver: peer.DefaultResolver(raw),
+		duration: time.Minute * 10,
+		data:     map[string]resolved{},
+	}
+
 	return &Bot{
 		state:      state,
 		client:     client,
@@ -53,6 +64,7 @@ func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 		m:          metrics,
 		gpt2:       net.NewGPT2().WithClient(httpClient),
 		gpt3:       net.NewGPT3().WithClient(httpClient),
+		resolver:   resolver,
 	}
 }
 

@@ -17,6 +17,7 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
+	"github.com/labstack/echo/v4"
 	"github.com/povilasv/prommod"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -106,7 +107,8 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 	bot := NewBot(state, client, metrics).
 		WithLogger(logger.Named("bot")).
 		WithStart(time.Now()).
-		WithGPT2(g)
+		WithGPT2(g).
+		WithNotifyGroup(os.Getenv("TG_NOTIFY_GROUP"))
 
 	group, ctx := errgroup.WithContext(ctx)
 
@@ -133,11 +135,11 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 		if httpAddr == "" {
 			httpAddr = "localhost:8080"
 		}
-		mux := http.NewServeMux()
-		bot.RegisterRoutes(mux)
+		e := echo.New()
+		bot.RegisterRoutes(e)
 		server := http.Server{
 			Addr:    httpAddr,
-			Handler: mux,
+			Handler: e,
 		}
 		group.Go(func() error {
 			return server.ListenAndServe()
