@@ -102,7 +102,7 @@ func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
 
 func (b *Bot) handlePRClosed(ctx context.Context, e *github.PullRequestEvent) error {
 	if !e.GetPullRequest().GetMerged() {
-		// Ignoring unmerged.
+		b.logger.Info("Ignoring non-merged PR")
 		return nil
 	}
 
