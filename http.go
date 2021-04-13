@@ -33,8 +33,13 @@ func (b *Bot) handleHook(e echo.Context) error {
 		b.logger.Info("Failed to validate payload")
 		return echo.ErrNotFound
 	}
+	whType := github.WebHookType(e.Request())
+	if whType == "security_advisory" {
+		// Current github library is unable to handle this.
+		return e.String(http.StatusOK, "ignored")
+	}
 
-	event, err := github.ParseWebHook(github.WebHookType(e.Request()), payload)
+	event, err := github.ParseWebHook(whType, payload)
 	if err != nil {
 		b.logger.Error("Failed to parse webhook", zap.Error(err))
 		return echo.ErrInternalServerError
