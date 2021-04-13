@@ -19,6 +19,7 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/povilasv/prommod"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -138,7 +139,11 @@ func bot(ctx context.Context, metrics Metrics, logger *zap.Logger) error {
 		}
 
 		e := echo.New()
-		e.Use(echozap.ZapLogger(logger.Named("http")))
+		e.Use(
+			middleware.Recover(),
+			middleware.RequestID(),
+			echozap.ZapLogger(logger.Named("http")),
+		)
 
 		bot.RegisterRoutes(e)
 		server := http.Server{
