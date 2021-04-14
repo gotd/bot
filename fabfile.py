@@ -12,4 +12,5 @@ def deploy(c):
     c.run('mv /tmp/bot /home/bot/bot')
 
     c.run('systemctl restart bot')
+    c.run('tg send -p gotd_test "New version is deployed"')
 
