@@ -57,11 +57,15 @@ func NewMetrics() Metrics {
 }
 
 type metricWriter struct {
-	Bytes int64
+	Increase func(n int64) int64
+	Bytes    int64
 }
 
 func (m *metricWriter) Write(p []byte) (n int, err error) {
-	m.Bytes += int64(len(p))
+	delta := int64(len(p))
+
+	m.Increase(delta)
+	m.Bytes += delta
 
 	return len(p), nil
 }

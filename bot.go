@@ -136,18 +136,19 @@ func maxSize(sizes []tg.PhotoSizeClass) string {
 
 func (b *Bot) downloadMedia(ctx context.Context, loc tg.InputFileLocationClass) error {
 	h := sha256.New()
-	metric := &metricWriter{}
+	w := &metricWriter{
+		Increase: b.m.MediaBytes.Add,
+	}
 
 	if _, err := b.downloader.Download(b.rpc, loc).
-		Stream(ctx, io.MultiWriter(h, metric)); err != nil {
+		Stream(ctx, io.MultiWriter(h, w)); err != nil {
 		return xerrors.Errorf("stream: %w", err)
 	}
 
 	b.logger.Info("Downloaded media",
-		zap.Int64("bytes", metric.Bytes),
+		zap.Int64("bytes", w.Bytes),
 		zap.String("sha256", fmt.Sprintf("%x", h.Sum(nil))),
 	)
-	b.m.MediaBytes.Add(metric.Bytes)
 
 	return nil
 }
