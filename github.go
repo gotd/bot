@@ -148,7 +148,7 @@ func (b *Bot) handlePRClosed(ctx context.Context, e *github.PullRequestEvent) er
 		return xerrors.Errorf("resolve: %w", err)
 	}
 
-	if _, err := b.sender.To(p).StyledText(ctx,
+	if _, err := b.sender.To(p).NoWebpage().StyledText(ctx,
 		styling.Plain("Pull request "),
 		getPullRequestURL(e),
 		styling.Plain(" merged:\n\n"),
@@ -166,7 +166,7 @@ func (b *Bot) handlePROpened(ctx context.Context, e *github.PullRequestEvent) er
 		return xerrors.Errorf("resolve: %w", err)
 	}
 
-	if _, err := b.sender.To(p).StyledText(ctx,
+	if _, err := b.sender.To(p).NoWebpage().StyledText(ctx,
 		styling.Plain("New pull request "),
 		getPullRequestURL(e),
 		styling.Plain(" opened:\n\n"),
