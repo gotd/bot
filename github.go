@@ -5,17 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/google/go-github/v33/github"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 
-	"github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
 )
@@ -90,44 +86,6 @@ func (b *Bot) answerGH(
 	})
 }
 
-type resolved struct {
-	time time.Time
-	peer tg.InputPeerClass
-}
-
-type ttlResolver struct {
-	clock    clock.Clock
-	resolver peer.Resolver
-	duration time.Duration
-	mux      sync.Mutex
-	data     map[string]resolved
-}
-
-func (r *ttlResolver) ResolvePhone(ctx context.Context, phone string) (tg.InputPeerClass, error) {
-	return r.resolver.ResolvePhone(ctx, phone)
-}
-
-func (r *ttlResolver) ResolveDomain(ctx context.Context, s string) (tg.InputPeerClass, error) {
-	r.mux.Lock()
-	defer r.mux.Unlock()
-
-	x, ok := r.data[s]
-	if ok && r.clock.Now().Sub(x.time) < r.duration {
-		return x.peer, nil
-	}
-
-	p, err := r.resolver.ResolveDomain(ctx, s)
-	if err != nil {
-		return nil, err
-	}
-
-	x.peer = p
-	x.time = r.clock.Now()
-	r.data[s] = x
-
-	return p, nil
-}
-
 func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
 	urlName := fmt.Sprintf("%s#%d",
 		e.GetRepo().GetFullName(),
@@ -143,9 +101,9 @@ func (b *Bot) handlePRClosed(ctx context.Context, e *github.PullRequestEvent) er
 		return nil
 	}
 
-	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+	p, err := b.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("resolve: %w", err)
+		return xerrors.Errorf("peer: %w", err)
 	}
 
 	if _, err := b.sender.To(p).NoWebpage().StyledText(ctx,
@@ -161,9 +119,9 @@ func (b *Bot) handlePRClosed(ctx context.Context, e *github.PullRequestEvent) er
 }
 
 func (b *Bot) handlePROpened(ctx context.Context, e *github.PullRequestEvent) error {
-	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+	p, err := b.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("resolve: %w", err)
+		return xerrors.Errorf("peer: %w", err)
 	}
 
 	if _, err := b.sender.To(p).NoWebpage().StyledText(ctx,
@@ -193,9 +151,9 @@ func (b *Bot) handleRelease(ctx context.Context, e *github.ReleaseEvent) error {
 		return nil
 	}
 
-	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+	p, err := b.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("resolve: %w", err)
+		return xerrors.Errorf("peer: %w", err)
 	}
 
 	if _, err := b.sender.To(p).StyledText(ctx,
@@ -212,9 +170,9 @@ func (b *Bot) handleRelease(ctx context.Context, e *github.ReleaseEvent) error {
 func (b *Bot) handleRepo(ctx context.Context, e *github.RepositoryEvent) error {
 	switch e.GetAction() {
 	case "created", "publicized":
-		p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+		p, err := b.notifyPeer(ctx)
 		if err != nil {
-			return xerrors.Errorf("resolve: %w", err)
+			return xerrors.Errorf("peer: %w", err)
 		}
 
 		if _, err := b.sender.To(p).StyledText(ctx,
@@ -230,4 +188,12 @@ func (b *Bot) handleRepo(ctx context.Context, e *github.RepositoryEvent) error {
 
 		return nil
 	}
+}
+
+func (b *Bot) notifyPeer(ctx context.Context) (tg.InputPeerClass, error) {
+	p, err := b.resolver.ResolveDomain(ctx, b.notifyGroup)
+	if err != nil {
+		return nil, xerrors.Errorf("resolve: %w", err)
+	}
+	return p, nil
 }

@@ -13,7 +13,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/bot/net"
-	"github.com/gotd/td/clock"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
@@ -46,12 +45,6 @@ type Bot struct {
 func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 	raw := tg.NewClient(client)
 	httpClient := http.DefaultClient
-	resolver := &ttlResolver{
-		clock:    clock.System,
-		resolver: peer.DefaultResolver(raw),
-		duration: time.Minute * 10,
-		data:     map[string]resolved{},
-	}
 
 	return &Bot{
 		state:      state,
@@ -64,7 +57,7 @@ func NewBot(state *State, client *telegram.Client, metrics Metrics) *Bot {
 		m:          metrics,
 		gpt2:       net.NewGPT2().WithClient(httpClient),
 		gpt3:       net.NewGPT3().WithClient(httpClient),
-		resolver:   resolver,
+		resolver:   peer.DefaultResolver(raw),
 	}
 }
 
