@@ -139,7 +139,7 @@ func (b *Bot) handlePROpened(ctx context.Context, e *github.PullRequestEvent) er
 func (b *Bot) handlePR(ctx context.Context, e *github.PullRequestEvent) error {
 	// Ignore PR-s from dependabot (too much noise).
 	// TODO(ernado): delay and merge into single message
-	if e.GetPullRequest().GetUser().GetName() == "dependabot" {
+	if e.GetPullRequest().GetUser().GetLogin() == "dependabot[bot]" {
 		b.logger.Info("Ignored PR from dependabot")
 		return nil
 	}
