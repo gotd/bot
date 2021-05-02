@@ -48,13 +48,12 @@ type App struct {
 	mux dispatch.MessageMux
 	bot *dispatch.Bot
 
-	gpt2          gentext.Net
-	gpt3          gentext.Net
-	github        *github.Client
-	httpTransport http.RoundTripper
-	http          *http.Client
-	mts           metrics.Metrics
-	logger        *zap.Logger
+	gpt2   gentext.Net
+	gpt3   gentext.Net
+	github *github.Client
+	http   *http.Client
+	mts    metrics.Metrics
+	logger *zap.Logger
 
 	tasks []func(ctx context.Context) error
 }
@@ -126,19 +125,18 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 
 	httpTransport := http.DefaultTransport
 	app := &App{
-		client:        client,
-		token:         token,
-		raw:           raw,
-		resolver:      resolver,
-		sender:        sender,
-		downloader:    dd,
-		db:            db,
-		mux:           mux,
-		bot:           b,
-		httpTransport: httpTransport,
-		http:          &http.Client{Transport: httpTransport},
-		mts:           mts,
-		logger:        logger,
+		client:     client,
+		token:      token,
+		raw:        raw,
+		resolver:   resolver,
+		sender:     sender,
+		downloader: dd,
+		db:         db,
+		mux:        mux,
+		bot:        b,
+		http:       &http.Client{Transport: httpTransport},
+		mts:        mts,
+		logger:     logger,
 	}
 
 	gpt2, err := setupGPT2(app.http)
