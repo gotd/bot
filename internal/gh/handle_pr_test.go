@@ -8,13 +8,14 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/vfs"
 	"github.com/google/go-github/v33/github"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
+	"golang.org/x/xerrors"
+
 	"github.com/gotd/td/bin"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 	"github.com/gotd/td/tgerr"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/bot/internal/storage"
 )
