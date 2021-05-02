@@ -1,4 +1,4 @@
-package main
+package metrics
 
 import (
 	"time"
@@ -20,6 +20,7 @@ func newMetric(opts prometheus.CounterOpts) *metric {
 	return m
 }
 
+// Metrics represents bot metrics.
 type Metrics struct {
 	Start      time.Time
 	Messages   *metric
@@ -27,18 +28,21 @@ type Metrics struct {
 	MediaBytes *metric
 }
 
+// Describe implements prometheus.Collector.
 func (m Metrics) Describe(desc chan<- *prometheus.Desc) {
 	m.Messages.Describe(desc)
 	m.Responses.Describe(desc)
 	m.MediaBytes.Describe(desc)
 }
 
+// Collect implements prometheus.Collector.
 func (m Metrics) Collect(ch chan<- prometheus.Metric) {
 	m.Messages.Collect(ch)
 	m.Responses.Collect(ch)
 	m.MediaBytes.Collect(ch)
 }
 
+// NewMetrics returns new Metrics.
 func NewMetrics() Metrics {
 	return Metrics{
 		Messages: newMetric(prometheus.CounterOpts{
@@ -53,6 +57,7 @@ func NewMetrics() Metrics {
 			Name: "bot_media_bytes",
 			Help: "Total count of received media bytes",
 		}),
+		Start: time.Now(),
 	}
 }
 
