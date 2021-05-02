@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/xerrors"
 )
 
 func runMetrics(ctx context.Context, registry *prometheus.Registry, logger *zap.Logger) error {
@@ -25,15 +26,18 @@ func runMetrics(ctx context.Context, registry *prometheus.Registry, logger *zap.
 	grp, ctx := errgroup.WithContext(ctx)
 	grp.Go(func() error {
 		logger.Info("ListenAndServe", zap.String("addr", server.Addr))
-		if err := server.ListenAndServe(); err != nil && !xerrors.Is(err, http.ErrServerClosed) {
-			return err
-		}
-		return nil
+		return server.ListenAndServe()
 	})
 	grp.Go(func() error {
 		<-ctx.Done()
-		logger.Debug("Shutting down")
-		return server.Close()
+		shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+
+		logger.Info("Shutdown", zap.String("addr", server.Addr))
+		if err := server.Shutdown(shutCtx); err != nil {
+			return multierr.Append(err, server.Close())
+		}
+		return nil
 	})
 
 	return grp.Wait()

@@ -54,8 +54,6 @@ type App struct {
 	http   *http.Client
 	mts    metrics.Metrics
 	logger *zap.Logger
-
-	tasks []func(ctx context.Context) error
 }
 
 func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
@@ -162,16 +160,56 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	return app, nil
 }
 
-func (b *App) AddTask(task func(ctx context.Context) error) {
-	b.tasks = append(b.tasks, task)
-}
-
 func (b *App) Close() error {
 	return b.db.Close()
 }
 
 func (b *App) Run(ctx context.Context) error {
 	group, ctx := errgroup.WithContext(ctx)
+
+	if secret, ok := os.LookupEnv("GITHUB_SECRET"); ok {
+		logger := b.logger.Named("webhook")
+
+		httpAddr := os.Getenv("HTTP_ADDR")
+		if httpAddr == "" {
+			httpAddr = "localhost:8080"
+		}
+
+		webhook := gh.NewWebhook(b.db, b.sender, secret).
+			WithLogger(logger)
+		if notifyGroup, ok := os.LookupEnv("TG_NOTIFY_GROUP"); ok {
+			webhook = webhook.WithNotifyGroup(notifyGroup)
+		}
+
+		e := echo.New()
+		e.Use(
+			middleware.Recover(),
+			middleware.RequestID(),
+			echozap.ZapLogger(logger.Named("requests")),
+		)
+		webhook.RegisterRoutes(e)
+
+		server := http.Server{
+			Addr:    httpAddr,
+			Handler: e,
+		}
+		group.Go(func() error {
+			logger.Info("ListenAndServe", zap.String("addr", server.Addr))
+			return server.ListenAndServe()
+		})
+		group.Go(func() error {
+			<-ctx.Done()
+			shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+
+			logger.Info("Shutdown", zap.String("addr", server.Addr))
+			if err := server.Shutdown(shutCtx); err != nil {
+				return multierr.Append(err, server.Close())
+			}
+			return nil
+		})
+	}
+
 	group.Go(func() error {
 		return b.client.Run(ctx, func(ctx context.Context) error {
 			b.logger.Debug("Client initialized")
@@ -200,13 +238,6 @@ func (b *App) Run(ctx context.Context) error {
 			return telegram.RunUntilCanceled(ctx, b.client)
 		})
 	})
-
-	for _, task := range b.tasks {
-		group.Go(func() error {
-			return task(ctx)
-		})
-	}
-
 	return group.Wait()
 }
 
@@ -258,47 +289,6 @@ func setupBot(app *App) error {
 	if app.github != nil {
 		app.mux.Handle("github", "", gh.New(app.github))
 	}
-	if secret, ok := os.LookupEnv("GITHUB_SECRET"); ok {
-		logger := app.logger.Named("webhook")
-
-		httpAddr := os.Getenv("HTTP_ADDR")
-		if httpAddr == "" {
-			httpAddr = "localhost:8080"
-		}
-
-		webhook := gh.NewWebhook(app.db, app.sender, secret).
-			WithLogger(logger)
-		if notifyGroup, ok := os.LookupEnv("TG_NOTIFY_GROUP"); ok {
-			webhook = webhook.WithNotifyGroup(notifyGroup)
-		}
-
-		e := echo.New()
-		e.Use(
-			middleware.Recover(),
-			middleware.RequestID(),
-			echozap.ZapLogger(logger.Named("requests")),
-		)
-		webhook.RegisterRoutes(e)
-
-		server := http.Server{
-			Addr:    httpAddr,
-			Handler: e,
-		}
-		app.AddTask(func(ctx context.Context) error {
-			return server.ListenAndServe()
-		})
-		app.AddTask(func(ctx context.Context) error {
-			<-ctx.Done()
-			shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			defer cancel()
-
-			if err := server.Shutdown(shutCtx); err != nil {
-				return multierr.Append(err, server.Close())
-			}
-			return nil
-		})
-	}
-
 	return nil
 }
 
