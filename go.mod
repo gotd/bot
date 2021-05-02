@@ -8,7 +8,7 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20210428182429-0ba9163b848c
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-github/v33 v33.0.0
-	github.com/gotd/td v0.38.0
+	github.com/gotd/td v0.38.1-0.20210501194459-705bcb47d742
 	github.com/labstack/echo/v4 v4.2.2
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.10.0
