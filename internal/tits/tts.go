@@ -55,7 +55,7 @@ func (h Handler) requestTTS(ctx context.Context, msg, lang string) (io.ReadClose
 	return resp.Body, nil
 }
 
-// OnMessage implements bot.MessageHandler.
+// OnMessage implements dispatch.MessageHandler.
 func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	lang := "en"
 	cmd := strings.ToLower(e.Message.Message)

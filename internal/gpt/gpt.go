@@ -22,7 +22,7 @@ func New(net gentext.Net) Handler {
 	return Handler{net: net}
 }
 
-// OnMessage implements bot.MessageHandler.
+// OnMessage implements dispatch.MessageHandler.
 func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	return e.WithReply(ctx, func(reply *tg.Message) error {
 		prompt := reply.GetMessage()

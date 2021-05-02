@@ -22,7 +22,7 @@ func New(fmt Formatter) Handler {
 	return Handler{fmt: fmt}
 }
 
-// OnMessage implements bot.MessageHandler.
+// OnMessage implements dispatch.MessageHandler.
 func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	return e.WithReply(ctx, func(reply *tg.Message) error {
 		var w strings.Builder

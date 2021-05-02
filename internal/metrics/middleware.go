@@ -109,7 +109,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 	return nil
 }
 
-// OnMessage implements bot.MessageHandler.
+// OnMessage implements dispatch.MessageHandler.
 func (m Middleware) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	m.metrics.Messages.Inc()
 

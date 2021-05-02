@@ -35,7 +35,7 @@ func (h Handler) stats() string {
 	return w.String()
 }
 
-// OnMessage implements bot.MessageHandler.
+// OnMessage implements dispatch.MessageHandler.
 func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	_, err := e.Reply().Text(ctx, h.stats())
 	return err

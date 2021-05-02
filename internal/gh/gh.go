@@ -32,7 +32,7 @@ func New(client *github.Client) Handler {
 	return Handler{github: client}
 }
 
-// OnMessage implements bot.MessageHandler.
+// OnMessage implements dispatch.MessageHandler.
 func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	return e.WithReply(ctx, func(reply *tg.Message) error {
 		gh := h.github

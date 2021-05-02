@@ -15,9 +15,32 @@ import (
 type MessageEvent struct {
 	Peer    tg.InputPeerClass
 	Message *tg.Message
-	sender  *message.Sender
-	logger  *zap.Logger
-	rpc     *tg.Client
+
+	user    *tg.User
+	chat    *tg.Chat
+	channel *tg.Channel
+
+	sender *message.Sender
+	logger *zap.Logger
+	rpc    *tg.Client
+}
+
+// User returns User object and true if message got from user.
+// False and nil otherwise.
+func (e MessageEvent) User() (*tg.User, bool) {
+	return e.user, e.user != nil
+}
+
+// Chat returns Chat object and true if message got from chat.
+// False and nil otherwise.
+func (e MessageEvent) Chat() (*tg.Chat, bool) {
+	return e.chat, e.chat != nil
+}
+
+// Channel returns Channel object and true if message got from channel.
+// False and nil otherwise.
+func (e MessageEvent) Channel() (*tg.Channel, bool) {
+	return e.channel, e.channel != nil
 }
 
 // Logger returns associated logger.

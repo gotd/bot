@@ -9,16 +9,6 @@ import (
 	"github.com/gotd/td/tg"
 )
 
-func (b *Bot) answer(ctx context.Context, msg *tg.Message, peer tg.InputPeerClass) error {
-	return b.handler.OnMessage(ctx, MessageEvent{
-		Peer:    peer,
-		Message: msg,
-		sender:  b.sender,
-		logger:  b.logger,
-		rpc:     b.rpc,
-	})
-}
-
 func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) error {
 	b.logger.Info("Got message",
 		zap.String("text", m.Message),
@@ -27,25 +17,46 @@ func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) erro
 		zap.String("username", user.Username),
 	)
 
-	return b.answer(ctx, m, user.AsInputPeer())
+	return b.handler.OnMessage(ctx, MessageEvent{
+		Peer:    user.AsInputPeer(),
+		user:    user,
+		Message: m,
+		sender:  b.sender,
+		logger:  b.logger,
+		rpc:     b.rpc,
+	})
 }
 
-func (b *Bot) handleChat(ctx context.Context, peer *tg.Chat, m *tg.Message) error {
+func (b *Bot) handleChat(ctx context.Context, chat *tg.Chat, m *tg.Message) error {
 	b.logger.Info("Got message from chat",
 		zap.String("text", m.Message),
-		zap.Int("chat_id", peer.ID),
+		zap.Int("chat_id", chat.ID),
 	)
 
-	return b.answer(ctx, m, peer.AsInputPeer())
+	return b.handler.OnMessage(ctx, MessageEvent{
+		Peer:    chat.AsInputPeer(),
+		chat:    chat,
+		Message: m,
+		sender:  b.sender,
+		logger:  b.logger,
+		rpc:     b.rpc,
+	})
 }
 
-func (b *Bot) handleChannel(ctx context.Context, peer *tg.Channel, m *tg.Message) error {
+func (b *Bot) handleChannel(ctx context.Context, channel *tg.Channel, m *tg.Message) error {
 	b.logger.Info("Got message from channel",
 		zap.String("text", m.Message),
-		zap.Int("channel_id", peer.ID),
+		zap.Int("channel_id", channel.ID),
 	)
 
-	return b.answer(ctx, m, peer.AsInputPeer())
+	return b.handler.OnMessage(ctx, MessageEvent{
+		Peer:    channel.AsInputPeer(),
+		channel: channel,
+		Message: m,
+		sender:  b.sender,
+		logger:  b.logger,
+		rpc:     b.rpc,
+	})
 }
 
 func (b *Bot) Handle(ctx context.Context, e tg.Entities, msg tg.MessageClass) error {

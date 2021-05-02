@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/brpaz/echozap"
+	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -30,6 +32,7 @@ import (
 	"github.com/gotd/bot/internal/gpt"
 	"github.com/gotd/bot/internal/inspect"
 	"github.com/gotd/bot/internal/metrics"
+	"github.com/gotd/bot/internal/storage"
 	"github.com/gotd/bot/internal/tits"
 )
 
@@ -41,6 +44,7 @@ type App struct {
 	sender     *message.Sender
 	downloader *downloader.Downloader
 
+	db  *pebble.DB
 	mux dispatch.MessageMux
 	bot *dispatch.Bot
 
@@ -55,7 +59,7 @@ type App struct {
 	tasks []func(ctx context.Context) error
 }
 
-func InitApp(mts metrics.Metrics, logger *zap.Logger) (*App, error) {
+func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	// Reading app id from env (never hardcode it!).
 	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
 	if err != nil {
@@ -82,6 +86,19 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (*App, error) {
 		return nil, xerrors.Errorf("mkdir: %w", err)
 	}
 
+	db, err := pebble.Open(
+		filepath.Join(sessionDir, fmt.Sprintf("bot.%s.state", tokHash(token))),
+		&pebble.Options{},
+	)
+	if err != nil {
+		return nil, xerrors.Errorf("database: %w", err)
+	}
+	defer func() {
+		if rerr != nil {
+			multierr.AppendInto(&rerr, db.Close())
+		}
+	}()
+
 	dispatcher := tg.NewUpdateDispatcher()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger.Named("client"),
@@ -99,7 +116,10 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (*App, error) {
 	dd := downloader.NewDownloader()
 
 	mux := dispatch.NewMessageMux()
-	b := dispatch.NewBot(raw, metrics.NewMiddleware(mux, dd, mts)).
+	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts)
+	h = storage.NewHook(h, db)
+
+	b := dispatch.NewBot(raw, h).
 		WithSender(sender).
 		WithLogger(logger).
 		Register(dispatcher)
@@ -112,6 +132,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (*App, error) {
 		resolver:      resolver,
 		sender:        sender,
 		downloader:    dd,
+		db:            db,
 		mux:           mux,
 		bot:           b,
 		httpTransport: httpTransport,
@@ -145,6 +166,10 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (*App, error) {
 
 func (b *App) AddTask(task func(ctx context.Context) error) {
 	b.tasks = append(b.tasks, task)
+}
+
+func (b *App) Close() error {
+	return b.db.Close()
 }
 
 func (b *App) Run(ctx context.Context) error {
@@ -243,7 +268,7 @@ func setupBot(app *App) error {
 				httpAddr = "localhost:8080"
 			}
 
-			webhook := gh.NewWebhook(app.raw, secret).
+			webhook := gh.NewWebhook(app.db, app.raw, secret).
 				WithLogger(logger).
 				WithResolver(app.resolver).
 				WithSender(app.sender)
@@ -282,11 +307,14 @@ func setupBot(app *App) error {
 	return nil
 }
 
-func runBot(ctx context.Context, mts metrics.Metrics, logger *zap.Logger) error {
+func runBot(ctx context.Context, mts metrics.Metrics, logger *zap.Logger) (rerr error) {
 	app, err := InitApp(mts, logger)
 	if err != nil {
 		return xerrors.Errorf("initialize: %w", err)
 	}
+	defer func() {
+		multierr.AppendInto(&rerr, app.Close())
+	}()
 
 	if err := setupBot(app); err != nil {
 		return xerrors.Errorf("setup: %w", err)
