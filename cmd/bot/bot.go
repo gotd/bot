@@ -33,7 +33,7 @@ import (
 	"github.com/gotd/bot/internal/inspect"
 	"github.com/gotd/bot/internal/metrics"
 	"github.com/gotd/bot/internal/storage"
-	"github.com/gotd/bot/internal/tits"
+	"github.com/gotd/bot/internal/tts"
 )
 
 type App struct {
@@ -251,7 +251,7 @@ func setupBot(app *App) error {
 	app.mux.Handle("/pp", "Pretty print replied message", inspect.Pretty())
 	app.mux.Handle("/json", "Print JSON of replied message", inspect.JSON())
 	app.mux.Handle("/stat", "Metrics and version", metrics.NewHandler(app.mts))
-	app.mux.Handle("/tts", "Text to speech", tits.New(app.http))
+	app.mux.Handle("/tts", "Text to speech", tts.New(app.http))
 	app.mux.Handle("/gpt2", "Complete text with GPT2",
 		gpt.New(gentext.NewGPT2().WithClient(app.http)))
 	app.mux.Handle("/gpt3", "Complete text with GPT3",

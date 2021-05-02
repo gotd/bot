@@ -1,4 +1,4 @@
-package tits
+package tts
 
 import (
 	"context"
