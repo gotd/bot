@@ -11,8 +11,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
-	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/peer"
+
+	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 )
 
@@ -21,7 +22,6 @@ type Webhook struct {
 	db *pebble.DB
 
 	sender       *message.Sender
-	resolver     peer.Resolver
 	notifyGroup  string
 	githubSecret string
 
@@ -29,12 +29,10 @@ type Webhook struct {
 }
 
 // NewWebhook creates new web hook handler.
-func NewWebhook(db *pebble.DB, raw *tg.Client, githubSecret string) *Webhook {
-	resolver := peer.DefaultResolver(raw)
+func NewWebhook(db *pebble.DB, sender *message.Sender, githubSecret string) *Webhook {
 	return &Webhook{
 		db:           db,
-		sender:       message.NewSender(raw).WithResolver(resolver),
-		resolver:     resolver,
+		sender:       sender,
 		notifyGroup:  "gotd_ru",
 		githubSecret: githubSecret,
 		logger:       zap.NewNop(),
@@ -56,12 +54,6 @@ func (h *Webhook) WithNotifyGroup(domain string) *Webhook {
 // WithLogger sets logger to use.
 func (h *Webhook) WithLogger(logger *zap.Logger) *Webhook {
 	h.logger = logger
-	return h
-}
-
-// WithResolver sets peer resolver to use.
-func (h *Webhook) WithResolver(resolver peer.Resolver) *Webhook {
-	h.resolver = resolver
 	return h
 }
 
@@ -107,7 +99,7 @@ func (h Webhook) handleHook(e echo.Context) error {
 }
 
 func (h Webhook) notifyPeer(ctx context.Context) (tg.InputPeerClass, error) {
-	p, err := h.resolver.ResolveDomain(ctx, h.notifyGroup)
+	p, err := h.sender.ResolveDomain(h.notifyGroup, peer.OnlyChannel).AsInputPeer(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf("resolve: %w", err)
 	}

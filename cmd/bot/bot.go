@@ -259,49 +259,46 @@ func setupBot(app *App) error {
 
 	if app.github != nil {
 		app.mux.Handle("github", "", gh.New(app.github))
+	}
+	if secret, ok := os.LookupEnv("GITHUB_SECRET"); ok {
+		logger := app.logger.Named("webhook")
 
-		if secret, ok := os.LookupEnv("GITHUB_SECRET"); ok {
-			logger := app.logger.Named("webhook")
-
-			httpAddr := os.Getenv("HTTP_ADDR")
-			if httpAddr == "" {
-				httpAddr = "localhost:8080"
-			}
-
-			webhook := gh.NewWebhook(app.db, app.raw, secret).
-				WithLogger(logger).
-				WithResolver(app.resolver).
-				WithSender(app.sender)
-			if notifyGroup, ok := os.LookupEnv("TG_NOTIFY_GROUP"); ok {
-				webhook = webhook.WithNotifyGroup(notifyGroup)
-			}
-
-			e := echo.New()
-			e.Use(
-				middleware.Recover(),
-				middleware.RequestID(),
-				echozap.ZapLogger(logger.Named("requests")),
-			)
-			webhook.RegisterRoutes(e)
-
-			server := http.Server{
-				Addr:    httpAddr,
-				Handler: e,
-			}
-			app.AddTask(func(ctx context.Context) error {
-				return server.ListenAndServe()
-			})
-			app.AddTask(func(ctx context.Context) error {
-				<-ctx.Done()
-				shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				defer cancel()
-
-				if err := server.Shutdown(shutCtx); err != nil {
-					return multierr.Append(err, server.Close())
-				}
-				return nil
-			})
+		httpAddr := os.Getenv("HTTP_ADDR")
+		if httpAddr == "" {
+			httpAddr = "localhost:8080"
 		}
+
+		webhook := gh.NewWebhook(app.db, app.sender, secret).
+			WithLogger(logger)
+		if notifyGroup, ok := os.LookupEnv("TG_NOTIFY_GROUP"); ok {
+			webhook = webhook.WithNotifyGroup(notifyGroup)
+		}
+
+		e := echo.New()
+		e.Use(
+			middleware.Recover(),
+			middleware.RequestID(),
+			echozap.ZapLogger(logger.Named("requests")),
+		)
+		webhook.RegisterRoutes(e)
+
+		server := http.Server{
+			Addr:    httpAddr,
+			Handler: e,
+		}
+		app.AddTask(func(ctx context.Context) error {
+			return server.ListenAndServe()
+		})
+		app.AddTask(func(ctx context.Context) error {
+			<-ctx.Done()
+			shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+
+			if err := server.Shutdown(shutCtx); err != nil {
+				return multierr.Append(err, server.Close())
+			}
+			return nil
+		})
 	}
 
 	return nil
