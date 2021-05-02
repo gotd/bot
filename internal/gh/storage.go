@@ -14,7 +14,7 @@ import (
 // PRMsgIDKey generates key for given PR.
 func PRMsgIDKey(pr *github.PullRequestEvent) []byte {
 	key := strconv.AppendInt([]byte("pr_"), pr.GetRepo().GetID(), 10)
-	key = strconv.AppendInt(key, int64(pr.GetNumber()), 10)
+	key = strconv.AppendInt(key, int64(pr.GetPullRequest().GetNumber()), 10)
 	return key
 }
 
@@ -22,7 +22,7 @@ func PRMsgIDKey(pr *github.PullRequestEvent) []byte {
 func addID(db *pebble.DB, pr *github.PullRequestEvent, msgID int) error {
 	key := PRMsgIDKey(pr)
 	if err := db.Set(key, strconv.AppendInt(nil, 64, msgID), pebble.Sync); err != nil {
-		return xerrors.Errorf("commit PR #%d msg ID", pr.GetNumber())
+		return xerrors.Errorf("commit PR #%d msg ID", pr.GetPullRequest().GetNumber())
 	}
 
 	return nil
