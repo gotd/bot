@@ -27,10 +27,11 @@ func NewHook(next dispatch.MessageHandler, db *pebble.DB) Hook {
 	return Hook{next: next, db: db}
 }
 
-func (h Hook) update(peerID, msgID int) (rerr error) {
+// SetLastMsgID sets last message id in dialog.
+func SetLastMsgID(db *pebble.DB, peerID, msgID int) (rerr error) {
 	key := LastMsgIDKey(peerID)
 
-	b := h.db.NewIndexedBatch()
+	b := db.NewIndexedBatch()
 	data, closer, err := b.Get(key)
 	switch {
 	case xerrors.Is(err, pebble.ErrNotFound):
@@ -70,7 +71,7 @@ func (h Hook) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	}
 
 	return multierr.Append(
-		h.update(ch.ID, e.Message.ID),
+		SetLastMsgID(h.db, ch.ID, e.Message.ID),
 		h.next.OnMessage(ctx, e),
 	)
 }
