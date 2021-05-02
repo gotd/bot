@@ -16,6 +16,8 @@ import (
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/message/unpack"
 	"github.com/gotd/td/tg"
+
+	"github.com/gotd/bot/internal/storage"
 )
 
 func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
@@ -29,16 +31,18 @@ func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
 
 func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *message.Builder {
 	r := h.sender.To(p).NoWebpage()
-	if u := e.PullRequest.GetHTMLURL(); u != "" {
-		r = r.Row(markup.URL("Diff🔀", path.Join(u, "files")))
-		r = r.Row(markup.URL("Checks▶", path.Join(u, "checks")))
+	if u := e.GetPullRequest().GetHTMLURL(); u != "" {
+		r = r.Row(
+			markup.URL("Diff🔀", path.Join(u, "files")),
+			markup.URL("Checks▶", path.Join(u, "checks")),
+		)
 	}
 	return r
 }
 
 func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEvent) (rerr error) {
 	prID := event.GetPullRequest().GetNumber()
-	log := h.logger.With(zap.Int("pr", prID), zap.String("repo", event.Repo.GetName()))
+	log := h.logger.With(zap.Int("pr", prID), zap.String("repo", event.GetRepo().GetFullName()))
 	if !event.GetPullRequest().GetMerged() {
 		h.logger.Info("Ignoring non-merged PR")
 		return nil
@@ -137,7 +141,15 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 		return xerrors.Errorf("send: %w", err)
 	}
 
-	return addID(h.db, event, msgID)
+	ch, ok := p.(*tg.InputPeerChannel)
+	if !ok {
+		return addID(h.db, event, msgID)
+	}
+
+	return multierr.Append(
+		addID(h.db, event, msgID),
+		storage.SetLastMsgID(h.db, ch.ChannelID, msgID),
+	)
 }
 
 func (h Webhook) handlePR(ctx context.Context, e *github.PullRequestEvent) error {

@@ -21,7 +21,7 @@ func PRMsgIDKey(pr *github.PullRequestEvent) []byte {
 // addID commits sent message ID with PR notification.
 func addID(db *pebble.DB, pr *github.PullRequestEvent, msgID int) error {
 	key := PRMsgIDKey(pr)
-	if err := db.Set(key, strconv.AppendInt(nil, 64, msgID), pebble.Sync); err != nil {
+	if err := db.Set(key, strconv.AppendInt(nil, int64(msgID), 10), pebble.Sync); err != nil {
 		return xerrors.Errorf("commit PR #%d msg ID", pr.GetPullRequest().GetNumber())
 	}
 
