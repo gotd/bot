@@ -69,5 +69,8 @@ func (h Hook) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 		return h.next.OnMessage(ctx, e)
 	}
 
-	return multierr.Append(h.update(ch.ID, e.Message.ID), h.next.OnMessage(ctx, e))
+	return multierr.Append(
+		h.update(ch.ID, e.Message.ID),
+		h.next.OnMessage(ctx, e),
+	)
 }
