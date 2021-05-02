@@ -31,7 +31,7 @@ func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *messag
 	r := h.sender.To(p).NoWebpage()
 	if u := e.PullRequest.GetHTMLURL(); u != "" {
 		r = r.Row(markup.URL("Diff", path.Join(u, "files")))
-		r = r.Row(markup.URL("Checks", path.Join(u, "checks")))
+		r = r.Row(markup.URL("Checks▶", path.Join(u, "checks")))
 	}
 	return r
 }
@@ -119,11 +119,16 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 	if err != nil {
 		return xerrors.Errorf("peer: %w", err)
 	}
+	action := " opened"
+	if event.GetPullRequest().GetDraft() {
+		action = " drafted"
+	}
 
 	msgID, err := unpack.MessageID(h.notify(p, event).StyledText(ctx,
 		styling.Plain("New pull request "),
 		getPullRequestURL(event),
-		styling.Plain(" opened:\n\n"),
+		styling.Plain(action),
+		styling.Plain(":\n\n"),
 		styling.Italic(event.GetPullRequest().GetTitle()),
 	))
 	if err != nil {
