@@ -30,7 +30,7 @@ func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
 func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *message.Builder {
 	r := h.sender.To(p).NoWebpage()
 	if u := e.PullRequest.GetHTMLURL(); u != "" {
-		r = r.Row(markup.URL("Diff", path.Join(u, "files")))
+		r = r.Row(markup.URL("Diff🔀", path.Join(u, "files")))
 		r = r.Row(markup.URL("Checks▶", path.Join(u, "checks")))
 	}
 	return r
@@ -128,6 +128,8 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 		styling.Plain("New pull request "),
 		getPullRequestURL(event),
 		styling.Plain(action),
+		styling.Plain(" by "),
+		styling.TextURL(event.Sender.GetLogin(), event.Sender.GetHTMLURL()),
 		styling.Plain(":\n\n"),
 		styling.Italic(event.GetPullRequest().GetTitle()),
 	))
