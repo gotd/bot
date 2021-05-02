@@ -84,6 +84,14 @@ func (h Webhook) handleHook(e echo.Context) error {
 		zap.String("type", fmt.Sprintf("%T", event)),
 	)
 	log.Info("Processing event")
+	if err := h.processEvent(e, event, log); err != nil {
+		log.Error("Failed to process event", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+	return e.String(http.StatusOK, "done")
+}
+
+func (h Webhook) processEvent(e echo.Context, event interface{}, log *zap.Logger) error {
 	ctx := e.Request().Context()
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
@@ -94,7 +102,7 @@ func (h Webhook) handleHook(e echo.Context) error {
 		return h.handleRepo(ctx, event)
 	default:
 		log.Info("No handler")
-		return e.String(http.StatusOK, "ok")
+		return nil
 	}
 }
 
