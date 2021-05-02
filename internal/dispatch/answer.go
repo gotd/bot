@@ -3,9 +3,10 @@ package dispatch
 import (
 	"context"
 
-	"github.com/gotd/td/tg"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/tg"
 )
 
 func (b *Bot) answer(ctx context.Context, msg *tg.Message, peer tg.InputPeerClass) error {

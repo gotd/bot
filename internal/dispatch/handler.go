@@ -4,8 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/gotd/td/tg"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/tg"
 )
 
 // MessageHandler is a simple message event handler.

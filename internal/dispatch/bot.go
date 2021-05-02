@@ -1,10 +1,11 @@
 package dispatch
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
-	"go.uber.org/zap"
 )
 
 // Bot represents generic Telegram bot state and event dispatcher.

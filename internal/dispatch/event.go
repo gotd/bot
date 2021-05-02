@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/tg"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/tg"
 )
 
 // MessageEvent represents message event.

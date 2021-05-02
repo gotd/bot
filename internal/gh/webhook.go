@@ -6,13 +6,14 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v33/github"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+	"golang.org/x/xerrors"
+
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 )
 
 // Webhook is a Github events web hook handler.

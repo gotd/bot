@@ -3,9 +3,10 @@ package gpt
 import (
 	"context"
 
+	"golang.org/x/xerrors"
+
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/gentext"

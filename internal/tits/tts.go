@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/tg"
 	"go.uber.org/multierr"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
 )

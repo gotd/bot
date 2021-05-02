@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gotd/td/telegram/downloader"
-	"github.com/gotd/td/tg"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
+
+	"github.com/gotd/td/telegram/downloader"
+	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
 )
