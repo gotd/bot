@@ -16,8 +16,6 @@ import (
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/message/unpack"
 	"github.com/gotd/td/tg"
-
-	"github.com/gotd/bot/internal/storage"
 )
 
 func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
@@ -53,11 +51,11 @@ func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEv
 		return xerrors.Errorf("peer: %w", err)
 	}
 
-	var replyID int64
+	var replyID int
 	fallback := func(ctx context.Context) error {
 		r := h.notify(p, event)
 		if replyID != 0 {
-			r = r.Reply(int(replyID))
+			r = r.Reply(replyID)
 		}
 		if _, err := r.StyledText(ctx,
 			styling.Plain("Pull request "),
@@ -76,36 +74,25 @@ func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEv
 		return fallback(ctx)
 	}
 
-	snap := h.db.NewSnapshot()
-	defer func() {
-		multierr.AppendInto(&rerr, snap.Close())
-	}()
-
-	msgID, err := findID(snap, event)
+	msgID, lastMsgID, err := h.storage.FindPRNotification(ch.ChannelID, event)
 	if err != nil {
+		if msgID != 0 {
+			log.Debug("Found PR notification ID", zap.Int("msg_id", msgID))
+			replyID = msgID
+		}
 		if xerrors.Is(err, pebble.ErrNotFound) {
 			return fallback(ctx)
 		}
-		return xerrors.Errorf("find msg ID of PR #%d notification", prID)
+		return xerrors.Errorf("find notification: %w", err)
 	}
-	log.Debug("Found PR notification ID", zap.Int64("msg_id", msgID))
-	replyID = msgID
 
-	lastMsgID, err := findLastMsgID(snap, ch.ChannelID)
-	if err != nil {
-		if xerrors.Is(err, pebble.ErrNotFound) {
-			return fallback(ctx)
-		}
-		return xerrors.Errorf("find last msg ID of channel %d", ch.ChannelID)
-	}
-	log.Debug("Found last message ID", zap.Int64("msg_id", lastMsgID), zap.Int("channel", ch.ChannelID))
-
+	log.Debug("Found last message ID", zap.Int("msg_id", lastMsgID), zap.Int("channel", ch.ChannelID))
 	if lastMsgID-msgID > 10 {
 		log.Debug("Can't merge, send new message")
 		return fallback(ctx)
 	}
 
-	if _, err := h.notify(p, event).Edit(int(msgID)).StyledText(ctx,
+	if _, err := h.notify(p, event).Edit(msgID).StyledText(ctx,
 		styling.Plain("Pull request "),
 		getPullRequestURL(event),
 		styling.Strike(" opened"),
@@ -143,12 +130,12 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 
 	ch, ok := p.(*tg.InputPeerChannel)
 	if !ok {
-		return addID(h.db, event, msgID)
+		return h.storage.SetPRNotification(event, msgID)
 	}
 
 	return multierr.Append(
-		addID(h.db, event, msgID),
-		storage.SetLastMsgID(h.db, ch.ChannelID, msgID),
+		h.storage.UpdateLastMsgID(ch.ChannelID, msgID),
+		h.storage.SetPRNotification(event, msgID),
 	)
 }
 
