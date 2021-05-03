@@ -3,6 +3,7 @@ package gh
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"path"
 
 	"github.com/cockroachdb/pebble"
@@ -29,10 +30,13 @@ func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
 
 func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *message.Builder {
 	r := h.sender.To(p).NoWebpage()
-	if u := e.GetPullRequest().GetHTMLURL(); u != "" {
+	if u, _ := url.Parse(e.GetPullRequest().GetHTMLURL()); u != nil {
+		files, checks := *u, *u
+		files.Path = path.Join(files.Path, "files")
+		checks.Path = path.Join(checks.Path, "checks")
 		r = r.Row(
-			markup.URL("Diff🔀", path.Join(u, "files")),
-			markup.URL("Checks▶", path.Join(u, "checks")),
+			markup.URL("Diff🔀", files.String()),
+			markup.URL("Checks▶", checks.String()),
 		)
 	}
 	return r
