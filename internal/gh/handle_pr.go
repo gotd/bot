@@ -79,11 +79,11 @@ func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEv
 	}
 
 	msgID, lastMsgID, err := h.storage.FindPRNotification(ch.ChannelID, event)
+	if msgID != 0 {
+		log.Debug("Found PR notification ID", zap.Int("msg_id", msgID))
+		replyID = msgID
+	}
 	if err != nil {
-		if msgID != 0 {
-			log.Debug("Found PR notification ID", zap.Int("msg_id", msgID))
-			replyID = msgID
-		}
 		if xerrors.Is(err, pebble.ErrNotFound) {
 			return fallback(ctx)
 		}

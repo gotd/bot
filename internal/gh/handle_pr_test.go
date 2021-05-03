@@ -2,7 +2,6 @@ package gh
 
 import (
 	"context"
-	"strconv"
 	"testing"
 
 	"github.com/cockroachdb/pebble"
@@ -74,33 +73,23 @@ func TestWebhook(t *testing.T) {
 		ChannelID:  69,
 		AccessHash: 42,
 	}
+	event := prEvent(prID, orgID)
 
 	log := zaptest.NewLogger(t)
 	db, err := pebble.Open("golovach_lena.db", &pebble.Options{FS: vfs.NewMem()})
 	a.NoError(err)
+	store := storage.NewMsgID(db)
 
-	err = db.Set(
-		storage.LastMsgIDKey(channel.ChannelID),
-		strconv.AppendInt(nil, int64(lastMsgID), 10),
-		pebble.Sync,
-	)
-	a.NoError(err)
-
-	err = db.Set(
-		PRMsgIDKey(prEvent(prID, orgID)),
-		strconv.AppendInt(nil, int64(msgID), 10),
-		pebble.Sync,
-	)
-	a.NoError(err)
+	a.NoError(store.UpdateLastMsgID(channel.ChannelID, lastMsgID))
+	a.NoError(store.SetPRNotification(event, msgID))
 
 	invoker := &mockInvoker{}
 	raw := tg.NewClient(invoker)
 	sender := message.NewSender(raw).WithResolver(mockResolver{
 		"gotd_ru": channel,
 	})
-	hook := NewWebhook(db, sender, "secret").WithLogger(log)
+	hook := NewWebhook(storage.NewMsgID(db), sender, "secret").WithLogger(log)
 
-	event := prEvent(prID, orgID)
 	err = hook.handlePRClosed(ctx, event)
 	a.NoError(err)
 
