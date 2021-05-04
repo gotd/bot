@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -15,11 +14,13 @@ import (
 
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
+
+	"github.com/gotd/bot/internal/storage"
 )
 
 // Webhook is a Github events web hook handler.
 type Webhook struct {
-	db *pebble.DB
+	storage storage.MsgID
 
 	sender       *message.Sender
 	notifyGroup  string
@@ -29,9 +30,9 @@ type Webhook struct {
 }
 
 // NewWebhook creates new web hook handler.
-func NewWebhook(db *pebble.DB, sender *message.Sender, githubSecret string) *Webhook {
+func NewWebhook(msgID storage.MsgID, sender *message.Sender, githubSecret string) *Webhook {
 	return &Webhook{
-		db:           db,
+		storage:      msgID,
 		sender:       sender,
 		notifyGroup:  "gotd_ru",
 		githubSecret: githubSecret,

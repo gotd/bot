@@ -44,9 +44,10 @@ type App struct {
 	sender     *message.Sender
 	downloader *downloader.Downloader
 
-	db  *pebble.DB
-	mux dispatch.MessageMux
-	bot *dispatch.Bot
+	db      *pebble.DB
+	storage storage.MsgID
+	mux     dispatch.MessageMux
+	bot     *dispatch.Bot
 
 	gpt2   gentext.Net
 	gpt3   gentext.Net
@@ -95,6 +96,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 			multierr.AppendInto(&rerr, db.Close())
 		}
 	}()
+	msgIDStore := storage.NewMsgID(db)
 
 	dispatcher := tg.NewUpdateDispatcher()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
@@ -114,7 +116,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 
 	mux := dispatch.NewMessageMux()
 	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts)
-	h = storage.NewHook(h, db)
+	h = storage.NewHook(h, msgIDStore)
 
 	b := dispatch.NewBot(raw, h).
 		WithSender(sender).
@@ -130,6 +132,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		sender:     sender,
 		downloader: dd,
 		db:         db,
+		storage:    msgIDStore,
 		mux:        mux,
 		bot:        b,
 		http:       &http.Client{Transport: httpTransport},
@@ -175,7 +178,7 @@ func (b *App) Run(ctx context.Context) error {
 			httpAddr = "localhost:8080"
 		}
 
-		webhook := gh.NewWebhook(b.db, b.sender, secret).
+		webhook := gh.NewWebhook(b.storage, b.sender, secret).
 			WithLogger(logger)
 		if notifyGroup, ok := os.LookupEnv("TG_NOTIFY_GROUP"); ok {
 			webhook = webhook.WithNotifyGroup(notifyGroup)
