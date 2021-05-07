@@ -8,13 +8,13 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20210428182429-0ba9163b848c
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-github/v33 v33.0.0
-	github.com/gotd/td v0.39.0-alpha.1
+	github.com/gotd/td v0.40.0-rc.1
 	github.com/labstack/echo/v4 v4.2.2
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.10.0
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/atomic v1.7.0
-	go.uber.org/multierr v1.6.0
+	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b // indirect
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
