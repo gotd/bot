@@ -28,6 +28,16 @@ func getPullRequestURL(e *github.PullRequestEvent) styling.StyledTextOption {
 	return styling.TextURL(urlName, e.GetPullRequest().GetHTMLURL())
 }
 
+func getPullRequestAuthor(e *github.PullRequestEvent) styling.StyledTextOption {
+	u := e.GetPullRequest().GetUser()
+	return styling.TextURL(u.GetLogin(), u.GetHTMLURL())
+}
+
+func getPullRequestMergedBy(e *github.PullRequestEvent) styling.StyledTextOption {
+	u := e.GetPullRequest().GetUser()
+	return styling.TextURL(u.GetLogin(), u.GetHTMLURL())
+}
+
 func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *message.Builder {
 	r := h.sender.To(p).NoWebpage()
 	if u, _ := url.Parse(e.GetPullRequest().GetHTMLURL()); u != nil {
@@ -42,10 +52,10 @@ func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *messag
 	return r
 }
 
-func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEvent) (rerr error) {
-	prID := event.GetPullRequest().GetNumber()
-	log := h.logger.With(zap.Int("pr", prID), zap.String("repo", event.GetRepo().GetFullName()))
-	if !event.GetPullRequest().GetMerged() {
+func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent) error {
+	prID := e.GetPullRequest().GetNumber()
+	log := h.logger.With(zap.Int("pr", prID), zap.String("repo", e.GetRepo().GetFullName()))
+	if !e.GetPullRequest().GetMerged() {
 		h.logger.Info("Ignoring non-merged PR")
 		return nil
 	}
@@ -57,15 +67,17 @@ func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEv
 
 	var replyID int
 	fallback := func(ctx context.Context) error {
-		r := h.notify(p, event)
+		r := h.notify(p, e)
 		if replyID != 0 {
 			r = r.Reply(replyID)
 		}
 		if _, err := r.StyledText(ctx,
 			styling.Plain("Pull request "),
-			getPullRequestURL(event),
-			styling.Plain(" merged:\n\n"),
-			styling.Italic(event.GetPullRequest().GetTitle()),
+			getPullRequestURL(e),
+			styling.Plain(" merged by "),
+			getPullRequestMergedBy(e),
+			styling.Plain("\n\n"),
+			styling.Italic(e.GetPullRequest().GetTitle()),
 		); err != nil {
 			return xerrors.Errorf("send: %w", err)
 		}
@@ -78,7 +90,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEv
 		return fallback(ctx)
 	}
 
-	msgID, lastMsgID, err := h.storage.FindPRNotification(ch.ChannelID, event)
+	msgID, lastMsgID, err := h.storage.FindPRNotification(ch.ChannelID, e)
 	if msgID != 0 {
 		log.Debug("Found PR notification ID", zap.Int("msg_id", msgID))
 		replyID = msgID
@@ -96,12 +108,14 @@ func (h Webhook) handlePRClosed(ctx context.Context, event *github.PullRequestEv
 		return fallback(ctx)
 	}
 
-	if _, err := h.notify(p, event).Edit(msgID).StyledText(ctx,
+	if _, err := h.notify(p, e).Edit(msgID).StyledText(ctx,
 		styling.Plain("Pull request "),
-		getPullRequestURL(event),
+		getPullRequestURL(e),
 		styling.Strike(" opened"),
-		styling.Plain(" merged:\n\n"),
-		styling.Italic(event.GetPullRequest().GetTitle()),
+		styling.Plain(" merged by "),
+		getPullRequestMergedBy(e),
+		styling.Plain("\n\n"),
+		styling.Italic(e.GetPullRequest().GetTitle()),
 	); err != nil {
 		return xerrors.Errorf("send: %w", err)
 	}
@@ -124,8 +138,8 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 		getPullRequestURL(event),
 		styling.Plain(action),
 		styling.Plain(" by "),
-		styling.TextURL(event.Sender.GetLogin(), event.Sender.GetHTMLURL()),
-		styling.Plain(":\n\n"),
+		getPullRequestAuthor(event),
+		styling.Plain("\n\n"),
 		styling.Italic(event.GetPullRequest().GetTitle()),
 	))
 	if err != nil {
