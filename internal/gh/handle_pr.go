@@ -34,7 +34,7 @@ func getPullRequestAuthor(e *github.PullRequestEvent) styling.StyledTextOption {
 }
 
 func getPullRequestMergedBy(e *github.PullRequestEvent) styling.StyledTextOption {
-	u := e.GetPullRequest().GetUser()
+	u := e.GetPullRequest().GetMergedBy()
 	return styling.TextURL(u.GetLogin(), u.GetHTMLURL())
 }
 
