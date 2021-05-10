@@ -11,7 +11,7 @@ require (
 	github.com/google/go-github/v33 v33.0.0
 	github.com/gotd/contrib v0.8.0
 	github.com/gotd/getdoc v0.6.2
-	github.com/gotd/td v0.40.1-0.20210510082619-05f552116e7c
+	github.com/gotd/td v0.40.1-0.20210510110301-2159ff706744
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.3.0
 	github.com/povilasv/prommod v0.0.12
