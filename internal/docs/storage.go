@@ -48,6 +48,14 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 	for _, def := range schema.Definitions {
 		id := fmt.Sprintf("%x", def.Definition.ID)
 
+		doc, err := indexer.Document(id)
+		if err != nil {
+			return nil, xerrors.Errorf("try find %q: %w", id, err)
+		}
+		if doc != nil {
+			continue
+		}
+
 		if err := indexer.Index(id, map[string]interface{}{
 			"definition": Alias(def),
 			"id":         id,

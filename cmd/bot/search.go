@@ -25,9 +25,16 @@ func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
 		return nil, xerrors.Errorf("parse: %w", err)
 	}
 
-	index, err := bleve.New(filepath.Join(sessionDir, "docs.index"), bleve.NewIndexMapping())
-	if err != nil {
-		return nil, xerrors.Errorf("create indexer: %w", err)
+	indexPath := filepath.Join(sessionDir, "docs.index")
+	index, err := bleve.Open(indexPath)
+	switch {
+	case os.IsNotExist(err):
+		index, err = bleve.New(indexPath, bleve.NewIndexMapping())
+		if err != nil {
+			return nil, xerrors.Errorf("create indexer: %w", err)
+		}
+	case err != nil:
+		return nil, xerrors.Errorf("open index: %w", err)
 	}
 	defer func() {
 		if rerr != nil {
