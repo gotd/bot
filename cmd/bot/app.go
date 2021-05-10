@@ -142,7 +142,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 			return nil, xerrors.Errorf("create search: %w", err)
 		}
 		app.index = search
-		b = b.OnInline(docs.New(search))
+		b.OnInline(docs.New(search))
 	}
 
 	gpt2, err := setupGPT2(app.http)
