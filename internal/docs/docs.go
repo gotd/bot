@@ -3,6 +3,7 @@ package docs
 import (
 	"context"
 	"fmt"
+	escapehtml "html"
 	"strings"
 
 	"go.uber.org/multierr"
@@ -27,6 +28,19 @@ func New(search *Search) Handler {
 	return Handler{search: search}
 }
 
+func writeType(w *strings.Builder, typ tl.Type, text string) {
+	if typ.Bare || typ.GenericRef || typ.GenericArg != nil {
+		w.WriteString(text)
+		return
+	}
+
+	w.WriteString("</pre>")
+	w.WriteString(fmt.Sprintf(`<a href="https://core.telegram.org/type/%s">`, typ.Name))
+	w.WriteString(text)
+	w.WriteString("</a>")
+	w.WriteString("<pre>")
+}
+
 func formatDefinition(d tl.Definition) styling.StyledTextOption {
 	var b strings.Builder
 
@@ -43,23 +57,18 @@ func formatDefinition(d tl.Definition) styling.StyledTextOption {
 	}
 	for _, param := range d.Params {
 		b.WriteRune(' ')
-		paramString := param.String()
-		if param.Type.Bare || param.Type.GenericRef || param.Type.GenericArg != nil {
-			b.WriteString(paramString)
+		escaped := escapehtml.EscapeString(param.String())
+		if param.Flags {
+			b.WriteString(escaped)
 			continue
 		}
-
-		b.WriteString("</pre>")
-		b.WriteString(fmt.Sprintf(`<a href="https://core.telegram.org/type/%s">`, param.Type.Name))
-		b.WriteString(param.String())
-		b.WriteString("</a>")
-		b.WriteString("<pre>")
+		writeType(&b, param.Type, escaped)
 	}
 	if d.Base {
 		b.WriteString(" ?")
 	}
 	b.WriteString(" = ")
-	b.WriteString(d.Type.String())
+	writeType(&b, d.Type, escapehtml.EscapeString(d.Type.String()))
 	b.WriteString("</pre>")
 
 	return html.String(nil, b.String())

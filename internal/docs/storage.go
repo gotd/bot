@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/document"
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/getdoc"
@@ -41,13 +40,14 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 		goNames: tg.TypesConstructorMap(),
 	}
 
-	mapping := indexer.Mapping()
 	for _, def := range schema.Definitions {
 		id := fmt.Sprintf("%x", def.Definition.ID)
 
-		doc := document.NewDocument(id)
-		doc.AddField(document.NewTextField("type_id", nil, []byte(id)))
-		if err := mapping.MapDocument(doc, Alias(def)); err != nil {
+		if err := indexer.Index(id, map[string]interface{}{
+			"definition": Alias(def),
+			"id":         id,
+			"goName":     s.goName(def.Definition.ID),
+		}); err != nil {
 			return nil, xerrors.Errorf("index %s: %w", id, err)
 		}
 		s.data[id] = def
@@ -72,6 +72,10 @@ func getType(v interface{}) string {
 	}
 }
 
+func (s *Search) goName(id uint32) string {
+	return getType(s.goNames[id]())
+}
+
 // Match searches docs using given text query.
 func (s *Search) Match(q string) ([]SearchResult, error) {
 	query := bleve.NewQueryStringQuery(q)
@@ -94,7 +98,7 @@ func (s *Search) Match(q string) ([]SearchResult, error) {
 
 		result = append(result, SearchResult{
 			SchemaDefinition: def,
-			GoName:           getType(s.goNames[def.Definition.ID]()),
+			GoName:           s.goName(def.Definition.ID),
 			NamespacedName:   typeKey,
 			Constructor:      constructorDoc,
 			Method:           methodDoc,
