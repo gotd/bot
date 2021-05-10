@@ -41,6 +41,7 @@ type App struct {
 	downloader *downloader.Downloader
 
 	db      *pebble.DB
+	index   *docs.Search
 	storage storage.MsgID
 	mux     dispatch.MessageMux
 	bot     *dispatch.Bot
@@ -119,14 +120,6 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		Register(dispatcher).
 		OnMessage(h)
 
-	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
-		search, err := setupSearch(schemaPath)
-		if err != nil {
-			return nil, xerrors.Errorf("create search: %w", err)
-		}
-		b = b.OnInline(docs.New(search))
-	}
-
 	httpTransport := http.DefaultTransport
 	app := &App{
 		client:     client,
@@ -141,6 +134,15 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		http:       &http.Client{Transport: httpTransport},
 		mts:        mts,
 		logger:     logger,
+	}
+
+	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
+		search, err := setupIndex(sessionDir, schemaPath)
+		if err != nil {
+			return nil, xerrors.Errorf("create search: %w", err)
+		}
+		app.index = search
+		b = b.OnInline(docs.New(search))
 	}
 
 	gpt2, err := setupGPT2(app.http)
@@ -167,7 +169,11 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 }
 
 func (b *App) Close() error {
-	return b.db.Close()
+	err := b.db.Close()
+	if b.index != nil {
+		err = multierr.Append(err, b.index.Close())
+	}
+	return err
 }
 
 func (b *App) Run(ctx context.Context) error {

@@ -29,6 +29,11 @@ type Search struct {
 	goNames map[uint32]func() bin.Object
 }
 
+// Close closes underlying index.
+func (s *Search) Close() error {
+	return s.idx.Close()
+}
+
 // IndexSchema creates new Search object.
 func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Search, error) {
 	type Alias tl.SchemaDefinition
