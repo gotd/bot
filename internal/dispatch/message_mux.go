@@ -9,19 +9,6 @@ import (
 	"github.com/gotd/td/tg"
 )
 
-// MessageHandler is a simple message event handler.
-type MessageHandler interface {
-	OnMessage(ctx context.Context, e MessageEvent) error
-}
-
-// MessageHandlerFunc is a functional adapter for Handler.
-type MessageHandlerFunc func(ctx context.Context, e MessageEvent) error
-
-// OnMessage implements MessageHandler.
-func (h MessageHandlerFunc) OnMessage(ctx context.Context, e MessageEvent) error {
-	return h(ctx, e)
-}
-
 type handle struct {
 	MessageHandler
 	description string

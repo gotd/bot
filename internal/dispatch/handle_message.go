@@ -17,13 +17,11 @@ func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) erro
 		zap.String("username", user.Username),
 	)
 
-	return b.handler.OnMessage(ctx, MessageEvent{
-		Peer:    user.AsInputPeer(),
-		user:    user,
-		Message: m,
-		sender:  b.sender,
-		logger:  b.logger,
-		rpc:     b.rpc,
+	return b.onMessage.OnMessage(ctx, MessageEvent{
+		Peer:      user.AsInputPeer(),
+		user:      user,
+		Message:   m,
+		baseEvent: b.baseEvent(),
 	})
 }
 
@@ -33,13 +31,11 @@ func (b *Bot) handleChat(ctx context.Context, chat *tg.Chat, m *tg.Message) erro
 		zap.Int("chat_id", chat.ID),
 	)
 
-	return b.handler.OnMessage(ctx, MessageEvent{
-		Peer:    chat.AsInputPeer(),
-		chat:    chat,
-		Message: m,
-		sender:  b.sender,
-		logger:  b.logger,
-		rpc:     b.rpc,
+	return b.onMessage.OnMessage(ctx, MessageEvent{
+		Peer:      chat.AsInputPeer(),
+		chat:      chat,
+		Message:   m,
+		baseEvent: b.baseEvent(),
 	})
 }
 
@@ -49,17 +45,15 @@ func (b *Bot) handleChannel(ctx context.Context, channel *tg.Channel, m *tg.Mess
 		zap.Int("channel_id", channel.ID),
 	)
 
-	return b.handler.OnMessage(ctx, MessageEvent{
-		Peer:    channel.AsInputPeer(),
-		channel: channel,
-		Message: m,
-		sender:  b.sender,
-		logger:  b.logger,
-		rpc:     b.rpc,
+	return b.onMessage.OnMessage(ctx, MessageEvent{
+		Peer:      channel.AsInputPeer(),
+		channel:   channel,
+		Message:   m,
+		baseEvent: b.baseEvent(),
 	})
 }
 
-func (b *Bot) Handle(ctx context.Context, e tg.Entities, msg tg.MessageClass) error {
+func (b *Bot) handleMessage(ctx context.Context, e tg.Entities, msg tg.MessageClass) error {
 	switch m := msg.(type) {
 	case *tg.Message:
 		if m.Out {
@@ -92,7 +86,7 @@ func (b *Bot) Handle(ctx context.Context, e tg.Entities, msg tg.MessageClass) er
 }
 
 func (b *Bot) OnNewMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewMessage) error {
-	if err := b.Handle(ctx, e, u.Message); err != nil {
+	if err := b.handleMessage(ctx, e, u.Message); err != nil {
 		if !tg.IsUserBlocked(err) {
 			return xerrors.Errorf("handle message %d: %w", u.Message.GetID(), err)
 		}
@@ -103,7 +97,7 @@ func (b *Bot) OnNewMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewMe
 }
 
 func (b *Bot) OnNewChannelMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewChannelMessage) error {
-	if err := b.Handle(ctx, e, u.Message); err != nil {
+	if err := b.handleMessage(ctx, e, u.Message); err != nil {
 		return xerrors.Errorf("handle: %w", err)
 	}
 	return nil

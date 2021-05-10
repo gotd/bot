@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/blevesearch/bleve"
 	"github.com/brpaz/echozap"
 	"github.com/cockroachdb/pebble"
 	"github.com/google/go-github/v33/github"
@@ -19,6 +20,9 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/getdoc"
+	"github.com/gotd/tl"
+
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
@@ -27,6 +31,7 @@ import (
 	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
+	"github.com/gotd/bot/internal/docs"
 	"github.com/gotd/bot/internal/gentext"
 	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/gpt"
@@ -55,6 +60,35 @@ type App struct {
 	http   *http.Client
 	mts    metrics.Metrics
 	logger *zap.Logger
+}
+
+func createSearch(p string) (*docs.Search, error) {
+	f, err := os.Open(p)
+	if err != nil {
+		return nil, xerrors.Errorf("open: %w", err)
+	}
+
+	sch, err := tl.Parse(f)
+	if err != nil {
+		return nil, xerrors.Errorf("parse: %w", err)
+	}
+
+	index, err := bleve.NewMemOnly(bleve.NewIndexMapping())
+	if err != nil {
+		return nil, xerrors.Errorf("create indexer: %w", err)
+	}
+
+	doc, err := getdoc.Load(getdoc.LayerLatest)
+	if err != nil {
+		return nil, xerrors.Errorf("load docs: %w", err)
+	}
+
+	search, err := docs.IndexSchema(index, sch, doc)
+	if err != nil {
+		return nil, xerrors.Errorf("index schema: %w", err)
+	}
+
+	return search, nil
 }
 
 func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
@@ -118,10 +152,19 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts)
 	h = storage.NewHook(h, msgIDStore)
 
-	b := dispatch.NewBot(raw, h).
+	b := dispatch.NewBot(raw).
 		WithSender(sender).
 		WithLogger(logger).
-		Register(dispatcher)
+		Register(dispatcher).
+		OnMessage(h)
+
+	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
+		search, err := createSearch(schemaPath)
+		if err != nil {
+			return nil, xerrors.Errorf("create search: %w", err)
+		}
+		b = b.OnInline(docs.New(search))
+	}
 
 	httpTransport := http.DefaultTransport
 	app := &App{
