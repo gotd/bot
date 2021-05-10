@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,6 +20,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/contrib/invoker"
+	"github.com/gotd/contrib/updates"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
@@ -31,6 +34,7 @@ import (
 	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/metrics"
 	"github.com/gotd/bot/internal/storage"
+	bolt "go.etcd.io/bbolt"
 )
 
 type App struct {
@@ -39,6 +43,10 @@ type App struct {
 	raw        *tg.Client
 	sender     *message.Sender
 	downloader *downloader.Downloader
+
+	lazy       *LazyHandler
+	gaps       *BoltState
+	dispatcher tg.UpdateDispatcher
 
 	db      *pebble.DB
 	index   *docs.Search
@@ -81,6 +89,11 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		return nil, xerrors.Errorf("mkdir: %w", err)
 	}
 
+	stateDb, err := bolt.Open(filepath.Join(sessionDir, "gaps-state.bbolt"), fs.ModePerm, bolt.DefaultOptions)
+	if err != nil {
+		return nil, xerrors.Errorf("state database: %w", err)
+	}
+
 	db, err := pebble.Open(
 		filepath.Join(sessionDir, fmt.Sprintf("bot.%s.state", tokHash(token))),
 		&pebble.Options{},
@@ -95,18 +108,17 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	}()
 	msgIDStore := storage.NewMsgID(db)
 
-	dispatcher := tg.NewUpdateDispatcher()
+	lz := new(LazyHandler)
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger.Named("client"),
 		SessionStorage: &session.FileStorage{
 			Path: filepath.Join(sessionDir, sessionFileName(token)),
 		},
 		UpdateHandler: dispatch.NewLoggedDispatcher(
-			dispatcher,
-			logger.Named("updates"),
+			lz, logger.Named("updates"),
 		),
 	})
-	raw := tg.NewClient(client)
+	raw := tg.NewClient(invoker.NewUpdateHook(client, lz.Handle))
 	sender := message.NewSender(raw)
 	dd := downloader.NewDownloader()
 
@@ -114,6 +126,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts)
 	h = storage.NewHook(h, msgIDStore)
 
+	dispatcher := tg.NewUpdateDispatcher()
 	b := dispatch.NewBot(raw).
 		WithSender(sender).
 		WithLogger(logger).
@@ -127,6 +140,9 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		raw:        raw,
 		sender:     sender,
 		downloader: dd,
+		lazy:       lz,
+		gaps:       NewBoltState(stateDb),
+		dispatcher: dispatcher,
 		db:         db,
 		storage:    msgIDStore,
 		mux:        mux,
@@ -235,6 +251,12 @@ func (b *App) Run(ctx context.Context) error {
 				if _, err := b.client.AuthBot(ctx, b.token); err != nil {
 					return xerrors.Errorf("login: %w", err)
 				}
+
+				// Refresh auth status.
+				status, err = b.client.AuthStatus(ctx)
+				if err != nil {
+					return xerrors.Errorf("auth status: %w", err)
+				}
 			} else {
 				b.logger.Info("Bot login restored",
 					zap.String("name", status.User.Username),
@@ -247,7 +269,21 @@ func (b *App) Run(ctx context.Context) error {
 				}
 			}
 
-			return telegram.RunUntilCanceled(ctx, b.client)
+			gaps := updates.New(updates.Config{
+				RawClient: b.raw,
+				Handler:   NewGapAdapter(ctx, b.logger.Named("adapter"), b.dispatcher),
+				SelfID:    status.User.ID,
+				IsBot:     true,
+				Storage:   b.gaps,
+				Logger:    b.logger.Named("gaps"),
+			})
+
+			b.lazy.Init(telegram.UpdateHandlerFunc(func(ctx context.Context, u tg.UpdatesClass) error {
+				gaps.Handle(u)
+				return nil
+			}))
+
+			return gaps.Run(ctx)
 		})
 	})
 	return group.Wait()
