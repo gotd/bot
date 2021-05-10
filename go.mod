@@ -3,12 +3,15 @@ module github.com/gotd/bot
 go 1.15
 
 require (
+	github.com/blevesearch/bleve v1.0.14
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.1
 	github.com/cockroachdb/pebble v0.0.0-20210428182429-0ba9163b848c
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-github/v33 v33.0.0
-	github.com/gotd/td v0.40.0
+	github.com/gotd/getdoc v0.6.2
+	github.com/gotd/td v0.40.1-0.20210510082619-05f552116e7c
+	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.3.0
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.10.0
