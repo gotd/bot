@@ -47,6 +47,7 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 			"definition": Alias(def),
 			"id":         id,
 			"goName":     s.goName(def.Definition.ID),
+			"category":   def.Category.String(),
 		}); err != nil {
 			return nil, xerrors.Errorf("index %s: %w", id, err)
 		}

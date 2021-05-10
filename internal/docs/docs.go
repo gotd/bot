@@ -9,6 +9,8 @@ import (
 	"go.uber.org/multierr"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/getdoc"
+	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/message/html"
 	"github.com/gotd/td/telegram/message/inline"
 	"github.com/gotd/td/telegram/message/markup"
@@ -93,26 +95,44 @@ func (h Handler) OnInline(ctx context.Context, e dispatch.InlineQuery) error {
 		var (
 			desc   []string
 			docURL string
+			fields map[string]getdoc.ParamDescription
 		)
 		switch result.Category {
 		case tl.CategoryType:
 			desc = result.Constructor.Description
 			docURL = fmt.Sprintf("https://core.telegram.org/constructor/%s", result.NamespacedName)
+			fields = result.Constructor.Fields
 		case tl.CategoryFunction:
 			desc = result.Method.Description
 			docURL = fmt.Sprintf("https://core.telegram.org/method/%s", result.NamespacedName)
+			fields = result.Method.Parameters
 		}
 		description := strings.Join(desc, " ")
 
 		msg := inline.MessageStyledText(
 			formatDefinition(def),
-			styling.Plain("\n\n"),
-			styling.Italic(description),
+			styling.Custom(func(eb *entity.Builder) error {
+				eb.Plain("\n\n")
+				eb.Italic(description)
+				eb.Plain("\n\n")
+
+				for _, field := range fields {
+					eb.Plain("-")
+					eb.Bold(field.Name)
+					eb.Plain(" ")
+					eb.Italic(field.Description)
+					eb.Plain("\n")
+				}
+				eb.Plain("\n")
+
+				return nil
+			}),
 		).Row(
 			markup.URL("Telegram docs", docURL),
 			markup.URL("gotd docs", goDoc),
-		)
-		options = append(options, inline.Article(title, msg.NoWebpage()).Description(description))
+		).NoWebpage()
+
+		options = append(options, inline.Article(title, msg).Description(description))
 	}
 	_, err = e.Reply().Set(ctx, options...)
 	return err
