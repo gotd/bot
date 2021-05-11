@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -14,21 +15,33 @@ import (
 	"github.com/gotd/bot/internal/docs"
 )
 
-func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
+func parseSchema(schemaPath string) (_ *tl.Schema, rerr error) {
 	f, err := os.Open(schemaPath)
 	if err != nil {
 		return nil, xerrors.Errorf("open: %w", err)
 	}
+	defer func() {
+		multierr.AppendInto(&rerr, f.Close())
+	}()
 
 	sch, err := tl.Parse(f)
 	if err != nil {
 		return nil, xerrors.Errorf("parse: %w", err)
 	}
 
+	return sch, nil
+}
+
+func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
+	sch, err := parseSchema(schemaPath)
+	if err != nil {
+		return nil, xerrors.Errorf("parse schema: %w", err)
+	}
+
 	indexPath := filepath.Join(sessionDir, "docs.index")
 	index, err := bleve.Open(indexPath)
 	switch {
-	case os.IsNotExist(err):
+	case errors.Is(err, bleve.ErrorIndexPathDoesNotExist):
 		index, err = bleve.New(indexPath, bleve.NewIndexMapping())
 		if err != nil {
 			return nil, xerrors.Errorf("create indexer: %w", err)
