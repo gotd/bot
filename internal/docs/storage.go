@@ -52,6 +52,7 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 		if err != nil {
 			return nil, xerrors.Errorf("try find %q: %w", id, err)
 		}
+		s.data[id] = def
 		if doc != nil {
 			continue
 		}
@@ -64,7 +65,6 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 		}); err != nil {
 			return nil, xerrors.Errorf("index %s: %w", id, err)
 		}
-		s.data[id] = def
 	}
 
 	return s, nil
