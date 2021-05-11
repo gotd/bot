@@ -19,6 +19,7 @@ func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
 	if err != nil {
 		return nil, xerrors.Errorf("open: %w", err)
 	}
+	defer func() { _ = f.Close() }()
 
 	sch, err := tl.Parse(f)
 	if err != nil {
