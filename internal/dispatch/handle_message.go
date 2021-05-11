@@ -42,6 +42,7 @@ func (b *Bot) handleChat(ctx context.Context, chat *tg.Chat, m *tg.Message) erro
 func (b *Bot) handleChannel(ctx context.Context, channel *tg.Channel, m *tg.Message) error {
 	b.logger.Info("Got message from channel",
 		zap.String("text", m.Message),
+		zap.String("username", channel.Username),
 		zap.Int("channel_id", channel.ID),
 	)
 
