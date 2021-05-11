@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -29,7 +30,7 @@ func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
 	indexPath := filepath.Join(sessionDir, "docs.index")
 	index, err := bleve.Open(indexPath)
 	switch {
-	case os.IsNotExist(err):
+	case errors.Is(err, bleve.ErrorIndexPathDoesNotExist):
 		index, err = bleve.New(indexPath, bleve.NewIndexMapping())
 		if err != nil {
 			return nil, xerrors.Errorf("create indexer: %w", err)
