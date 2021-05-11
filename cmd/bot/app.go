@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	bolt "go.etcd.io/bbolt"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -34,7 +35,6 @@ import (
 	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/metrics"
 	"github.com/gotd/bot/internal/storage"
-	bolt "go.etcd.io/bbolt"
 )
 
 type App struct {
@@ -93,6 +93,11 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	if err != nil {
 		return nil, xerrors.Errorf("state database: %w", err)
 	}
+	defer func() {
+		if rerr != nil {
+			multierr.AppendInto(&rerr, stateDb.Close())
+		}
+	}()
 
 	db, err := pebble.Open(
 		filepath.Join(sessionDir, fmt.Sprintf("bot.%s.state", tokHash(token))),
@@ -185,7 +190,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 }
 
 func (b *App) Close() error {
-	err := b.db.Close()
+	err := multierr.Append(b.gaps.db.Close(), b.db.Close())
 	if b.index != nil {
 		err = multierr.Append(err, b.index.Close())
 	}
@@ -269,9 +274,18 @@ func (b *App) Run(ctx context.Context) error {
 				}
 			}
 
+			// Since gaps engine has a very nice design and stops bot if we got a error, we should
+			// to handle fuckin error manually and just log it.
+			var handleGraceful telegram.UpdateHandlerFunc = func(ctx context.Context, u tg.UpdatesClass) error {
+				if err := b.dispatcher.Handle(ctx, u); err != nil {
+					b.logger.Info("Updates handle error", zap.Error(err))
+				}
+				return nil
+			}
+
 			gaps := updates.New(updates.Config{
 				RawClient: b.raw,
-				Handler:   NewGapAdapter(ctx, b.logger.Named("adapter"), b.dispatcher),
+				Handler:   NewGapAdapter(ctx, b.logger.Named("adapter"), handleGraceful),
 				SelfID:    status.User.ID,
 				IsBot:     true,
 				Storage:   b.gaps,

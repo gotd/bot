@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/binary"
 
-	"github.com/gotd/contrib/updates"
 	bolt "go.etcd.io/bbolt"
+
+	"github.com/gotd/contrib/updates"
 )
 
 func i2b(v int) []byte { b := make([]byte, 8); binary.LittleEndian.PutUint64(b, uint64(v)); return b }

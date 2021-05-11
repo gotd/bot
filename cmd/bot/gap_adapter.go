@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	"github.com/gotd/contrib/updates"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
-	"go.uber.org/zap"
 )
 
 var _ updates.Handler = (*GapAdapter)(nil)

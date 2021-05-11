@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/v2"
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/getdoc"
@@ -58,8 +58,9 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 		}
 
 		if err := indexer.Index(id, map[string]interface{}{
-			"definition": Alias(def),
 			"id":         id,
+			"definition": Alias(def),
+			"name":       definitionType(def.Definition),
 			"goName":     s.goName(def.Definition.ID),
 			"category":   def.Category.String(),
 		}); err != nil {

@@ -4,9 +4,10 @@ import (
 	"context"
 	"sync"
 
+	"go.uber.org/atomic"
+
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
-	"go.uber.org/atomic"
 )
 
 type LazyHandler struct {
