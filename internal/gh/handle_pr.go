@@ -38,7 +38,7 @@ func getPullRequestMergedBy(e *github.PullRequestEvent) styling.StyledTextOption
 	return styling.TextURL(u.GetLogin(), u.GetHTMLURL())
 }
 
-func (h Webhook) notify(p tg.InputPeerClass, e *github.PullRequestEvent) *message.Builder {
+func (h Webhook) notifyPR(p tg.InputPeerClass, e *github.PullRequestEvent) *message.Builder {
 	r := h.sender.To(p).NoWebpage()
 	if u, _ := url.Parse(e.GetPullRequest().GetHTMLURL()); u != nil {
 		files, checks := *u, *u
@@ -67,7 +67,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 
 	var replyID int
 	fallback := func(ctx context.Context) error {
-		r := h.notify(p, e)
+		r := h.notifyPR(p, e)
 		if replyID != 0 {
 			r = r.Reply(replyID)
 		}
@@ -108,7 +108,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 		return fallback(ctx)
 	}
 
-	if _, err := h.notify(p, e).Edit(msgID).StyledText(ctx,
+	if _, err := h.notifyPR(p, e).Edit(msgID).StyledText(ctx,
 		styling.Plain("Pull request "),
 		getPullRequestURL(e),
 		styling.Plain(" "),
@@ -134,7 +134,7 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 		action = " drafted"
 	}
 
-	msgID, err := unpack.MessageID(h.notify(p, event).StyledText(ctx,
+	msgID, err := unpack.MessageID(h.notifyPR(p, event).StyledText(ctx,
 		styling.Plain("New pull request "),
 		getPullRequestURL(event),
 		styling.Plain(action),
