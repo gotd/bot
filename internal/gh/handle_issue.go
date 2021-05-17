@@ -37,15 +37,17 @@ func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
 		eb.Italic(issue.GetTitle())
 		eb.Plain("\n\n")
 
-		eb.Italic("Labels:")
-		for _, label := range issue.Labels {
-			switch label.GetName() {
-			case "":
-				continue
-			case "bug":
-				eb.Bold(label.GetName())
-			default:
-				eb.Italic(label.GetName())
+		if len(issue.Labels) > 0 {
+			eb.Italic("Labels:")
+			for _, label := range issue.Labels {
+				switch label.GetName() {
+				case "":
+					continue
+				case "bug":
+					eb.Bold(label.GetName())
+				default:
+					eb.Italic(label.GetName())
+				}
 			}
 		}
 		return nil
