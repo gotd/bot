@@ -30,14 +30,17 @@ func New(search *Search) Handler {
 	return Handler{search: search}
 }
 
-func writeType(w *strings.Builder, typ tl.Type, text string) {
+func writeType(w *strings.Builder, typ tl.Type, namespace []string, text string) {
 	if typ.Bare || typ.GenericRef || typ.GenericArg != nil {
 		w.WriteString(text)
 		return
 	}
 
 	w.WriteString("</pre>")
-	w.WriteString(fmt.Sprintf(`<a href="https://core.telegram.org/type/%s">`, typ.Name))
+	w.WriteString(fmt.Sprintf(
+		`<a href="https://core.telegram.org/type/%s">`,
+		escapehtml.EscapeString(namespacedName(typ.Name, namespace)),
+	))
 	w.WriteString(text)
 	w.WriteString("</a>")
 	w.WriteString("<pre>")
@@ -64,13 +67,13 @@ func formatDefinition(d tl.Definition) styling.StyledTextOption {
 			b.WriteString(escaped)
 			continue
 		}
-		writeType(&b, param.Type, escaped)
+		writeType(&b, param.Type, nil, escaped)
 	}
 	if d.Base {
 		b.WriteString(" ?")
 	}
 	b.WriteString(" = ")
-	writeType(&b, d.Type, escapehtml.EscapeString(d.Type.String()))
+	writeType(&b, d.Type, d.Namespace, escapehtml.EscapeString(d.Type.String()))
 	b.WriteString("</pre>")
 
 	return html.String(nil, b.String())

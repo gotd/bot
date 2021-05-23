@@ -14,11 +14,15 @@ import (
 	"github.com/gotd/tl"
 )
 
-func definitionType(d tl.Definition) string {
-	if len(d.Namespace) == 0 {
-		return d.Name
+func namespacedName(name string, namespace []string) string {
+	if len(namespace) == 0 {
+		return name
 	}
-	return fmt.Sprintf("%s.%s", strings.Join(d.Namespace, "."), d.Name)
+	return fmt.Sprintf("%s.%s", strings.Join(namespace, "."), name)
+}
+
+func definitionType(d tl.Definition) string {
+	return namespacedName(d.Name, d.Namespace)
 }
 
 // Search is a abstraction for searching docs.
@@ -59,6 +63,7 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 
 		if err := indexer.Index(id, map[string]interface{}{
 			"id":         id,
+			"idx":        "0x" + id,
 			"definition": Alias(def),
 			"name":       definitionType(def.Definition),
 			"goName":     s.goName(def.Definition.ID),
