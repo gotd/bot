@@ -37,9 +37,11 @@ func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
 		eb.Italic(issue.GetTitle())
 		eb.Plain("\n\n")
 
-		if len(issue.Labels) > 0 {
-			eb.Italic("Labels:")
-			for _, label := range issue.Labels {
+		length := len(issue.Labels)
+		if length > 0 {
+			eb.Italic("Labels: ")
+
+			for idx, label := range issue.Labels {
 				switch label.GetName() {
 				case "":
 					continue
@@ -47,6 +49,10 @@ func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
 					eb.Bold(label.GetName())
 				default:
 					eb.Italic(label.GetName())
+				}
+
+				if idx != length-1 {
+					eb.Plain(",")
 				}
 			}
 		}
