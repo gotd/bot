@@ -28,7 +28,7 @@ type Metrics struct {
 	Messages   *metric
 	Responses  *metric
 	MediaBytes *metric
-	Middleware *tg_prom.Prometheus
+	Middleware *tg_prom.Middleware
 }
 
 // Describe implements prometheus.Collector.
