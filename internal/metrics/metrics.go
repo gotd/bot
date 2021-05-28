@@ -5,6 +5,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/atomic"
+
+	"github.com/gotd/contrib/middleware/tg_prom"
 )
 
 type metric struct {
@@ -26,6 +28,7 @@ type Metrics struct {
 	Messages   *metric
 	Responses  *metric
 	MediaBytes *metric
+	Middleware *tg_prom.Prometheus
 }
 
 // Describe implements prometheus.Collector.
@@ -33,6 +36,9 @@ func (m Metrics) Describe(desc chan<- *prometheus.Desc) {
 	m.Messages.Describe(desc)
 	m.Responses.Describe(desc)
 	m.MediaBytes.Describe(desc)
+	for _, mm := range m.Middleware.Metrics() {
+		mm.Describe(desc)
+	}
 }
 
 // Collect implements prometheus.Collector.
@@ -40,11 +46,15 @@ func (m Metrics) Collect(ch chan<- prometheus.Metric) {
 	m.Messages.Collect(ch)
 	m.Responses.Collect(ch)
 	m.MediaBytes.Collect(ch)
+	for _, mm := range m.Middleware.Metrics() {
+		mm.Collect(ch)
+	}
 }
 
 // NewMetrics returns new Metrics.
 func NewMetrics() Metrics {
 	return Metrics{
+		Middleware: tg_prom.New(),
 		Messages: newMetric(prometheus.CounterOpts{
 			Name: "bot_messages",
 			Help: "Total count of received messages",

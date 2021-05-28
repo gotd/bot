@@ -270,8 +270,8 @@ github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/gotd/contrib v0.9.0-alpha.2 h1:2t81c5zi6h1/D18U4+EycISZbQx4qhxSpbGKOiY3TVI=
-github.com/gotd/contrib v0.9.0-alpha.2/go.mod h1:WXiugv/5FedFKcdioDqRteOXWIMJN6i+BPrX+Y05WLc=
+github.com/gotd/contrib v0.9.0-alpha.2.0.20210528224854-06d7aa7bdbbf h1:8W1o3ga8E2AFdJe7We7tv/vigzMJX9/IjUEN67tnaEs=
+github.com/gotd/contrib v0.9.0-alpha.2.0.20210528224854-06d7aa7bdbbf/go.mod h1:vUhZ3hSBQlVuQqZZkFh7qJ3qSphoBgvaqW6fzQW1JTQ=
 github.com/gotd/getdoc v0.6.2 h1:QHkdeJFwzYOZ4g6EZP9KXLXxxULYcARmmRn0iewrInw=
 github.com/gotd/getdoc v0.6.2/go.mod h1:6Ul8cyaq+Aw0gVyuU+TKZPCmNjdlylzSIWVxjzI5t/U=
 github.com/gotd/ige v0.1.5 h1:qITql4hZpqPM/DSeO5IVlxzXJxrs4ZZiKRwPif2K76U=

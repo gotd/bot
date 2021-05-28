@@ -122,8 +122,12 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		UpdateHandler: dispatch.NewLoggedDispatcher(
 			lz, logger.Named("updates"),
 		),
+		Middlewares: []telegram.Middleware{
+			mts.Middleware,
+			invoker.UpdateHook(lz.Handle),
+		},
 	})
-	raw := tg.NewClient(invoker.NewUpdateHook(client, lz.Handle))
+	raw := client.API()
 	sender := message.NewSender(raw)
 	dd := downloader.NewDownloader()
 
