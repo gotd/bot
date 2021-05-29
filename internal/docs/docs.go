@@ -96,9 +96,10 @@ func (h Handler) OnInline(ctx context.Context, e dispatch.InlineQuery) error {
 		goDoc := fmt.Sprintf("https://ref.gotd.dev/use/github.com/gotd/td/tg..%s.html", result.GoName)
 
 		var (
-			desc   []string
-			docURL string
-			fields map[string]getdoc.ParamDescription
+			desc      []string
+			docURL    string
+			fields    map[string]getdoc.ParamDescription
+			botCanUse bool
 		)
 		switch result.Category {
 		case tl.CategoryType:
@@ -118,6 +119,12 @@ func (h Handler) OnInline(ctx context.Context, e dispatch.InlineQuery) error {
 				eb.Plain("\n\n")
 				eb.Italic(description)
 				eb.Plain("\n\n")
+
+				if botCanUse {
+					eb.Plain("\n\n")
+					eb.Plain("Bot can use this method")
+					eb.Plain("\n\n")
+				}
 
 				for _, field := range fields {
 					eb.Plain("-")
