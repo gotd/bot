@@ -54,7 +54,7 @@ type mockInvoker struct {
 	lastReq *tg.MessagesEditMessageRequest
 }
 
-func (m *mockInvoker) InvokeRaw(ctx context.Context, input bin.Encoder, output bin.Decoder) error {
+func (m *mockInvoker) Invoke(ctx context.Context, input bin.Encoder, output bin.Decoder) error {
 	req, ok := input.(*tg.MessagesEditMessageRequest)
 	if !ok {
 		return xerrors.Errorf("unexpected type %T", input)
