@@ -52,7 +52,7 @@ func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
 				}
 
 				if idx != length-1 {
-					eb.Plain(",")
+					eb.Plain(", ")
 				}
 			}
 		}
