@@ -17,7 +17,7 @@ require (
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.10.0
 	github.com/stretchr/testify v1.7.0
-	go.etcd.io/bbolt v1.3.5
+	go.etcd.io/bbolt v1.3.6
 	go.uber.org/atomic v1.7.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.17.0
