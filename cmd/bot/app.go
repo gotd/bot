@@ -251,18 +251,19 @@ func (b *App) Run(ctx context.Context) error {
 		return b.client.Run(ctx, func(ctx context.Context) error {
 			b.logger.Debug("Client initialized")
 
-			status, err := b.client.AuthStatus(ctx)
+			au := b.client.Auth()
+			status, err := au.Status(ctx)
 			if err != nil {
 				return xerrors.Errorf("auth status: %w", err)
 			}
 
 			if !status.Authorized {
-				if _, err := b.client.AuthBot(ctx, b.token); err != nil {
+				if _, err := au.Bot(ctx, b.token); err != nil {
 					return xerrors.Errorf("login: %w", err)
 				}
 
 				// Refresh auth status.
-				status, err = b.client.AuthStatus(ctx)
+				status, err = au.Status(ctx)
 				if err != nil {
 					return xerrors.Errorf("auth status: %w", err)
 				}
