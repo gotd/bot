@@ -5,7 +5,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/gotd/contrib/updates"
+	"github.com/gotd/td/telegram/updates"
 )
 
 func i2b(v int) []byte { b := make([]byte, 8); binary.LittleEndian.PutUint64(b, uint64(v)); return b }
@@ -93,14 +93,20 @@ func (s *BoltState) SetQts(qts int) error {
 	})
 }
 
-func (s *BoltState) SetDateSeq(date, seq int) error {
+func (s *BoltState) SetDate(date int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("state"))
 		if err != nil {
 			return err
 		}
+		return b.Put([]byte("date"), i2b(date))
+	})
+}
 
-		if err := b.Put([]byte("date"), i2b(date)); err != nil {
+func (s *BoltState) SetSeq(seq int) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("state"))
+		if err != nil {
 			return err
 		}
 		return b.Put([]byte("seq"), i2b(seq))
