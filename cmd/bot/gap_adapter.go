@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/gotd/contrib/updates"
+	"github.com/gotd/td/telegram/updates"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/tg"
 )
@@ -29,22 +29,19 @@ func NewGapAdapter(
 func (a *GapAdapter) HandleDiff(diff updates.DiffUpdate) error {
 	return a.next.Handle(a.ctx, &tg.Updates{
 		Updates: append(
-			append(
-				msgsToUpdates(diff.NewMessages),
-				encryptedMsgsToUpdates(diff.NewEncryptedMessages)...,
-			),
-			diff.OtherUpdates...,
+			msgsToUpdates(diff.NewMessages),
+			encryptedMsgsToUpdates(diff.NewEncryptedMessages)...,
 		),
 		Users: diff.Users,
 		Chats: diff.Chats,
 	})
 }
 
-func (a *GapAdapter) HandleUpdates(u updates.Updates) error {
+func (a *GapAdapter) HandleUpdates(ents *updates.Entities, ups []tg.UpdateClass) error {
 	return a.next.Handle(a.ctx, &tg.Updates{
-		Updates: u.Updates,
-		Users:   u.Ents.AsUsers(),
-		Chats:   u.Ents.AsChats(),
+		Updates: ups,
+		Users:   ents.AsUsers(),
+		Chats:   ents.AsChats(),
 	})
 }
 

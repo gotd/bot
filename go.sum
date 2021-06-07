@@ -217,7 +217,6 @@ github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfU
 github.com/golang/groupcache v0.0.0-20160516000752-02826c3e7903/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
-github.com/golang/mock v1.5.0 h1:jlYHihg//f7RRwuPfptm04yp4s7O6Kw8EZiVYIGcH0g=
 github.com/golang/mock v1.5.0/go.mod h1:CWnOUgYIOo4TcNZ0wHX3YZCqsaM1I1Jvs6v3mP3KVu8=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -281,8 +280,8 @@ github.com/gotd/ige v0.2.0/go.mod h1:pAVmZwgDHK8PrfdMdztT+VTpiAC7WyNNNNKQtKfpAaU
 github.com/gotd/neo v0.1.3 h1:rCKbMssH7mlkE31wjVOQcxmhNkSTC3uLZyETigUiKvQ=
 github.com/gotd/neo v0.1.3/go.mod h1:9A2a4bn9zL6FADufBdt7tZt+WMhvZoc5gWXihOPoiBQ=
 github.com/gotd/td v0.43.0/go.mod h1:OOkhUYRkybzPVg/DD71ocSAD/iPWOiTOWZKRK0EObH8=
-github.com/gotd/td v0.43.2-0.20210606205930-03344003a7f3 h1:xYz4tyftTZ1leAgYzxf19luVqOvdVX/Z/32cgl6Fru8=
-github.com/gotd/td v0.43.2-0.20210606205930-03344003a7f3/go.mod h1:Rkx6QgDUvysLO/kGJJYRjLc9lB1LsZENZayGxR6bapQ=
+github.com/gotd/td v0.43.2-0.20210607071521-eae40f262dfa h1:pVQpve4EKqMqTZlk6mSjdPwJfws1tt0aKdx/EEopfqo=
+github.com/gotd/td v0.43.2-0.20210607071521-eae40f262dfa/go.mod h1:Rkx6QgDUvysLO/kGJJYRjLc9lB1LsZENZayGxR6bapQ=
 github.com/gotd/tl v0.4.0 h1:8k2z0drujiPyhpLDa9PRm/yU1Gwlfn3iUzeInPiXwMA=
 github.com/gotd/tl v0.4.0/go.mod h1:CMIcjPWFS4qxxJ+1Ce7U/ilbtPrkoVo/t8uhN5Y/D7c=
 github.com/gotd/xor v0.1.0/go.mod h1:ZTmdgqf6SOHder8/MFp9CNkXIadzID5lIiaZxRZICH0=

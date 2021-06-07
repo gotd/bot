@@ -22,11 +22,11 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/contrib/invoker"
-	"github.com/gotd/contrib/updates"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/updates"
 	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
@@ -298,8 +298,7 @@ func (b *App) Run(ctx context.Context) error {
 			})
 
 			b.lazy.Init(telegram.UpdateHandlerFunc(func(ctx context.Context, u tg.UpdatesClass) error {
-				gaps.Handle(u)
-				return nil
+				return gaps.HandleUpdates(u)
 			}))
 
 			return gaps.Run(ctx)
