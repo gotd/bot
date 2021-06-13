@@ -8,6 +8,7 @@ import (
 
 	"github.com/povilasv/prommod"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
@@ -25,8 +26,8 @@ func run(ctx context.Context) error {
 	registry := prometheus.NewPedanticRegistry()
 	mts := metrics.NewMetrics()
 	registry.MustRegister(
-		prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
-		prometheus.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		collectors.NewGoCollector(),
 		prommod.NewCollector("gotdbot"),
 		mts,
 	)
