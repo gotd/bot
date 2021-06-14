@@ -3,7 +3,7 @@ module github.com/gotd/bot
 go 1.15
 
 require (
-	github.com/blevesearch/bleve/v2 v2.0.5
+	github.com/blevesearch/bleve/v2 v2.0.6
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.1
 	github.com/cockroachdb/pebble v0.0.0-20210428182429-0ba9163b848c
