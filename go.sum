@@ -73,8 +73,8 @@ github.com/blevesearch/zapx/v15 v15.2.1 h1:ZaqQiWLo0srtPvy3ozgpR9+Oabs3HQrF4uJM0
 github.com/blevesearch/zapx/v15 v15.2.1/go.mod h1:pUCN72ZJkVd7dU9lA4Fd8E3+fl5wv3JPpThk4FQ5bpA=
 github.com/bradleyfalzon/ghinstallation v1.1.1 h1:pmBXkxgM1WeF8QYvDLT5kuQiHMcmf+X015GI0KM/E3I=
 github.com/bradleyfalzon/ghinstallation v1.1.1/go.mod h1:vyCmHTciHx/uuyN82Zc3rXN3X2KTK8nUTCrTMwAhcug=
-github.com/brpaz/echozap v1.1.1 h1:5Vv+tXkCgG/DuYkCyaZYAlUuVy2Quag2DBmBf5lJ1Io=
-github.com/brpaz/echozap v1.1.1/go.mod h1:5NJmhB1VsJbB8cyks5qft57uvgJwgls3t5tJbThIM4Y=
+github.com/brpaz/echozap v1.1.2 h1:j11FNpm3NHW/4grlHejrk3CLnMJSSsxy82GBQG2PMPg=
+github.com/brpaz/echozap v1.1.2/go.mod h1:5NJmhB1VsJbB8cyks5qft57uvgJwgls3t5tJbThIM4Y=
 github.com/cenkalti/backoff/v4 v4.1.0/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
 github.com/cenkalti/backoff/v4 v4.1.1 h1:G2HAfAmvm/GcKan2oOQpBXOd2tT2G57ZnZGWa1PxPBQ=
 github.com/cenkalti/backoff/v4 v4.1.1/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
