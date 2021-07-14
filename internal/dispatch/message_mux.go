@@ -64,7 +64,11 @@ func (m MessageMux) RegisterCommands(ctx context.Context, raw *tg.Client) error 
 		})
 	}
 
-	if _, err := raw.BotsSetBotCommands(ctx, commands); err != nil {
+	if _, err := raw.BotsSetBotCommands(ctx, &tg.BotsSetBotCommandsRequest{
+		Scope:    &tg.BotCommandScopeDefault{},
+		LangCode: "en",
+		Commands: commands,
+	}); err != nil {
 		return xerrors.Errorf("set commands: %w", err)
 	}
 	return nil
