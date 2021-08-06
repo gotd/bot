@@ -112,7 +112,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 		styling.Plain("Pull request "),
 		getPullRequestURL(e),
 		styling.Plain(" "),
-		styling.Strike("opened"),
+		styling.Strike("opened by "+e.GetPullRequest().GetUser().GetLogin()),
 		styling.Plain(" merged by "),
 		getPullRequestMergedBy(e),
 		styling.Plain("\n\n"),

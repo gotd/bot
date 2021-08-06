@@ -7,25 +7,38 @@ import (
 	"github.com/google/go-github/v33/github"
 	"golang.org/x/xerrors"
 
+	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/message/styling"
 )
 
-func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
-	if e.GetAction() != "opened" {
-		return nil
+type issueType string
+
+const (
+	featureRequest issueType = "feature request"
+	bugReport      issueType = "bug report"
+	plain          issueType = "issue"
+)
+
+func getIssueType(issue *github.Issue) issueType {
+	for _, label := range issue.Labels {
+		switch label.GetName() {
+		case "enhancement":
+			return featureRequest
+		case "bug":
+			return bugReport
+		}
 	}
 
-	p, err := h.notifyPeer(ctx)
-	if err != nil {
-		return xerrors.Errorf("peer: %w", err)
-	}
+	return plain
+}
 
+func formatIssue(e *github.IssuesEvent) message.StyledTextOption {
 	issue := e.GetIssue()
 	sender := e.GetSender()
 	formatter := func(eb *entity.Builder) error {
-		eb.Plain("New issue ")
-		urlName := fmt.Sprintf("%s#%d",
+		urlName := fmt.Sprintf("New %s %s#%d",
+			getIssueType(issue),
 			e.GetRepo().GetFullName(),
 			issue.GetNumber(),
 		)
@@ -59,8 +72,20 @@ func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
 		return nil
 	}
 
-	if _, err := h.sender.To(p).NoWebpage().
-		StyledText(ctx, styling.Custom(formatter)); err != nil {
+	return styling.Custom(formatter)
+}
+
+func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
+	if e.GetAction() != "opened" {
+		return nil
+	}
+
+	p, err := h.notifyPeer(ctx)
+	if err != nil {
+		return xerrors.Errorf("peer: %w", err)
+	}
+
+	if _, err := h.sender.To(p).NoWebpage().StyledText(ctx, formatIssue(e)); err != nil {
 		return xerrors.Errorf("send: %w", err)
 	}
 	return nil
