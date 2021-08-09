@@ -37,8 +37,10 @@ func formatIssue(e *github.IssuesEvent) message.StyledTextOption {
 	issue := e.GetIssue()
 	sender := e.GetSender()
 	formatter := func(eb *entity.Builder) error {
-		urlName := fmt.Sprintf("New %s %s#%d",
-			getIssueType(issue),
+		eb.Plain("New ")
+		eb.Plain(string(getIssueType(issue)))
+
+		urlName := fmt.Sprintf("%s#%d",
 			e.GetRepo().GetFullName(),
 			issue.GetNumber(),
 		)

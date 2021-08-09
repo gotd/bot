@@ -13,6 +13,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/entity"
 	"github.com/gotd/td/telegram/message/markup"
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/telegram/message/unpack"
@@ -112,7 +113,16 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 		styling.Plain("Pull request "),
 		getPullRequestURL(e),
 		styling.Plain(" "),
-		styling.Strike("opened by "+e.GetPullRequest().GetUser().GetLogin()),
+		styling.Strike("opened by "),
+		styling.Custom(func(eb *entity.Builder) error {
+			u := e.GetPullRequest().GetUser()
+			eb.Format(
+				u.GetLogin(),
+				entity.Strike(),
+				entity.TextURL(u.GetHTMLURL()),
+			)
+			return nil
+		}),
 		styling.Plain(" merged by "),
 		getPullRequestMergedBy(e),
 		styling.Plain("\n\n"),
