@@ -40,7 +40,7 @@ func formatIssue(e *github.IssuesEvent) message.StyledTextOption {
 		eb.Plain("New ")
 		eb.Plain(string(getIssueType(issue)))
 
-		urlName := fmt.Sprintf("%s#%d",
+		urlName := fmt.Sprintf(" %s#%d",
 			e.GetRepo().GetFullName(),
 			issue.GetNumber(),
 		)
