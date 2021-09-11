@@ -21,12 +21,12 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 
-	"github.com/gotd/contrib/invoker"
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/updates"
+	updhook "github.com/gotd/td/telegram/updates/hook"
 	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
@@ -44,9 +44,9 @@ type App struct {
 	sender     *message.Sender
 	downloader *downloader.Downloader
 
-	lazy       *LazyHandler
-	gaps       *BoltState
-	dispatcher tg.UpdateDispatcher
+	stateStorage *BoltState
+	gaps         *updates.Manager
+	dispatcher   tg.UpdateDispatcher
 
 	db      *pebble.DB
 	index   *docs.Search
@@ -113,18 +113,31 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	}()
 	msgIDStore := storage.NewMsgID(db)
 
-	lz := new(LazyHandler)
+	stateStorage := NewBoltState(stateDb)
+	dispatcher := tg.NewUpdateDispatcher()
+	gaps := updates.New(updates.Config{
+		Handler: dispatcher,
+		Storage: stateStorage,
+		Logger:  logger.Named("gaps"),
+	})
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger.Named("client"),
 		SessionStorage: &session.FileStorage{
 			Path: filepath.Join(sessionDir, sessionFileName(token)),
 		},
 		UpdateHandler: dispatch.NewLoggedDispatcher(
-			lz, logger.Named("updates"),
+			gaps, logger.Named("updates"),
 		),
 		Middlewares: []telegram.Middleware{
 			mts.Middleware,
-			invoker.UpdateHook(lz.Handle),
+			updhook.UpdateHook(func(ctx context.Context, u tg.UpdatesClass) error {
+				go func() {
+					if err := gaps.Handle(ctx, u); err != nil {
+						logger.Error("Handle RPC response update error", zap.Error(err))
+					}
+				}()
+				return nil
+			}),
 		},
 	})
 	raw := client.API()
@@ -135,7 +148,6 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts)
 	h = storage.NewHook(h, msgIDStore)
 
-	dispatcher := tg.NewUpdateDispatcher()
 	b := dispatch.NewBot(raw).
 		WithSender(sender).
 		WithLogger(logger).
@@ -144,21 +156,21 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 
 	httpTransport := http.DefaultTransport
 	app := &App{
-		client:     client,
-		token:      token,
-		raw:        raw,
-		sender:     sender,
-		downloader: dd,
-		lazy:       lz,
-		gaps:       NewBoltState(stateDb),
-		dispatcher: dispatcher,
-		db:         db,
-		storage:    msgIDStore,
-		mux:        mux,
-		bot:        b,
-		http:       &http.Client{Transport: httpTransport},
-		mts:        mts,
-		logger:     logger,
+		client:       client,
+		token:        token,
+		raw:          raw,
+		sender:       sender,
+		downloader:   dd,
+		stateStorage: stateStorage,
+		gaps:         gaps,
+		dispatcher:   dispatcher,
+		db:           db,
+		storage:      msgIDStore,
+		mux:          mux,
+		bot:          b,
+		http:         &http.Client{Transport: httpTransport},
+		mts:          mts,
+		logger:       logger,
 	}
 
 	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
@@ -194,7 +206,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 }
 
 func (b *App) Close() error {
-	err := multierr.Append(b.gaps.db.Close(), b.db.Close())
+	err := multierr.Append(b.stateStorage.db.Close(), b.db.Close())
 	if b.index != nil {
 		err = multierr.Append(err, b.index.Close())
 	}
@@ -273,35 +285,19 @@ func (b *App) Run(ctx context.Context) error {
 				)
 			}
 
+			if err := b.gaps.Auth(ctx, b.raw, status.User.ID, status.User.Bot, false); err != nil {
+				return err
+			}
+			defer func() { _ = b.gaps.Logout() }()
+
 			if _, disableRegister := os.LookupEnv("DISABLE_COMMAND_REGISTER"); !disableRegister {
 				if err := b.mux.RegisterCommands(ctx, b.raw); err != nil {
 					return xerrors.Errorf("register commands: %w", err)
 				}
 			}
 
-			// Since gaps engine has a very nice design and stops bot if we got a error, we should
-			// to handle fuckin error manually and just log it.
-			var handleGraceful telegram.UpdateHandlerFunc = func(ctx context.Context, u tg.UpdatesClass) error {
-				if err := b.dispatcher.Handle(ctx, u); err != nil {
-					b.logger.Info("Updates handle error", zap.Error(err))
-				}
-				return nil
-			}
-
-			gaps := updates.New(updates.Config{
-				RawClient: b.raw,
-				Handler:   NewGapAdapter(ctx, b.logger.Named("adapter"), handleGraceful),
-				SelfID:    status.User.ID,
-				IsBot:     true,
-				Storage:   b.gaps,
-				Logger:    b.logger.Named("gaps"),
-			})
-
-			b.lazy.Init(telegram.UpdateHandlerFunc(func(ctx context.Context, u tg.UpdatesClass) error {
-				return gaps.HandleUpdates(u)
-			}))
-
-			return gaps.Run(ctx)
+			<-ctx.Done()
+			return ctx.Err()
 		})
 	})
 	return group.Wait()

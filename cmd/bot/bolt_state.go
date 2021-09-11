@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	bolt "go.etcd.io/bbolt"
 
@@ -12,7 +13,7 @@ func i2b(v int) []byte { b := make([]byte, 8); binary.LittleEndian.PutUint64(b, 
 
 func b2i(b []byte) int { return int(binary.LittleEndian.Uint64(b)) }
 
-var _ updates.Storage = (*BoltState)(nil)
+var _ updates.StateStorage = (*BoltState)(nil)
 
 type BoltState struct {
 	db *bolt.DB
@@ -20,27 +21,32 @@ type BoltState struct {
 
 func NewBoltState(db *bolt.DB) *BoltState { return &BoltState{db} }
 
-func (s *BoltState) GetState() (updates.State, error) {
+func (s *BoltState) GetState(userID int) (state updates.State, found bool, err error) {
 	tx, err := s.db.Begin(false)
 	if err != nil {
-		return updates.State{}, err
+		return updates.State{}, false, err
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	state := tx.Bucket([]byte("state"))
-	if state == nil {
-		return updates.State{}, updates.ErrStateNotFound
+	user := tx.Bucket(i2b(userID))
+	if user == nil {
+		return updates.State{}, false, nil
+	}
+
+	stateBucket := user.Bucket([]byte("state"))
+	if stateBucket == nil {
+		return updates.State{}, false, nil
 	}
 
 	var (
-		pts  = state.Get([]byte("pts"))
-		qts  = state.Get([]byte("qts"))
-		date = state.Get([]byte("date"))
-		seq  = state.Get([]byte("seq"))
+		pts  = stateBucket.Get([]byte("pts"))
+		qts  = stateBucket.Get([]byte("qts"))
+		date = stateBucket.Get([]byte("date"))
+		seq  = stateBucket.Get([]byte("seq"))
 	)
 
 	if pts == nil || qts == nil || date == nil || seq == nil {
-		return updates.State{}, updates.ErrStateNotFound
+		return updates.State{}, false, nil
 	}
 
 	return updates.State{
@@ -48,12 +54,17 @@ func (s *BoltState) GetState() (updates.State, error) {
 		Qts:  b2i(qts),
 		Date: b2i(date),
 		Seq:  b2i(seq),
-	}, nil
+	}, true, nil
 }
 
-func (s *BoltState) SetState(state updates.State) error {
+func (s *BoltState) SetState(userID int, state updates.State) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("state"))
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
+		if err != nil {
+			return err
+		}
+
+		b, err := user.CreateBucketIfNotExists([]byte("state"))
 		if err != nil {
 			return err
 		}
@@ -73,83 +84,138 @@ func (s *BoltState) SetState(state updates.State) error {
 	})
 }
 
-func (s *BoltState) SetPts(pts int) error {
+func (s *BoltState) SetPts(userID, pts int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("state"))
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte("pts"), i2b(pts))
+
+		state := user.Bucket([]byte("state"))
+		if state == nil {
+			return fmt.Errorf("state not found")
+		}
+		return state.Put([]byte("pts"), i2b(pts))
 	})
 }
 
-func (s *BoltState) SetQts(qts int) error {
+func (s *BoltState) SetQts(userID, qts int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("state"))
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte("qts"), i2b(qts))
+
+		state := user.Bucket([]byte("state"))
+		if state == nil {
+			return fmt.Errorf("state not found")
+		}
+		return state.Put([]byte("qts"), i2b(qts))
 	})
 }
 
-func (s *BoltState) SetDate(date int) error {
+func (s *BoltState) SetDate(userID, date int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("state"))
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte("date"), i2b(date))
+
+		state := user.Bucket([]byte("state"))
+		if state == nil {
+			return fmt.Errorf("state not found")
+		}
+		return state.Put([]byte("date"), i2b(date))
 	})
 }
 
-func (s *BoltState) SetSeq(seq int) error {
+func (s *BoltState) SetSeq(userID, seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("state"))
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
 		if err != nil {
 			return err
 		}
-		return b.Put([]byte("seq"), i2b(seq))
+
+		state := user.Bucket([]byte("state"))
+		if state == nil {
+			return fmt.Errorf("state not found")
+		}
+		return state.Put([]byte("seq"), i2b(seq))
 	})
 }
 
-func (s *BoltState) SetChannelPts(channelID, pts int) error {
+func (s *BoltState) SetDateSeq(userID, date, seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("channels"))
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
 		if err != nil {
 			return err
 		}
-		return b.Put(i2b(channelID), i2b(pts))
+
+		state := user.Bucket([]byte("state"))
+		if state == nil {
+			return fmt.Errorf("state not found")
+		}
+		if err := state.Put([]byte("date"), i2b(date)); err != nil {
+			return err
+		}
+		return state.Put([]byte("seq"), i2b(seq))
 	})
 }
 
-func (s *BoltState) Channels(iter func(channelID, pts int)) error {
-	return s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("channels"))
-		if b == nil {
-			return nil
+func (s *BoltState) GetChannelPts(userID, channelID int) (int, bool, error) {
+	tx, err := s.db.Begin(false)
+	if err != nil {
+		return 0, false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	user := tx.Bucket(i2b(userID))
+	if user == nil {
+		return 0, false, nil
+	}
+
+	channels := user.Bucket([]byte("channels"))
+	if channels == nil {
+		return 0, false, nil
+	}
+
+	pts := channels.Get(i2b(channelID))
+	if pts == nil {
+		return 0, false, nil
+	}
+
+	return b2i(pts), true, nil
+}
+
+func (s *BoltState) SetChannelPts(userID, channelID, pts int) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
+		if err != nil {
+			return err
 		}
 
-		return b.ForEach(func(k, v []byte) error {
-			iter(b2i(k), b2i(v))
-			return nil
+		channels, err := user.CreateBucketIfNotExists([]byte("channels"))
+		if err != nil {
+			return err
+		}
+		return channels.Put(i2b(channelID), i2b(pts))
+	})
+}
+
+func (s *BoltState) ForEachChannels(userID int, f func(channelID, pts int) error) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		user, err := tx.CreateBucketIfNotExists(i2b(userID))
+		if err != nil {
+			return err
+		}
+
+		channels, err := user.CreateBucketIfNotExists([]byte("channels"))
+		if err != nil {
+			return err
+		}
+
+		return channels.ForEach(func(k, v []byte) error {
+			return f(b2i(k), b2i(v))
 		})
-	})
-}
-
-func (s *BoltState) ForgetAll() error {
-	return s.db.Update(func(tx *bolt.Tx) error {
-		if tx.Bucket([]byte("state")) != nil {
-			if err := tx.DeleteBucket([]byte("state")); err != nil {
-				return err
-			}
-		}
-
-		if tx.Bucket([]byte("channels")) != nil {
-			if err := tx.DeleteBucket([]byte("channels")); err != nil {
-				return err
-			}
-		}
-		return nil
 	})
 }
