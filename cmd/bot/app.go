@@ -38,11 +38,10 @@ import (
 )
 
 type App struct {
-	client     *telegram.Client
-	token      string
-	raw        *tg.Client
-	sender     *message.Sender
-	downloader *downloader.Downloader
+	client *telegram.Client
+	token  string
+	raw    *tg.Client
+	sender *message.Sender
 
 	stateStorage *BoltState
 	gaps         *updates.Manager
@@ -160,7 +159,6 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		token:        token,
 		raw:          raw,
 		sender:       sender,
-		downloader:   dd,
 		stateStorage: stateStorage,
 		gaps:         gaps,
 		dispatcher:   dispatcher,
