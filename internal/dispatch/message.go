@@ -61,18 +61,18 @@ func (e MessageEvent) WithReply(ctx context.Context, cb func(reply *tg.Message) 
 	)
 	switch p := e.Peer.(type) {
 	case *tg.InputPeerChannel:
-		log.Info("Fetching message", zap.Int("channel_id", p.ChannelID))
+		log.Info("Fetching message", zap.Int64("channel_id", p.ChannelID))
 
 		msg, err = e.getChannelMessage(ctx, &tg.InputChannel{
 			ChannelID:  p.ChannelID,
 			AccessHash: p.AccessHash,
 		}, h.ReplyToMsgID)
 	case *tg.InputPeerChat:
-		log.Info("Fetching message", zap.Int("chat_id", p.ChatID))
+		log.Info("Fetching message", zap.Int64("chat_id", p.ChatID))
 
 		msg, err = e.getMessage(ctx, h.ReplyToMsgID)
 	case *tg.InputPeerUser:
-		log.Info("Fetching message", zap.Int("chat_id", p.UserID))
+		log.Info("Fetching message", zap.Int64("chat_id", p.UserID))
 
 		msg, err = e.getMessage(ctx, h.ReplyToMsgID)
 	}

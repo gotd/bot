@@ -12,7 +12,7 @@ import (
 func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) error {
 	b.logger.Info("Got message",
 		zap.String("text", m.Message),
-		zap.Int("user_id", user.ID),
+		zap.Int64("user_id", user.ID),
 		zap.String("user_first_name", user.FirstName),
 		zap.String("username", user.Username),
 	)
@@ -28,7 +28,7 @@ func (b *Bot) handleUser(ctx context.Context, user *tg.User, m *tg.Message) erro
 func (b *Bot) handleChat(ctx context.Context, chat *tg.Chat, m *tg.Message) error {
 	b.logger.Info("Got message from chat",
 		zap.String("text", m.Message),
-		zap.Int("chat_id", chat.ID),
+		zap.Int64("chat_id", chat.ID),
 	)
 
 	return b.onMessage.OnMessage(ctx, MessageEvent{
@@ -43,7 +43,7 @@ func (b *Bot) handleChannel(ctx context.Context, channel *tg.Channel, m *tg.Mess
 	b.logger.Info("Got message from channel",
 		zap.String("text", m.Message),
 		zap.String("username", channel.Username),
-		zap.Int("channel_id", channel.ID),
+		zap.Int64("channel_id", channel.ID),
 	)
 
 	return b.onMessage.OnMessage(ctx, MessageEvent{

@@ -17,8 +17,8 @@ func PRMsgIDKey(pr *github.PullRequestEvent) []byte {
 }
 
 // LastMsgIDKey generates last message ID key for given channel.
-func LastMsgIDKey(channelID int) []byte {
-	return strconv.AppendInt([]byte("last_msg_"), int64(channelID), 10)
+func LastMsgIDKey(channelID int64) []byte {
+	return strconv.AppendInt([]byte("last_msg_"), channelID, 10)
 }
 
 // MsgID is a simple message ID storage.
@@ -32,7 +32,7 @@ func NewMsgID(db *pebble.DB) MsgID {
 }
 
 // UpdateLastMsgID updates last message ID for given channel.
-func (m MsgID) UpdateLastMsgID(channelID, msgID int) (rerr error) {
+func (m MsgID) UpdateLastMsgID(channelID int64, msgID int) (rerr error) {
 	key := LastMsgIDKey(channelID)
 
 	b := m.db.NewIndexedBatch()
@@ -74,7 +74,7 @@ func (m MsgID) SetPRNotification(pr *github.PullRequestEvent, msgID int) error {
 
 // FindPRNotification finds PR notification message ID and last message ID for given channel.
 // NB: even if last message ID was not found, function returns non-zero msgID.
-func (m MsgID) FindPRNotification(channelID int, pr *github.PullRequestEvent) (msgID, lastMsgID int, rerr error) {
+func (m MsgID) FindPRNotification(channelID int64, pr *github.PullRequestEvent) (msgID, lastMsgID int, rerr error) {
 	prID := pr.GetPullRequest().GetNumber()
 	snap := m.db.NewSnapshot()
 	defer func() {

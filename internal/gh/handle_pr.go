@@ -103,7 +103,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 		return xerrors.Errorf("find notification: %w", err)
 	}
 
-	log.Debug("Found last message ID", zap.Int("msg_id", lastMsgID), zap.Int("channel", ch.ChannelID))
+	log.Debug("Found last message ID", zap.Int("msg_id", lastMsgID), zap.Int64("channel", ch.ChannelID))
 	if lastMsgID-msgID > 10 {
 		log.Debug("Can't merge, send new message")
 		return fallback(ctx)
