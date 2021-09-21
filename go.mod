@@ -13,7 +13,7 @@ require (
 	github.com/gotd/getdoc v0.6.2
 	github.com/gotd/td v0.51.0-alpha.2
 	github.com/gotd/tl v0.4.0
-	github.com/labstack/echo/v4 v4.5.0
+	github.com/labstack/echo/v4 v4.6.0
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.11.0
 	github.com/stretchr/testify v1.7.0
