@@ -58,8 +58,8 @@ github.com/blevesearch/snowballstem v0.9.0 h1:lMQ189YspGP6sXvZQ4WZ+MLawfV8wOmPoD
 github.com/blevesearch/snowballstem v0.9.0/go.mod h1:PivSj3JMc8WuaFkTSRDW2SlrulNWPl4ABg1tC/hlgLs=
 github.com/blevesearch/upsidedown_store_api v1.0.1 h1:1SYRwyoFLwG3sj0ed89RLtM15amfX2pXlYbFOnF8zNU=
 github.com/blevesearch/upsidedown_store_api v1.0.1/go.mod h1:MQDVGpHZrpe3Uy26zJBf/a8h0FZY6xJbthIMm8myH2Q=
-github.com/blevesearch/vellum v1.0.6 h1:tm0l/LZ6xfmcoRkgi2545SpFRH0tE21K8Wxo9CteF+o=
-github.com/blevesearch/vellum v1.0.6/go.mod h1:doBZpmRhwTsASB4QdUZANlJvqVAUdUyX0ZK7QJCTeBE=
+github.com/blevesearch/vellum v1.0.6 h1:F7mKWx+xt7e+i3LGtCUhLI2rLonBgT1uke7WP3mL5v4=
+github.com/blevesearch/vellum v1.0.6/go.mod h1:vMf1MTDsr8l1N5GEi6idH9zF0w8XuY8W8gFuwkIB77g=
 github.com/blevesearch/zapx/v11 v11.3.0 h1:+jY21MuYjDRgx+3qaa0wxc4U7GBn4/jQGPpnLwjstsw=
 github.com/blevesearch/zapx/v11 v11.3.0/go.mod h1:HGTEgEu2wTQlsU6qo7rzD6DNhBX6A7zfvmqUZDkOshA=
 github.com/blevesearch/zapx/v12 v12.3.0 h1:EgcIPrFDwzCGXTFLB2vwhPhofK919jkgOSMVPjHiHw8=
