@@ -14,3 +14,8 @@ generate:
 check_generated: generate
 	git diff --exit-code
 .PHONY: check_generated
+
+deploy:
+	go build ./cmd/bot
+	fab deploy -H gotd
+	rm bot
