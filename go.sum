@@ -241,8 +241,8 @@ github.com/gotd/neo v0.1.3/go.mod h1:9A2a4bn9zL6FADufBdt7tZt+WMhvZoc5gWXihOPoiBQ
 github.com/gotd/neo v0.1.4 h1:av+c/4R+3B/eAlr+Bz++q+/DOuGKz+sfwJXmPXRbU/s=
 github.com/gotd/neo v0.1.4/go.mod h1:9A2a4bn9zL6FADufBdt7tZt+WMhvZoc5gWXihOPoiBQ=
 github.com/gotd/td v0.50.0/go.mod h1:aq9/wLoBlK+jskaDFcGC/YxGu3PZkAE4ertX1tGUsiI=
-github.com/gotd/td v0.51.3-0.20211105131622-cbe992ca34af h1:iqxb7ncUTZEkolThsxQ5q+39Gfkttbrsn4Qqj75zNEc=
-github.com/gotd/td v0.51.3-0.20211105131622-cbe992ca34af/go.mod h1:wDR9ovx2b2sX2MHbsm2WwYBQ+76b3GVXRiFwk/t222Y=
+github.com/gotd/td v0.51.3-0.20211106010050-55204ffb2bdd h1:INBzT7Wqc54XSHc3uJ/1wV5J5AyOuFxVejwjK16eiiA=
+github.com/gotd/td v0.51.3-0.20211106010050-55204ffb2bdd/go.mod h1:wDR9ovx2b2sX2MHbsm2WwYBQ+76b3GVXRiFwk/t222Y=
 github.com/gotd/tl v0.4.0 h1:8k2z0drujiPyhpLDa9PRm/yU1Gwlfn3iUzeInPiXwMA=
 github.com/gotd/tl v0.4.0/go.mod h1:CMIcjPWFS4qxxJ+1Ce7U/ilbtPrkoVo/t8uhN5Y/D7c=
 github.com/gotd/xor v0.1.1 h1:LSPEeuf7noTo4fi4PrEsAaWXOSwjsY2e+IINPiR+c7s=
