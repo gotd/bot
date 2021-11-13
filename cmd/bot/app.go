@@ -12,6 +12,7 @@ import (
 
 	"github.com/brpaz/echozap"
 	"github.com/cockroachdb/pebble"
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -19,7 +20,6 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/session"
 	"github.com/gotd/td/telegram"
@@ -65,32 +65,32 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	// Reading app id from env (never hardcode it!).
 	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
 	if err != nil {
-		return nil, xerrors.Errorf("APP_ID not set or invalid %q: %w", os.Getenv("APP_ID"), err)
+		return nil, errors.Wrapf(err, "APP_ID not set or invalid %q", os.Getenv("APP_ID"))
 	}
 
 	appHash := os.Getenv("APP_HASH")
 	if appHash == "" {
-		return nil, xerrors.New("no APP_HASH provided")
+		return nil, errors.New("no APP_HASH provided")
 	}
 
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
-		return nil, xerrors.New("no BOT_TOKEN provided")
+		return nil, errors.New("no BOT_TOKEN provided")
 	}
 
 	// Setting up session storage.
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, xerrors.Errorf("get home: %w", err)
+		return nil, errors.Wrap(err, "get home")
 	}
 	sessionDir := filepath.Join(home, ".td")
 	if err := os.MkdirAll(sessionDir, 0700); err != nil {
-		return nil, xerrors.Errorf("mkdir: %w", err)
+		return nil, errors.Wrap(err, "mkdir")
 	}
 
 	stateDb, err := bolt.Open(filepath.Join(sessionDir, "gaps-state.bbolt"), fs.ModePerm, bolt.DefaultOptions)
 	if err != nil {
-		return nil, xerrors.Errorf("state database: %w", err)
+		return nil, errors.Wrap(err, "state database")
 	}
 	defer func() {
 		if rerr != nil {
@@ -103,7 +103,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		&pebble.Options{},
 	)
 	if err != nil {
-		return nil, xerrors.Errorf("database: %w", err)
+		return nil, errors.Wrap(err, "database")
 	}
 	defer func() {
 		if rerr != nil {
@@ -174,7 +174,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
 		search, err := setupIndex(sessionDir, schemaPath)
 		if err != nil {
-			return nil, xerrors.Errorf("create search: %w", err)
+			return nil, errors.Wrap(err, "create search")
 		}
 		app.index = search
 		b.OnInline(docs.New(search))
@@ -182,20 +182,20 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 
 	gpt2, err := setupGPT2(app.http)
 	if err != nil {
-		return nil, xerrors.Errorf("setup gpt2: %w", err)
+		return nil, errors.Wrap(err, "setup gpt2")
 	}
 	app.gpt2 = gpt2
 
 	gpt3, err := setupGPT3(app.http)
 	if err != nil {
-		return nil, xerrors.Errorf("setup gpt3: %w", err)
+		return nil, errors.Wrap(err, "setup gpt3")
 	}
 	app.gpt3 = gpt3
 
 	if v, ok := os.LookupEnv("GITHUB_APP_ID"); ok {
 		ghClient, err := setupGithub(v, httpTransport)
 		if err != nil {
-			return nil, xerrors.Errorf("setup github: %w", err)
+			return nil, errors.Wrap(err, "setup github")
 		}
 		app.github = ghClient
 	}
@@ -264,18 +264,18 @@ func (b *App) Run(ctx context.Context) error {
 			au := b.client.Auth()
 			status, err := au.Status(ctx)
 			if err != nil {
-				return xerrors.Errorf("auth status: %w", err)
+				return errors.Wrap(err, "auth status")
 			}
 
 			if !status.Authorized {
 				if _, err := au.Bot(ctx, b.token); err != nil {
-					return xerrors.Errorf("login: %w", err)
+					return errors.Wrap(err, "login")
 				}
 
 				// Refresh auth status.
 				status, err = au.Status(ctx)
 				if err != nil {
-					return xerrors.Errorf("auth status: %w", err)
+					return errors.Wrap(err, "auth status")
 				}
 			} else {
 				b.logger.Info("Bot login restored",
@@ -290,7 +290,7 @@ func (b *App) Run(ctx context.Context) error {
 
 			if _, disableRegister := os.LookupEnv("DISABLE_COMMAND_REGISTER"); !disableRegister {
 				if err := b.mux.RegisterCommands(ctx, b.raw); err != nil {
-					return xerrors.Errorf("register commands: %w", err)
+					return errors.Wrap(err, "register commands")
 				}
 			}
 
@@ -304,18 +304,18 @@ func (b *App) Run(ctx context.Context) error {
 func runBot(ctx context.Context, mts metrics.Metrics, logger *zap.Logger) (rerr error) {
 	app, err := InitApp(mts, logger)
 	if err != nil {
-		return xerrors.Errorf("initialize: %w", err)
+		return errors.Wrap(err, "initialize")
 	}
 	defer func() {
 		multierr.AppendInto(&rerr, app.Close())
 	}()
 
 	if err := setupBot(app); err != nil {
-		return xerrors.Errorf("setup: %w", err)
+		return errors.Wrap(err, "setup")
 	}
 
 	if err := app.Run(ctx); err != nil {
-		return xerrors.Errorf("run: %w", err)
+		return errors.Wrap(err, "run")
 	}
 	return nil
 }

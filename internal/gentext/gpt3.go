@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 )
 
 type GPT3 struct {
@@ -45,14 +45,14 @@ func (g *GPT3) Query(ctx context.Context, query string) (string, error) {
 	if err := json.NewEncoder(&buf).Encode(gpt3Query{
 		Question: query,
 	}); err != nil {
-		return "", xerrors.Errorf("encode request: %w", err)
+		return "", errors.Wrap(err, "encode request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost, g.endpoint, &buf,
 	)
 	if err != nil {
-		return "", xerrors.Errorf("create request: %w", err)
+		return "", errors.Wrap(err, "create request")
 	}
 	defer req.Body.Close()
 
@@ -65,20 +65,20 @@ func (g *GPT3) Query(ctx context.Context, query string) (string, error) {
 
 	resp, err := g.client.Do(req)
 	if err != nil {
-		return "", xerrors.Errorf("send request: %w", err)
+		return "", errors.Wrap(err, "send request")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return "", xerrors.Errorf("bad code %d", resp.StatusCode)
+		return "", errors.Errorf("bad code %d", resp.StatusCode)
 	}
 
 	var r gpt3Result
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		return "", xerrors.Errorf("decode response: %w", err)
+		return "", errors.Wrap(err, "decode response")
 	}
 	if r.Status != "success" {
-		return "", xerrors.Errorf("got bad status: %q", r.Status)
+		return "", errors.Errorf("got bad status: %q", r.Status)
 	}
 
 	return r.Data, nil

@@ -3,9 +3,9 @@ package gh
 import (
 	"context"
 
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message/styling"
 )
@@ -15,14 +15,14 @@ func (h Webhook) handleRepo(ctx context.Context, e *github.RepositoryEvent) erro
 	case "created", "publicized":
 		p, err := h.notifyPeer(ctx)
 		if err != nil {
-			return xerrors.Errorf("peer: %w", err)
+			return errors.Wrap(err, "peer")
 		}
 
 		if _, err := h.sender.To(p).StyledText(ctx,
 			styling.Plain("New repository "),
 			styling.TextURL(e.GetRepo().GetFullName(), e.GetRepo().GetHTMLURL()),
 		); err != nil {
-			return xerrors.Errorf("send: %w", err)
+			return errors.Wrap(err, "send")
 		}
 
 		return nil

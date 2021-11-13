@@ -6,8 +6,8 @@ import (
 	escapehtml "html"
 	"strings"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/multierr"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/getdoc"
 	"github.com/gotd/td/telegram/message/entity"
@@ -85,8 +85,8 @@ func (h Handler) OnInline(ctx context.Context, e dispatch.InlineQuery) error {
 
 	results, err := h.search.Match(e.Query)
 	if err != nil {
-		_, rErr := reply.Set(ctx)
-		return multierr.Append(xerrors.Errorf("search: %w", err), rErr)
+		_, setErr := reply.Set(ctx)
+		return multierr.Append(errors.Wrapf(setErr, "search"), err)
 	}
 
 	var options []inline.ResultOption

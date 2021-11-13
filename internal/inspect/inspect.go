@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
@@ -27,11 +27,11 @@ func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 	return e.WithReply(ctx, func(reply *tg.Message) error {
 		var w strings.Builder
 		if err := h.fmt(&w, reply); err != nil {
-			return xerrors.Errorf("encode message %d: %w", reply.ID, err)
+			return errors.Wrapf(err, "encode message %d", reply.ID)
 		}
 
 		if _, err := e.Reply().StyledText(ctx, styling.Pre(w.String())); err != nil {
-			return xerrors.Errorf("send: %w", err)
+			return errors.Wrap(err, "send")
 		}
 
 		return nil

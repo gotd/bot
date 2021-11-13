@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
@@ -45,7 +45,7 @@ func (e baseEvent) Sender() *message.Sender {
 func findMessage(r tg.MessagesMessagesClass, msgID int) (*tg.Message, error) {
 	slice, ok := r.(interface{ GetMessages() []tg.MessageClass })
 	if !ok {
-		return nil, xerrors.Errorf("unexpected type %T", r)
+		return nil, errors.Errorf("unexpected type %T", r)
 	}
 
 	msgs := slice.GetMessages()
@@ -58,13 +58,13 @@ func findMessage(r tg.MessagesMessagesClass, msgID int) (*tg.Message, error) {
 		return msg, nil
 	}
 
-	return nil, xerrors.Errorf("message %d not found in response %+v", msgID, msgs)
+	return nil, errors.Errorf("message %d not found in response %+v", msgID, msgs)
 }
 
 func (e baseEvent) getMessage(ctx context.Context, msgID int) (*tg.Message, error) {
 	r, err := e.rpc.MessagesGetMessages(ctx, []tg.InputMessageClass{&tg.InputMessageID{ID: msgID}})
 	if err != nil {
-		return nil, xerrors.Errorf("get message: %w", err)
+		return nil, errors.Wrap(err, "get message")
 	}
 
 	return findMessage(r, msgID)
@@ -76,7 +76,7 @@ func (e baseEvent) getChannelMessage(ctx context.Context, channel *tg.InputChann
 		ID:      []tg.InputMessageClass{&tg.InputMessageID{ID: msgID}},
 	})
 	if err != nil {
-		return nil, xerrors.Errorf("get message: %w", err)
+		return nil, errors.Wrap(err, "get message")
 	}
 
 	return findMessage(r, msgID)

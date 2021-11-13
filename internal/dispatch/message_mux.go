@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 
 	"github.com/gotd/td/tg"
 )
@@ -42,7 +42,7 @@ func (m MessageMux) OnMessage(ctx context.Context, e MessageEvent) error {
 	for prefix, handler := range m.prefixes {
 		if strings.HasPrefix(e.Message.Message, prefix) {
 			if err := handler.OnMessage(ctx, e); err != nil {
-				return xerrors.Errorf("handle %q: %w", prefix, err)
+				return errors.Wrapf(err, "handle %q", prefix)
 			}
 			return nil
 		}
@@ -69,7 +69,7 @@ func (m MessageMux) RegisterCommands(ctx context.Context, raw *tg.Client) error 
 		LangCode: "en",
 		Commands: commands,
 	}); err != nil {
-		return xerrors.Errorf("set commands: %w", err)
+		return errors.Wrap(err, "set commands")
 	}
 	return nil
 }

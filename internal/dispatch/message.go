@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
@@ -46,7 +46,7 @@ func (e MessageEvent) WithReply(ctx context.Context, cb func(reply *tg.Message) 
 	h, ok := e.Message.GetReplyTo()
 	if !ok {
 		if _, err := e.Reply().Text(ctx, "Message must be a reply"); err != nil {
-			return xerrors.Errorf("send: %w", err)
+			return errors.Wrap(err, "send")
 		}
 		return nil
 	}
@@ -78,7 +78,7 @@ func (e MessageEvent) WithReply(ctx context.Context, cb func(reply *tg.Message) 
 	}
 	if err != nil {
 		if _, err := e.Reply().Text(ctx, fmt.Sprintf("Message %d not found", h.ReplyToMsgID)); err != nil {
-			return xerrors.Errorf("send: %w", err)
+			return errors.Wrap(err, "send")
 		}
 		return nil
 	}

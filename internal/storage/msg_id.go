@@ -4,9 +4,9 @@ import (
 	"strconv"
 
 	"github.com/cockroachdb/pebble"
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
 	"go.uber.org/multierr"
-	"golang.org/x/xerrors"
 )
 
 // PRMsgIDKey generates key for given PR.
@@ -38,7 +38,7 @@ func (m MsgID) UpdateLastMsgID(channelID int64, msgID int) (rerr error) {
 	b := m.db.NewIndexedBatch()
 	data, closer, err := b.Get(key)
 	switch {
-	case xerrors.Is(err, pebble.ErrNotFound):
+	case errors.Is(err, pebble.ErrNotFound):
 	case err != nil:
 		return err
 	default:
@@ -48,7 +48,7 @@ func (m MsgID) UpdateLastMsgID(channelID int64, msgID int) (rerr error) {
 		s := string(data)
 		id, err := strconv.Atoi(s)
 		if err != nil {
-			return xerrors.Errorf("parse msg id %q: %w", s, err)
+			return errors.Wrapf(err, "parse msg id %q", s)
 		}
 
 		if id > msgID {
@@ -57,11 +57,11 @@ func (m MsgID) UpdateLastMsgID(channelID int64, msgID int) (rerr error) {
 	}
 
 	if err := b.Set(key, strconv.AppendInt(nil, int64(msgID), 10), pebble.Sync); err != nil {
-		return xerrors.Errorf("set msg_id %d: %w", channelID, err)
+		return errors.Wrapf(err, "set msg_id %d", channelID)
 	}
 
 	if err := b.Commit(nil); err != nil {
-		return xerrors.Errorf("commit: %w", err)
+		return errors.Wrap(err, "commit")
 	}
 
 	return nil
@@ -84,12 +84,12 @@ func (m MsgID) FindPRNotification(channelID int64, pr *github.PullRequestEvent) 
 	var err error
 	msgID, err = findInt(snap, PRMsgIDKey(pr))
 	if err != nil {
-		return 0, 0, xerrors.Errorf("find msg ID of PR #%d notification: %w", prID, err)
+		return 0, 0, errors.Wrapf(err, "find msg ID of PR #%d notification", prID)
 	}
 
 	lastMsgID, err = findInt(snap, LastMsgIDKey(channelID))
 	if err != nil {
-		return msgID, 0, xerrors.Errorf("find last msg ID of channel %d: %w", channelID, err)
+		return msgID, 0, errors.Wrapf(err, "find last msg ID of channel %d", channelID)
 	}
 
 	return msgID, lastMsgID, nil
@@ -107,7 +107,7 @@ func findInt(snap *pebble.Snapshot, key []byte) (_ int, rerr error) {
 	s := string(data)
 	id, err := strconv.Atoi(s)
 	if err != nil {
-		return 0, xerrors.Errorf("parse msg id %q: %w", s, err)
+		return 0, errors.Wrapf(err, "parse msg id %q", s)
 	}
 
 	return id, nil

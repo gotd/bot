@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message/styling"
 )
@@ -17,7 +17,7 @@ func (h Webhook) handleRelease(ctx context.Context, e *github.ReleaseEvent) erro
 
 	p, err := h.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("peer: %w", err)
+		return errors.Wrap(err, "peer")
 	}
 
 	if _, err := h.sender.To(p).StyledText(ctx,
@@ -25,7 +25,7 @@ func (h Webhook) handleRelease(ctx context.Context, e *github.ReleaseEvent) erro
 		styling.TextURL(e.GetRelease().GetTagName(), e.GetRelease().GetHTMLURL()),
 		styling.Plain(fmt.Sprintf(" for %s", e.GetRepo().GetFullName())),
 	); err != nil {
-		return xerrors.Errorf("send: %w", err)
+		return errors.Wrap(err, "send")
 	}
 
 	return nil

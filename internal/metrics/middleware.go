@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/tg"
@@ -66,7 +66,7 @@ func (m Middleware) downloadMedia(ctx context.Context, rpc *tg.Client, loc tg.In
 
 	if _, err := m.downloader.Download(rpc, loc).
 		Stream(ctx, io.MultiWriter(h, w)); err != nil {
-		return xerrors.Errorf("stream: %w", err)
+		return errors.Wrap(err, "stream")
 	}
 
 	m.logger.Info("Downloaded media",
@@ -89,7 +89,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 			AccessHash:    doc.AccessHash,
 			FileReference: doc.FileReference,
 		}); err != nil {
-			return xerrors.Errorf("download: %w", err)
+			return errors.Wrap(err, "download")
 		}
 	case *tg.MessageMediaPhoto:
 		p, ok := media.Photo.AsNotEmpty()
@@ -102,7 +102,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 			FileReference: p.FileReference,
 			ThumbSize:     maxSize(p.Sizes),
 		}); err != nil {
-			return xerrors.Errorf("download: %w", err)
+			return errors.Wrap(err, "download")
 		}
 	}
 
@@ -118,7 +118,7 @@ func (m Middleware) OnMessage(ctx context.Context, e dispatch.MessageEvent) erro
 	}
 
 	if err := m.handleMedia(ctx, e.RPC(), e.Message); err != nil {
-		return xerrors.Errorf("handle media: %w", err)
+		return errors.Wrap(err, "handle media")
 	}
 
 	m.metrics.Responses.Inc()

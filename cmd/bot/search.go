@@ -1,13 +1,12 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/go-faster/errors"
 	"go.uber.org/multierr"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/getdoc"
 	"github.com/gotd/tl"
@@ -18,13 +17,13 @@ import (
 func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
 	f, err := os.Open(schemaPath)
 	if err != nil {
-		return nil, xerrors.Errorf("open: %w", err)
+		return nil, errors.Wrap(err, "open")
 	}
 	defer func() { _ = f.Close() }()
 
 	sch, err := tl.Parse(f)
 	if err != nil {
-		return nil, xerrors.Errorf("parse: %w", err)
+		return nil, errors.Wrap(err, "parse")
 	}
 
 	indexPath := filepath.Join(sessionDir, "docs.index")
@@ -33,10 +32,10 @@ func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
 	case errors.Is(err, bleve.ErrorIndexPathDoesNotExist):
 		index, err = bleve.New(indexPath, bleve.NewIndexMapping())
 		if err != nil {
-			return nil, xerrors.Errorf("create indexer: %w", err)
+			return nil, errors.Wrap(err, "create indexer")
 		}
 	case err != nil:
-		return nil, xerrors.Errorf("open index: %w", err)
+		return nil, errors.Wrap(err, "open index")
 	}
 	defer func() {
 		if rerr != nil {
@@ -46,12 +45,12 @@ func setupIndex(sessionDir, schemaPath string) (_ *docs.Search, rerr error) {
 
 	doc, err := getdoc.Load(getdoc.LayerLatest)
 	if err != nil {
-		return nil, xerrors.Errorf("load docs: %w", err)
+		return nil, errors.Wrap(err, "load docs")
 	}
 
 	search, err := docs.IndexSchema(index, sch, doc)
 	if err != nil {
-		return nil, xerrors.Errorf("index schema: %w", err)
+		return nil, errors.Wrap(err, "index schema")
 	}
 
 	return search, nil

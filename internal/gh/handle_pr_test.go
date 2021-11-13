@@ -6,10 +6,10 @@ import (
 
 	"github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/vfs"
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/bin"
 	"github.com/gotd/td/telegram/message"
@@ -57,7 +57,7 @@ type mockInvoker struct {
 func (m *mockInvoker) Invoke(ctx context.Context, input bin.Encoder, output bin.Decoder) error {
 	req, ok := input.(*tg.MessagesEditMessageRequest)
 	if !ok {
-		return xerrors.Errorf("unexpected type %T", input)
+		return errors.Errorf("unexpected type %T", input)
 	}
 	m.lastReq = req
 	return nil

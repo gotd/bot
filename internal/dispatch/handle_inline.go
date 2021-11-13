@@ -3,8 +3,8 @@ package dispatch
 import (
 	"context"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/tg"
 )
@@ -17,7 +17,7 @@ func (b *Bot) OnBotInlineQuery(ctx context.Context, e tg.Entities, u *tg.UpdateB
 
 	user, ok := e.Users[u.UserID]
 	if !ok {
-		return xerrors.Errorf("unknown user ID %d", u.UserID)
+		return errors.Errorf("unknown user ID %d", u.UserID)
 	}
 
 	var geo *tg.GeoPoint
@@ -33,7 +33,7 @@ func (b *Bot) OnBotInlineQuery(ctx context.Context, e tg.Entities, u *tg.UpdateB
 		user:      user,
 		baseEvent: b.baseEvent(),
 	}); err != nil {
-		return xerrors.Errorf("handle inline: %w", err)
+		return errors.Wrap(err, "handle inline")
 	}
 
 	return nil

@@ -3,7 +3,7 @@ package gpt
 import (
 	"context"
 
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 
 	"github.com/gotd/td/telegram/message/styling"
 	"github.com/gotd/td/tg"
@@ -29,9 +29,9 @@ func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 		result, err := h.net.Query(ctx, prompt)
 		if err != nil {
 			if _, err := e.Reply().Text(ctx, "GPT server request failed"); err != nil {
-				return xerrors.Errorf("send: %w", err)
+				return errors.Wrap(err, "send")
 			}
-			return xerrors.Errorf("send GPT request: %w", err)
+			return errors.Wrap(err, "send GPT request")
 		}
 
 		_, err = e.Reply().StyledText(ctx,

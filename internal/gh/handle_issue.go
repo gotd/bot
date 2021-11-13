@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/entity"
@@ -84,11 +84,11 @@ func (h Webhook) handleIssue(ctx context.Context, e *github.IssuesEvent) error {
 
 	p, err := h.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("peer: %w", err)
+		return errors.Wrap(err, "peer")
 	}
 
 	if _, err := h.sender.To(p).NoWebpage().StyledText(ctx, formatIssue(e)); err != nil {
-		return xerrors.Errorf("send: %w", err)
+		return errors.Wrap(err, "send")
 	}
 	return nil
 }

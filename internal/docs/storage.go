@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 
 	"github.com/gotd/getdoc"
 	"github.com/gotd/td/bin"
@@ -54,7 +54,7 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 
 		doc, err := indexer.Document(id)
 		if err != nil {
-			return nil, xerrors.Errorf("try find %q: %w", id, err)
+			return nil, errors.Wrapf(err, "try find %q", id)
 		}
 		s.data[id] = def
 		if doc != nil {
@@ -71,7 +71,7 @@ func IndexSchema(indexer bleve.Index, schema *tl.Schema, docs *getdoc.Doc) (*Sea
 			"goName":     s.goName(def.Definition.ID),
 			"category":   def.Category.String(),
 		}); err != nil {
-			return nil, xerrors.Errorf("index %s: %w", id, err)
+			return nil, errors.Wrapf(err, "index %s", id)
 		}
 	}
 
@@ -104,14 +104,14 @@ func (s *Search) Match(q string) ([]SearchResult, error) {
 	req := bleve.NewSearchRequest(query)
 	searchResult, err := s.idx.Search(req)
 	if err != nil {
-		return nil, xerrors.Errorf("query index %q: %w", q, err)
+		return nil, errors.Wrapf(err, "query index %q", q)
 	}
 
 	result := make([]SearchResult, 0, len(searchResult.Hits))
 	for _, hit := range searchResult.Hits {
 		def, ok := s.data[hit.ID]
 		if !ok {
-			return nil, xerrors.Errorf("%s not found", hit.ID)
+			return nil, errors.Errorf("%s not found", hit.ID)
 		}
 
 		typeKey := definitionType(def.Definition)

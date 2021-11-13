@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/multierr"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
@@ -31,7 +31,7 @@ func (h Handler) requestTTS(ctx context.Context, msg, lang string) (io.ReadClose
 		http.MethodGet, "https://translate.google.com.vn/translate_tts", nil,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf("create request: %w", err)
+		return nil, errors.Wrap(err, "create request")
 	}
 
 	q := req.URL.Query()
@@ -43,13 +43,13 @@ func (h Handler) requestTTS(ctx context.Context, msg, lang string) (io.ReadClose
 
 	resp, err := h.client.Do(req)
 	if err != nil {
-		return nil, xerrors.Errorf("send request: %w", err)
+		return nil, errors.Wrap(err, "send request")
 	}
 
 	if resp.StatusCode >= 400 {
 		// Close body to prevent resource leaking.
 		_ = resp.Body.Close()
-		return nil, xerrors.Errorf("bad code %d", resp.StatusCode)
+		return nil, errors.Errorf("bad code %d", resp.StatusCode)
 	}
 
 	return resp.Body, nil
@@ -68,9 +68,9 @@ func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 		body, err := h.requestTTS(ctx, reply.GetMessage(), lang)
 		if err != nil {
 			if _, err := e.Reply().Text(ctx, "TTS server request failed"); err != nil {
-				return xerrors.Errorf("send: %w", err)
+				return errors.Wrap(err, "send")
 			}
-			return xerrors.Errorf("send TTS request: %w", err)
+			return errors.Wrap(err, "send TTS request")
 		}
 		defer func() {
 			multierr.AppendInto(&rerr, body.Close())

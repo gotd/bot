@@ -7,10 +7,10 @@ import (
 	"path"
 
 	"github.com/cockroachdb/pebble"
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/entity"
@@ -63,7 +63,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 
 	p, err := h.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("peer: %w", err)
+		return errors.Wrap(err, "peer")
 	}
 
 	var replyID int
@@ -80,7 +80,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 			styling.Plain("\n\n"),
 			styling.Italic(e.GetPullRequest().GetTitle()),
 		); err != nil {
-			return xerrors.Errorf("send: %w", err)
+			return errors.Wrap(err, "send")
 		}
 
 		return nil
@@ -97,10 +97,10 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 		replyID = msgID
 	}
 	if err != nil {
-		if xerrors.Is(err, pebble.ErrNotFound) {
+		if errors.Is(err, pebble.ErrNotFound) {
 			return fallback(ctx)
 		}
-		return xerrors.Errorf("find notification: %w", err)
+		return errors.Wrap(err, "find notification")
 	}
 
 	log.Debug("Found last message ID", zap.Int("msg_id", lastMsgID), zap.Int64("channel", ch.ChannelID))
@@ -128,7 +128,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 		styling.Plain("\n\n"),
 		styling.Italic(e.GetPullRequest().GetTitle()),
 	); err != nil {
-		return xerrors.Errorf("send: %w", err)
+		return errors.Wrap(err, "send")
 	}
 
 	return nil
@@ -137,7 +137,7 @@ func (h Webhook) handlePRClosed(ctx context.Context, e *github.PullRequestEvent)
 func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEvent) error {
 	p, err := h.notifyPeer(ctx)
 	if err != nil {
-		return xerrors.Errorf("peer: %w", err)
+		return errors.Wrap(err, "peer")
 	}
 	action := " opened"
 	if event.GetPullRequest().GetDraft() {
@@ -154,7 +154,7 @@ func (h Webhook) handlePROpened(ctx context.Context, event *github.PullRequestEv
 		styling.Italic(event.GetPullRequest().GetTitle()),
 	))
 	if err != nil {
-		return xerrors.Errorf("send: %w", err)
+		return errors.Wrap(err, "send")
 	}
 
 	ch, ok := p.(*tg.InputPeerChannel)

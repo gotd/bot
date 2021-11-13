@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-faster/errors"
 	"github.com/google/go-github/v33/github"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/telegram/message/peer"
 
@@ -112,7 +112,7 @@ func (h Webhook) processEvent(e echo.Context, event interface{}, log *zap.Logger
 func (h Webhook) notifyPeer(ctx context.Context) (tg.InputPeerClass, error) {
 	p, err := h.sender.ResolveDomain(h.notifyGroup, peer.OnlyChannel).AsInputPeer(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf("resolve: %w", err)
+		return nil, errors.Wrap(err, "resolve")
 	}
 	return p, nil
 }

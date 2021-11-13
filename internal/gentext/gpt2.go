@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 )
 
 type GPT2 struct {
@@ -60,14 +60,14 @@ func (g *GPT2) Query(ctx context.Context, query string) (string, error) {
 		Prompt: query,
 		Length: rand.Intn(g.maxLength-g.minLength) + g.minLength,
 	}); err != nil {
-		return "", xerrors.Errorf("encode request: %w", err)
+		return "", errors.Wrap(err, "encode request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost, g.endpoint, &buf,
 	)
 	if err != nil {
-		return "", xerrors.Errorf("create request: %w", err)
+		return "", errors.Wrap(err, "create request")
 	}
 	defer req.Body.Close()
 
@@ -78,20 +78,20 @@ func (g *GPT2) Query(ctx context.Context, query string) (string, error) {
 
 	resp, err := g.client.Do(req)
 	if err != nil {
-		return "", xerrors.Errorf("send request: %w", err)
+		return "", errors.Wrap(err, "send request")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return "", xerrors.Errorf("bad code %d", resp.StatusCode)
+		return "", errors.Errorf("bad code %d", resp.StatusCode)
 	}
 
 	var r gpt2Result
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		return "", xerrors.Errorf("decode response: %w", err)
+		return "", errors.Wrap(err, "decode response")
 	}
 	if len(r.Replies) < 1 {
-		return "", xerrors.Errorf("got empty result %v", r)
+		return "", errors.Errorf("got empty result %v", r)
 	}
 
 	return r.Replies[0], nil

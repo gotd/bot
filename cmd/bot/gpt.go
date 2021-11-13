@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"golang.org/x/xerrors"
+	"github.com/go-faster/errors"
 
 	"github.com/gotd/bot/internal/gentext"
 )
@@ -15,14 +15,14 @@ func setupGPT2(client *http.Client) (gentext.Net, error) {
 	if v := os.Getenv("GPT_MIN_SIZE"); v != "" {
 		min, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, xerrors.Errorf("GPT_MIN_SIZE %q is invalid: %w", v, err)
+			return nil, errors.Wrapf(err, "GPT_MIN_SIZE %q is invalid", v)
 		}
 		g = g.WithMinLength(min)
 	}
 	if v := os.Getenv("GPT_MAX_SIZE"); v != "" {
 		max, err := strconv.Atoi(v)
 		if err != nil {
-			return nil, xerrors.Errorf("GPT_MAX_SIZE %q is invalid: %w", v, err)
+			return nil, errors.Wrapf(err, "GPT_MAX_SIZE %q is invalid", v)
 		}
 		g = g.WithMaxLength(max)
 	}

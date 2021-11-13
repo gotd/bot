@@ -3,8 +3,8 @@ package dispatch
 import (
 	"context"
 
+	"github.com/go-faster/errors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"github.com/gotd/td/tg"
 )
@@ -65,19 +65,19 @@ func (b *Bot) handleMessage(ctx context.Context, e tg.Entities, msg tg.MessageCl
 		case *tg.PeerUser:
 			user, ok := e.Users[p.UserID]
 			if !ok {
-				return xerrors.Errorf("unknown user ID %d", p.UserID)
+				return errors.Errorf("unknown user ID %d", p.UserID)
 			}
 			return b.handleUser(ctx, user, m)
 		case *tg.PeerChat:
 			chat, ok := e.Chats[p.ChatID]
 			if !ok {
-				return xerrors.Errorf("unknown chat ID %d", p.ChatID)
+				return errors.Errorf("unknown chat ID %d", p.ChatID)
 			}
 			return b.handleChat(ctx, chat, m)
 		case *tg.PeerChannel:
 			channel, ok := e.Channels[p.ChannelID]
 			if !ok {
-				return xerrors.Errorf("unknown channel ID %d", p.ChannelID)
+				return errors.Errorf("unknown channel ID %d", p.ChannelID)
 			}
 			return b.handleChannel(ctx, channel, m)
 		}
@@ -89,7 +89,7 @@ func (b *Bot) handleMessage(ctx context.Context, e tg.Entities, msg tg.MessageCl
 func (b *Bot) OnNewMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewMessage) error {
 	if err := b.handleMessage(ctx, e, u.Message); err != nil {
 		if !tg.IsUserBlocked(err) {
-			return xerrors.Errorf("handle message %d: %w", u.Message.GetID(), err)
+			return errors.Wrapf(err, "handle message %d", u.Message.GetID())
 		}
 
 		b.logger.Debug("Bot is blocked by user")
@@ -99,7 +99,7 @@ func (b *Bot) OnNewMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewMe
 
 func (b *Bot) OnNewChannelMessage(ctx context.Context, e tg.Entities, u *tg.UpdateNewChannelMessage) error {
 	if err := b.handleMessage(ctx, e, u.Message); err != nil {
-		return xerrors.Errorf("handle: %w", err)
+		return errors.Wrap(err, "handle")
 	}
 	return nil
 }
