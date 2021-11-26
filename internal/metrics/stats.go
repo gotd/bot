@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
 )
@@ -28,6 +29,7 @@ func (h Handler) stats() string {
 	fmt.Fprintln(&w, "Responses:", h.metrics.Responses.Load())
 	fmt.Fprintln(&w, "Media:", humanize.IBytes(uint64(h.metrics.MediaBytes.Load())))
 	fmt.Fprintln(&w, "Uptime:", time.Since(h.metrics.Start).Round(time.Second))
+	fmt.Fprintln(&w, "TL Layer version:", tg.Layer)
 	if v := getVersion(); v != "" {
 		fmt.Fprintln(&w, "Version:", v)
 	}
