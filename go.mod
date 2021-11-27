@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v33 v33.0.0
 	github.com/gotd/contrib v0.11.0
 	github.com/gotd/getdoc v0.7.0
-	github.com/gotd/td v0.52.0
+	github.com/gotd/td v0.53.0-alpha.2
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/povilasv/prommod v0.0.12
@@ -54,6 +54,7 @@ require (
 	github.com/cockroachdb/sentry-go v0.6.1-cockroachdb.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/go-faster/jx v0.25.0 // indirect
 	github.com/go-faster/xor v0.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
@@ -64,8 +65,8 @@ require (
 	github.com/gotd/ige v0.2.2 // indirect
 	github.com/gotd/neo v0.1.4 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/kr/text v0.1.0 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

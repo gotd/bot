@@ -3,10 +3,15 @@ package metrics
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 
 	"github.com/go-faster/errors"
+	"github.com/gotd/td/fileid"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/gotd/td/telegram/downloader"
@@ -20,23 +25,28 @@ type Middleware struct {
 	downloader *downloader.Downloader
 	metrics    Metrics
 
+	token      string
+	httpClient *http.Client
+
 	logger *zap.Logger
 }
 
 // NewMiddleware creates new metrics middleware
-func NewMiddleware(next dispatch.MessageHandler, d *downloader.Downloader, metrics Metrics) Middleware {
+func NewMiddleware(
+	next dispatch.MessageHandler,
+	d *downloader.Downloader,
+	metrics Metrics,
+	opts MiddlewareOptions,
+) Middleware {
+	opts.setDefaults()
 	return Middleware{
 		next:       next,
 		downloader: d,
 		metrics:    metrics,
-		logger:     zap.NewNop(),
+		token:      opts.Token,
+		httpClient: opts.HTTPClient,
+		logger:     opts.Logger,
 	}
-}
-
-// WithLogger sets logger.
-func (m *Middleware) WithLogger(logger *zap.Logger) *Middleware {
-	m.logger = logger
-	return m
 }
 
 func maxSize(sizes []tg.PhotoSizeClass) string {
@@ -77,7 +87,49 @@ func (m Middleware) downloadMedia(ctx context.Context, rpc *tg.Client, loc tg.In
 	return nil
 }
 
+func (m Middleware) getFile(ctx context.Context, id string) (rErr error) {
+	u := fmt.Sprintf("https://api.telegram.org/bot%s/getFile?file_id=%s", m.token, url.QueryEscape(id))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
+	if err != nil {
+		return errors.Wrap(err, "create request")
+	}
+
+	resp, err := m.httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "send request")
+	}
+	defer multierr.AppendInvoke(&rErr, multierr.Close(resp.Body))
+
+	var result struct {
+		OK          bool   `json:"ok"`
+		ErrorCode   int    `json:"error_code"`
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return errors.Wrap(err, "decode json")
+	}
+	if !result.OK {
+		return errors.Errorf("API error %d: %s", result.ErrorCode, result.Description)
+	}
+
+	return nil
+}
+
+func (m Middleware) tryFileID(ctx context.Context, id fileid.FileID) error {
+	if m.token == "" {
+		return nil
+	}
+
+	encoded, err := fileid.EncodeFileID(id)
+	if err != nil {
+		return errors.Wrap(err, "encode")
+	}
+
+	return m.getFile(ctx, encoded)
+}
+
 func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Message) error {
+	log := m.logger.With(zap.Int("msg_id", msg.ID), zap.Stringer("peer_id", msg.PeerID))
 	switch media := msg.Media.(type) {
 	case *tg.MessageMediaDocument:
 		doc, ok := media.Document.AsNotEmpty()
@@ -91,18 +143,33 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 		}); err != nil {
 			return errors.Wrap(err, "download")
 		}
+
+		if err := m.tryFileID(ctx, fileid.FromDocument(doc)); err != nil {
+			log.Warn("Test document FileID", zap.Error(err))
+		}
+
 	case *tg.MessageMediaPhoto:
 		p, ok := media.Photo.AsNotEmpty()
 		if !ok {
 			return nil
 		}
+		size := maxSize(p.Sizes)
 		if err := m.downloadMedia(ctx, rpc, &tg.InputPhotoFileLocation{
 			ID:            p.ID,
 			AccessHash:    p.AccessHash,
 			FileReference: p.FileReference,
-			ThumbSize:     maxSize(p.Sizes),
+			ThumbSize:     size,
 		}); err != nil {
 			return errors.Wrap(err, "download")
+		}
+
+		thumbType := 'x'
+		if len(size) >= 1 {
+			thumbType = rune(size[0])
+		}
+
+		if err := m.tryFileID(ctx, fileid.FromPhoto(p, thumbType)); err != nil {
+			log.Warn("Test photo FileID", zap.Error(err))
 		}
 	}
 

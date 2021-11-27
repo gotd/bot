@@ -142,9 +142,18 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	raw := client.API()
 	sender := message.NewSender(raw)
 	dd := downloader.NewDownloader()
+	httpTransport := http.DefaultTransport
+	httpClient := &http.Client{
+		Transport: httpTransport,
+		Timeout:   15 * time.Second,
+	}
 
 	mux := dispatch.NewMessageMux()
-	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts)
+	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts, metrics.MiddlewareOptions{
+		Token:      token,
+		HTTPClient: httpClient,
+		Logger:     logger.Named("metrics"),
+	})
 	h = storage.NewHook(h, msgIDStore)
 
 	b := dispatch.NewBot(raw).
@@ -153,7 +162,6 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		Register(dispatcher).
 		OnMessage(h)
 
-	httpTransport := http.DefaultTransport
 	app := &App{
 		client:       client,
 		token:        token,
@@ -166,7 +174,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		storage:      msgIDStore,
 		mux:          mux,
 		bot:          b,
-		http:         &http.Client{Transport: httpTransport},
+		http:         httpClient,
 		mts:          mts,
 		logger:       logger,
 	}
