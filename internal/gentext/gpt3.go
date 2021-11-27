@@ -27,23 +27,22 @@ func (g *GPT3) WithEndpoint(endpoint string) *GPT3 {
 func NewGPT3() *GPT3 {
 	return &GPT3{
 		client:   http.DefaultClient,
-		endpoint: "https://api.sbercloud.ru/v2/aicloud/gpt3",
+		endpoint: "https://api.aicloud.sbercloud.ru/public/v1/public_inference/gpt3/predict",
 	}
 }
 
 type gpt3Result struct {
-	Status string `json:"status"`
-	Data   string `json:"data"`
+	Predictions string `json:"predictions"`
 }
 
 type gpt3Query struct {
-	Question string `json:"question"`
+	Text string `json:"text"`
 }
 
 func (g *GPT3) Query(ctx context.Context, query string) (string, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(gpt3Query{
-		Question: query,
+		Text: query,
 	}); err != nil {
 		return "", errors.Wrap(err, "encode request")
 	}
@@ -59,7 +58,7 @@ func (g *GPT3) Query(ctx context.Context, query string) (string, error) {
 	req.Header.Set("User-Agent",
 		`Mozilla/5.0 (Windows NT 1337.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4000.1`,
 	)
-	req.Header.Set("Origin", "https://sbercloud.ru")
+	req.Header.Set("Origin", "https://russiannlp.github.io")
 	req.Header.Set("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7")
 	req.Header.Set("Content-Type", "application/json;charset=utf-8")
 
@@ -77,9 +76,6 @@ func (g *GPT3) Query(ctx context.Context, query string) (string, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
 		return "", errors.Wrap(err, "decode response")
 	}
-	if r.Status != "success" {
-		return "", errors.Errorf("got bad status: %q", r.Status)
-	}
 
-	return r.Data, nil
+	return r.Predictions, nil
 }
