@@ -21,7 +21,11 @@ func (m Middleware) checkOurFileID(ctx context.Context, id fileid.FileID) error 
 		return errors.Wrap(err, "encode")
 	}
 
-	return m.client.GetFile(ctx, encoded)
+	if err := m.client.GetFile(ctx, encoded); err != nil {
+		return errors.Wrap(err, "check file_id")
+	}
+
+	return nil
 }
 
 // tryGetFileID decodes file_id from BotAPI and tries to map into Telegram API file location.
