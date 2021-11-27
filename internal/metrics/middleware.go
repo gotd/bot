@@ -86,7 +86,10 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 
 	loc, fileID, err := m.tryGetFileID(ctx, msg.ID)
 	if err != nil {
-		log.Warn("Parse file_id", zap.String("file_id", fileID))
+		log.Warn("Parse file_id",
+			zap.String("file_id", fileID),
+			zap.Error(err),
+		)
 	} else {
 		if _, err := m.downloader.Download(rpc, loc).Stream(ctx, io.Discard); err != nil {
 			log.Warn("Download file_id",
@@ -94,6 +97,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 				zap.Error(err),
 			)
 		}
+		log.Info("Successfully downloaded file_id", zap.String("file_id", fileID))
 	}
 
 	switch media := msg.Media.(type) {
