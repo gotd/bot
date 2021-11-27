@@ -84,22 +84,6 @@ func (m Middleware) downloadMedia(ctx context.Context, rpc *tg.Client, loc tg.In
 func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Message) error {
 	log := m.logger.With(zap.Int("msg_id", msg.ID), zap.Stringer("peer_id", msg.PeerID))
 
-	loc, fileID, err := m.tryGetFileID(ctx, msg.ID)
-	if err != nil {
-		log.Warn("Parse file_id",
-			zap.String("file_id", fileID),
-			zap.Error(err),
-		)
-	} else {
-		if _, err := m.downloader.Download(rpc, loc).Stream(ctx, io.Discard); err != nil {
-			log.Warn("Download file_id",
-				zap.String("file_id", fileID),
-				zap.Error(err),
-			)
-		}
-		log.Info("Successfully downloaded file_id", zap.String("file_id", fileID))
-	}
-
 	switch media := msg.Media.(type) {
 	case *tg.MessageMediaDocument:
 		doc, ok := media.Document.AsNotEmpty()
@@ -141,6 +125,25 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 		if err := m.checkOurFileID(ctx, fileid.FromPhoto(p, thumbType)); err != nil {
 			log.Warn("Test photo FileID", zap.Error(err))
 		}
+	default:
+		// Do not try to get file_id from messages without attachments.
+		return nil
+	}
+
+	loc, fileID, err := m.tryGetFileID(ctx, msg.ID)
+	if err != nil {
+		log.Warn("Parse file_id",
+			zap.String("file_id", fileID),
+			zap.Error(err),
+		)
+	} else {
+		if _, err := m.downloader.Download(rpc, loc).Stream(ctx, io.Discard); err != nil {
+			log.Warn("Download file_id",
+				zap.String("file_id", fileID),
+				zap.Error(err),
+			)
+		}
+		log.Info("Successfully downloaded file_id", zap.String("file_id", fileID))
 	}
 
 	return nil
