@@ -11,6 +11,9 @@ generate:
 	go generate ./...
 .PHONY: generate
 
+build:
+	go build ./cmd/bot
+
 check_generated: generate
 	git diff --exit-code
 .PHONY: check_generated
