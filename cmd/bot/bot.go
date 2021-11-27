@@ -5,7 +5,6 @@ import (
 
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/gentext"
-	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/gpt"
 	"github.com/gotd/bot/internal/inspect"
 	"github.com/gotd/bot/internal/metrics"
@@ -56,9 +55,5 @@ func setupBot(app *App) error {
 		gpt.New(gentext.NewGPT2().WithClient(app.http)))
 	app.mux.Handle("/gpt3", "Complete text with GPT3",
 		gpt.New(gentext.NewGPT3().WithClient(app.http)))
-
-	if app.github != nil {
-		app.mux.Handle("github", "", gh.New(app.github))
-	}
 	return nil
 }
