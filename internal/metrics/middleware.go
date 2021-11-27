@@ -3,30 +3,25 @@ package metrics
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/fileid"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/tg"
 
+	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 )
 
 type Middleware struct {
 	next       dispatch.MessageHandler
 	downloader *downloader.Downloader
+	client     *botapi.Client
 	metrics    Metrics
-
-	token      string
-	httpClient *http.Client
 
 	logger *zap.Logger
 }
@@ -42,9 +37,8 @@ func NewMiddleware(
 	return Middleware{
 		next:       next,
 		downloader: d,
+		client:     opts.BotAPI,
 		metrics:    metrics,
-		token:      opts.Token,
-		httpClient: opts.HTTPClient,
 		logger:     opts.Logger,
 	}
 }
@@ -87,49 +81,21 @@ func (m Middleware) downloadMedia(ctx context.Context, rpc *tg.Client, loc tg.In
 	return nil
 }
 
-func (m Middleware) getFile(ctx context.Context, id string) (rErr error) {
-	u := fmt.Sprintf("https://api.telegram.org/bot%s/getFile?file_id=%s", m.token, url.QueryEscape(id))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, http.NoBody)
-	if err != nil {
-		return errors.Wrap(err, "create request")
-	}
-
-	resp, err := m.httpClient.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "send request")
-	}
-	defer multierr.AppendInvoke(&rErr, multierr.Close(resp.Body))
-
-	var result struct {
-		OK          bool   `json:"ok"`
-		ErrorCode   int    `json:"error_code"`
-		Description string `json:"description"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return errors.Wrap(err, "decode json")
-	}
-	if !result.OK {
-		return errors.Errorf("API error %d: %s", result.ErrorCode, result.Description)
-	}
-
-	return nil
-}
-
-func (m Middleware) tryFileID(ctx context.Context, id fileid.FileID) error {
-	if m.token == "" {
-		return nil
-	}
-
-	encoded, err := fileid.EncodeFileID(id)
-	if err != nil {
-		return errors.Wrap(err, "encode")
-	}
-
-	return m.getFile(ctx, encoded)
-}
-
 func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Message) error {
 	log := m.logger.With(zap.Int("msg_id", msg.ID), zap.Stringer("peer_id", msg.PeerID))
+
+	loc, fileID, err := m.tryGetFileID(ctx, msg.ID)
+	if err != nil {
+		log.Warn("Parse file_id", zap.String("file_id", fileID))
+	} else {
+		if _, err := m.downloader.Download(rpc, loc).Stream(ctx, io.Discard); err != nil {
+			log.Warn("Download file_id",
+				zap.String("file_id", fileID),
+				zap.Error(err),
+			)
+		}
+	}
+
 	switch media := msg.Media.(type) {
 	case *tg.MessageMediaDocument:
 		doc, ok := media.Document.AsNotEmpty()
@@ -144,7 +110,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 			return errors.Wrap(err, "download")
 		}
 
-		if err := m.tryFileID(ctx, fileid.FromDocument(doc)); err != nil {
+		if err := m.checkOurFileID(ctx, fileid.FromDocument(doc)); err != nil {
 			log.Warn("Test document FileID", zap.Error(err))
 		}
 
@@ -168,7 +134,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 			thumbType = rune(size[0])
 		}
 
-		if err := m.tryFileID(ctx, fileid.FromPhoto(p, thumbType)); err != nil {
+		if err := m.checkOurFileID(ctx, fileid.FromPhoto(p, thumbType)); err != nil {
 			log.Warn("Test photo FileID", zap.Error(err))
 		}
 	}

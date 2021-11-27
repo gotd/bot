@@ -29,6 +29,7 @@ import (
 	updhook "github.com/gotd/td/telegram/updates/hook"
 	"github.com/gotd/td/tg"
 
+	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/docs"
 	"github.com/gotd/bot/internal/gentext"
@@ -150,9 +151,10 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 
 	mux := dispatch.NewMessageMux()
 	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts, metrics.MiddlewareOptions{
-		Token:      token,
-		HTTPClient: httpClient,
-		Logger:     logger.Named("metrics"),
+		BotAPI: botapi.NewClient(token, botapi.Options{
+			HTTPClient: httpClient,
+		}),
+		Logger: logger.Named("metrics"),
 	})
 	h = storage.NewHook(h, msgIDStore)
 
