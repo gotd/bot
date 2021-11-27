@@ -72,7 +72,7 @@ type Update struct {
 //
 // NB: it can find only recently received messages.
 func (m *Client) GetBotAPIMessage(ctx context.Context, msgID int) (Message, error) {
-	u := fmt.Sprintf(`https://api.telegram.org/bot%s/getUpdates?allowed_updates=["message"]`, m.token)
+	u := fmt.Sprintf(`https://api.telegram.org/bot%s/getUpdates?allowed_updates="message"`, m.token)
 	var resp struct {
 		OK          bool     `json:"ok"`
 		ErrorCode   int      `json:"error_code"`
