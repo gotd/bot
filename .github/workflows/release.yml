@@ -23,9 +23,7 @@ jobs:
       - name: Set kubeconfig
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-        run: |
-          echo import kubeconfig
-          echo $KUBE_CONFIG_DATA | base64 -d > /tmp/kubeconfig
+        run: echo $KUBE_CONFIG_DATA | base64 -d > /tmp/kubeconfig
 
       - name: Set up kubectl cache
         uses: actions/cache@v2.1.6
