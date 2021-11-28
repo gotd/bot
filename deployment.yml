@@ -34,6 +34,8 @@ spec:
               value: 0.0.0.0:8090
             - name: TG_NOTIFY_GROUP
               value: gotd_ru
+            - name: TG_DEPLOY_NOTIFY_GROUP
+              value: gotd_test
             - name: BOT_TOKEN
               valueFrom:
                 secretKeyRef:

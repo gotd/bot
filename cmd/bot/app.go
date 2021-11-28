@@ -25,6 +25,7 @@ import (
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
+	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/updates"
 	updhook "github.com/gotd/td/telegram/updates/hook"
 	"github.com/gotd/td/tg"
@@ -301,6 +302,16 @@ func (b *App) Run(ctx context.Context) error {
 			if _, disableRegister := os.LookupEnv("DISABLE_COMMAND_REGISTER"); !disableRegister {
 				if err := b.mux.RegisterCommands(ctx, b.raw); err != nil {
 					return errors.Wrap(err, "register commands")
+				}
+			}
+
+			if deployNotify := os.Getenv("TG_DEPLOY_NOTIFY_GROUP"); deployNotify != "" {
+				p, err := b.sender.ResolveDomain(deployNotify, peer.OnlyChannel).AsInputPeer(ctx)
+				if err != nil {
+					return errors.Wrap(err, "resolve")
+				}
+				if _, err := b.sender.To(p).Text(ctx, "Started"); err != nil {
+					return errors.Wrap(err, "send")
 				}
 			}
 
