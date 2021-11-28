@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: bot
+      annotations:
+        "io.cilium.proxy-visibility": "<Egress/53/UDP/DNS>,<Egress/80/TCP/HTTP>"
     spec:
       volumes:
         - name: cache
