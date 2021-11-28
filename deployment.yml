@@ -25,6 +25,13 @@ spec:
       containers:
         - name: bot
           image: ghcr.io/gotd/bot:main
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256M
+            limits:
+              cpu: "2"
+              memory: 512M
           env:
             - name: HOME
               value: /cache
