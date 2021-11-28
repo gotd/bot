@@ -17,7 +17,7 @@ import (
 )
 
 func run(ctx context.Context) error {
-	logger, _ := zap.NewDevelopment(
+	logger, _ := zap.NewProduction(
 		zap.IncreaseLevel(zapcore.DebugLevel),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
