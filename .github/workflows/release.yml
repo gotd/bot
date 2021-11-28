@@ -110,5 +110,5 @@ jobs:
 
       - name: Deploy
         run: |
-          - ~/kubectl apply -f deployment.release.yml
-          - ~/kubectl rollout status deployment/bot
+          ~/kubectl apply -f deployment.release.yml
+          ~/kubectl rollout status deployment/bot
