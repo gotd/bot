@@ -82,13 +82,13 @@ jobs:
         run: sed 's/bot:main/bot:sha-${{ steps.var.outputs.sha }}/g' deployment.yml > deployment.release.yml
 
       - name: deploy
-        uses: steebchen/kubectl@v2
+        uses: steebchen/kubectl@v2.0.0
         with: # defaults to latest kubectl binary version
           config: ${{ secrets.KUBE_CONFIG_DATA }}
           command: apply -f deployment.release.yml
 
       - name: ensure
-        uses: steebchen/kubectl@v2
+        uses: steebchen/kubectl@v2.0.0
         with:
           config: ${{ secrets.KUBE_CONFIG_DATA }}
           command: rollout status deployment/my-app
