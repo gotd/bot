@@ -20,10 +20,10 @@ jobs:
       KUBECONFIG: /tmp/kubeconfig
 
     steps:
-      - name: Set kubeconfig
+      - name: Setup kubeconfig
         env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-        run: echo $KUBE_CONFIG_DATA | base64 -d > /tmp/kubeconfig
+          KUBECONFIG_GPG_PASS: ${{ secrets.KUBECONFIG_GPG_PASS }}
+        run: ./kubeconfig.sh
 
       - name: Set up kubectl cache
         uses: actions/cache@v2.1.6
