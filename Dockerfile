@@ -1,4 +1,4 @@
-FROM ghcr.io/go-faster/ubuntu:20.04
+FROM gcr.io/distroless/static
 
 ADD bot /usr/local/bin/bot
 

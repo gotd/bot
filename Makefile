@@ -12,7 +12,7 @@ generate:
 .PHONY: generate
 
 build:
-	go build ./cmd/bot
+	CGO_ENABLED=0 go build ./cmd/bot
 
 check_generated: generate
 	git diff --exit-code

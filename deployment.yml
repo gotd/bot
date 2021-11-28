@@ -22,7 +22,7 @@ spec:
           emptyDir: {}
       containers:
         - name: bot
-          image: ghcr.io/gotd/bot:sha-24e7bcc
+          image: ghcr.io/gotd/bot:v0.0.1
           env:
             - name: HOME
               value: /cache
