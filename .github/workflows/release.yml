@@ -20,11 +20,6 @@ jobs:
       KUBECONFIG: /tmp/kubeconfig
 
     steps:
-      - name: Setup kubeconfig
-        env:
-          KUBECONFIG_GPG_PASS: ${{ secrets.KUBECONFIG_GPG_PASS }}
-        run: ./kubeconfig.sh
-
       - name: Set up kubectl cache
         uses: actions/cache@v2.1.6
         with:
@@ -66,6 +61,11 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Setup kubeconfig
+        env:
+          KUBECONFIG_GPG_PASS: ${{ secrets.KUBECONFIG_GPG_PASS }}
+        run: ./kubeconfig.sh
 
       - name: Docker log in
         uses: docker/login-action@v1
