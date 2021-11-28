@@ -27,9 +27,9 @@ spec:
             - name: HOME
               value: /cache
             - name: HTTP_ADDR
-              value: 0.0.0.0
+              value: 0.0.0.0:8080
             - name: METRICS_ADDR
-              value: 0.0.0.0
+              value: 0.0.0.0:8090
             - name: TG_NOTIFY_GROUP
               value: gotd_ru
             - name: BOT_TOKEN
