@@ -20,24 +20,6 @@ jobs:
       KUBECONFIG: /tmp/kubeconfig
 
     steps:
-      - name: Set up kubectl cache
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/kubectl
-          key: kubectl
-
-      - name: Check kubectl
-        id: "kubectl"
-        uses: andstor/file-existence-action@v1
-        with:
-          files: ~/kubectl
-
-      - name: Download kubectl
-        if: steps.kubectl.outputs.files_exists != 'true'
-        run: |
-          wget -O ~/kubectl "https://dl.k8s.io/release/v1.22.4/bin/linux/amd64/kubectl"
-          chmod +x ~/kubectl
-
       - name: Set up Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -61,11 +43,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Setup kubeconfig
-        env:
-          KUBECONFIG_GPG_PASS: ${{ secrets.KUBECONFIG_GPG_PASS }}
-        run: ./kubeconfig.sh
 
       - name: Docker log in
         uses: docker/login-action@v1
@@ -107,6 +84,29 @@ jobs:
 
       - name: Generate deployment with SHA version
         run: sed 's/bot:main/bot:sha-${{ steps.var.outputs.sha }}/g' deployment.yml > deployment.release.yml
+
+      - name: Set up kubectl cache
+        uses: actions/cache@v2.1.6
+        with:
+          path: ~/kubectl
+          key: kubectl
+
+      - name: Check kubectl
+        id: "kubectl"
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ~/kubectl
+
+      - name: Download kubectl
+        if: steps.kubectl.outputs.files_exists != 'true'
+        run: |
+          wget -O ~/kubectl "https://dl.k8s.io/release/v1.22.4/bin/linux/amd64/kubectl"
+          chmod +x ~/kubectl
+
+      - name: Setup kubeconfig
+        env:
+          KUBECONFIG_GPG_PASS: ${{ secrets.KUBECONFIG_GPG_PASS }}
+        run: ./kubeconfig.sh
 
       - name: Deploy
         run: |
