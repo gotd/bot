@@ -2,7 +2,6 @@ package dispatch
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-faster/errors"
 	"go.uber.org/zap"
@@ -77,7 +76,7 @@ func (e MessageEvent) WithReply(ctx context.Context, cb func(reply *tg.Message) 
 		msg, err = e.getMessage(ctx, h.ReplyToMsgID)
 	}
 	if err != nil {
-		if _, err := e.Reply().Text(ctx, fmt.Sprintf("Message %d not found", h.ReplyToMsgID)); err != nil {
+		if _, err := e.Reply().Textf(ctx, "Message %d not found", h.ReplyToMsgID); err != nil {
 			return errors.Wrap(err, "send")
 		}
 		return nil
