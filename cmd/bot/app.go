@@ -245,6 +245,10 @@ func (b *App) Run(ctx context.Context) error {
 			middleware.RequestID(),
 			echozap.ZapLogger(logger.Named("requests")),
 		)
+
+		e.GET("/status", func(c echo.Context) error {
+			return c.String(http.StatusOK, "ok")
+		})
 		webhook.RegisterRoutes(e)
 
 		server := http.Server{
