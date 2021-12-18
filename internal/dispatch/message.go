@@ -71,11 +71,12 @@ func (e MessageEvent) WithReply(ctx context.Context, cb func(reply *tg.Message) 
 
 		msg, err = e.getMessage(ctx, h.ReplyToMsgID)
 	case *tg.InputPeerUser:
-		log.Info("Fetching message", zap.Int64("chat_id", p.UserID))
+		log.Info("Fetching message", zap.Int64("user_id", p.UserID))
 
 		msg, err = e.getMessage(ctx, h.ReplyToMsgID)
 	}
 	if err != nil {
+		log.Warn("Fetch message", zap.Error(err))
 		if _, err := e.Reply().Textf(ctx, "Message %d not found", h.ReplyToMsgID); err != nil {
 			return errors.Wrap(err, "send")
 		}
