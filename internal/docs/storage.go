@@ -95,7 +95,11 @@ func getType(v interface{}) string {
 }
 
 func (s *Search) goName(id uint32) string {
-	return getType(s.goNames[id]())
+	v, ok := s.goNames[id]
+	if !ok {
+		return ""
+	}
+	return getType(v())
 }
 
 // Match searches docs using given text query.
