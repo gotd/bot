@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v33 v33.0.0
 	github.com/gotd/contrib v0.11.0
 	github.com/gotd/getdoc v0.7.0
-	github.com/gotd/td v0.54.0-alpha.3
+	github.com/gotd/td v0.54.0-alpha.4
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/povilasv/prommod v0.0.12
@@ -63,7 +63,7 @@ require (
 	github.com/google/go-github/v29 v29.0.2 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gotd/ige v0.2.2 // indirect
-	github.com/gotd/neo v0.1.4 // indirect
+	github.com/gotd/neo v0.1.5 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
