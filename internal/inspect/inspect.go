@@ -30,7 +30,7 @@ func (h Handler) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
 			return errors.Wrapf(err, "encode message %d", reply.ID)
 		}
 
-		if _, err := e.Reply().StyledText(ctx, styling.Pre(w.String())); err != nil {
+		if _, err := e.Reply().StyledText(ctx, styling.Code(w.String())); err != nil {
 			return errors.Wrap(err, "send")
 		}
 
