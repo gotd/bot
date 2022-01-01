@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v33 v33.0.0
 	github.com/gotd/contrib v0.11.0
 	github.com/gotd/getdoc v0.7.0
-	github.com/gotd/td v0.54.0-alpha.4
+	github.com/gotd/td v0.54.0
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/povilasv/prommod v0.0.12
