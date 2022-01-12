@@ -10,7 +10,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-faster/errors v0.5.0
 	github.com/google/go-github/v33 v33.0.0
-	github.com/gotd/contrib v0.11.0
+	github.com/gotd/contrib v0.12.0
 	github.com/gotd/getdoc v0.7.0
 	github.com/gotd/td v0.54.1
 	github.com/gotd/tl v0.4.0
@@ -48,7 +48,7 @@ require (
 	github.com/blevesearch/zapx/v14 v14.3.2 // indirect
 	github.com/blevesearch/zapx/v15 v15.3.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
-	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cockroachdb/errors v1.8.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f // indirect
 	github.com/cockroachdb/redact v1.0.8 // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/golang/snappy v0.0.3 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-github/v29 v29.0.2 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gotd/ige v0.2.2 // indirect
