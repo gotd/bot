@@ -257,8 +257,8 @@ github.com/gotd/ige v0.2.2/go.mod h1:tuCRb+Y5Y3eNTo3ypIfNpQ4MFjrnONiL2jN2AKZXmb0
 github.com/gotd/neo v0.1.5 h1:oj0iQfMbGClP8xI59x7fE/uHoTJD7NZH9oV1WNuPukQ=
 github.com/gotd/neo v0.1.5/go.mod h1:9A2a4bn9zL6FADufBdt7tZt+WMhvZoc5gWXihOPoiBQ=
 github.com/gotd/td v0.54.1/go.mod h1:db9TAQ741uAJQlfTy835Z8cluBdhqzzxgqg1u9w7YDk=
-github.com/gotd/td v0.55.0 h1:ZrF6hDuE27VLxCQQdHzkoGHY2bZYZdLDfm1D1pWDpyY=
-github.com/gotd/td v0.55.0/go.mod h1:yfUf2+VoVVkqphYJzv/iA/pZKqPKZxFFHOTjoVUilsE=
+github.com/gotd/td v0.55.1 h1:wTlXTzrPJSw+mZbwPnb8Ewhlcu1BsnAABirFtYdjNHY=
+github.com/gotd/td v0.55.1/go.mod h1:yfUf2+VoVVkqphYJzv/iA/pZKqPKZxFFHOTjoVUilsE=
 github.com/gotd/tl v0.4.0 h1:8k2z0drujiPyhpLDa9PRm/yU1Gwlfn3iUzeInPiXwMA=
 github.com/gotd/tl v0.4.0/go.mod h1:CMIcjPWFS4qxxJ+1Ce7U/ilbtPrkoVo/t8uhN5Y/D7c=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
