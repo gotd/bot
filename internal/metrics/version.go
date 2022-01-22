@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-// getVersion optimistically gets current client version.
+// GetVersion optimistically gets current client version.
 //
 // Does not handle replace directives.
-func getVersion() string {
+func GetVersion() string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return ""

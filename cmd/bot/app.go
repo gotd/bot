@@ -314,7 +314,8 @@ func (b *App) Run(ctx context.Context) error {
 				if err != nil {
 					return errors.Wrap(err, "resolve")
 				}
-				if _, err := b.sender.To(p).Text(ctx, "Started"); err != nil {
+				if _, err := b.sender.To(p).Textf(ctx,
+					"Started (%s, layer: %d)", metrics.GetVersion(), tg.Layer); err != nil {
 					return errors.Wrap(err, "send")
 				}
 			}
