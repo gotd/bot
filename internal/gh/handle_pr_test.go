@@ -7,7 +7,7 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/vfs"
 	"github.com/go-faster/errors"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v42/github"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 

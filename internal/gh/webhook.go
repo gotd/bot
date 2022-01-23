@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-faster/errors"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v42/github"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 

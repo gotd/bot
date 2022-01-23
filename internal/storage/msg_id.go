@@ -5,7 +5,7 @@ import (
 
 	"github.com/cockroachdb/pebble"
 	"github.com/go-faster/errors"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v42/github"
 	"go.uber.org/multierr"
 )
 
