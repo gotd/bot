@@ -103,6 +103,8 @@ func (h Webhook) processEvent(e echo.Context, event interface{}, log *zap.Logger
 		return h.handleRepo(ctx, event)
 	case *github.IssuesEvent:
 		return h.handleIssue(ctx, event)
+	case *github.DiscussionEvent:
+		return h.handleDiscussion(ctx, event)
 	default:
 		log.Info("No handler")
 		return nil
