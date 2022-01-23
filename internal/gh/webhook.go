@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-faster/errors"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v42/github"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
@@ -103,6 +103,8 @@ func (h Webhook) processEvent(e echo.Context, event interface{}, log *zap.Logger
 		return h.handleRepo(ctx, event)
 	case *github.IssuesEvent:
 		return h.handleIssue(ctx, event)
+	case *github.DiscussionEvent:
+		return h.handleDiscussion(ctx, event)
 	default:
 		log.Info("No handler")
 		return nil
