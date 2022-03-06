@@ -17,7 +17,6 @@ spec:
       labels:
         app: bot
       annotations:
-        "io.cilium.proxy-visibility": "<Egress/53/UDP/DNS>,<Egress/80/TCP/HTTP>"
         prometheus.io/scrape: 'true'
         prometheus.io/port: '8090'
     spec:
