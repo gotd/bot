@@ -3,3 +3,5 @@ echobot
 /bot
 
 kubeconfig
+
+secret.yaml
