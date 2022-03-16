@@ -17,7 +17,7 @@ require (
 	github.com/labstack/echo/v4 v4.7.1
 	github.com/povilasv/prommod v0.0.12
 	github.com/prometheus/client_golang v1.12.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	go.etcd.io/bbolt v1.3.6
 	go.uber.org/atomic v1.9.0
 	go.uber.org/multierr v1.8.0
