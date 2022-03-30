@@ -3,7 +3,7 @@ module github.com/gotd/bot
 go 1.17
 
 require (
-	github.com/blevesearch/bleve/v2 v2.3.1
+	github.com/blevesearch/bleve/v2 v2.3.2
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.2
 	github.com/cockroachdb/pebble v0.0.0-20211125005712-9791c0f4c052
@@ -36,6 +36,7 @@ require (
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blevesearch/bleve_index_api v1.0.1 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
+	github.com/blevesearch/gtreap v0.1.1 // indirect
 	github.com/blevesearch/mmap-go v1.0.3 // indirect
 	github.com/blevesearch/scorch_segment_api/v2 v2.1.0 // indirect
 	github.com/blevesearch/segment v0.9.0 // indirect
@@ -79,7 +80,6 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/segmentio/asm v1.1.3 // indirect
-	github.com/steveyen/gtreap v0.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
