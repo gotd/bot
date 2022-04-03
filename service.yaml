@@ -4,13 +4,6 @@ metadata:
   namespace: gotd
   name: bot
 spec:
-  # Expose the service on a static port on each node
-  # so that we can access the service from outside the cluster
-  type: NodePort
-
-  # When the node receives a request on the static port (30163)
-  # "select pods with the label 'app' set to 'echo-hostname'"
-  # and forward the request to one of them
   selector:
     app: bot
 
@@ -19,6 +12,29 @@ spec:
     # nodePort - a static port assigned on each the node
     # port - port exposed internally in the cluster
     # targetPort - the container port to send requests to
-    - nodePort: 32080
-      port: 8080
+    - port: 80
       targetPort: 8080
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bot
+  namespace: gotd
+  annotations:
+    # use the shared ingress-nginx
+    kubernetes.io/ingress.class: "nginx"
+  labels:
+    app: status
+spec:
+  rules:
+    - host: bot.gotd.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bot
+                port:
+                  number: 80
