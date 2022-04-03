@@ -3,7 +3,7 @@ module github.com/gotd/bot
 go 1.17
 
 require (
-	github.com/blevesearch/bleve/v2 v2.3.1
+	github.com/blevesearch/bleve/v2 v2.3.2
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.2
 	github.com/cockroachdb/pebble v0.0.0-20211125005712-9791c0f4c052
@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.12.0
 	github.com/gotd/getdoc v0.7.0
-	github.com/gotd/td v0.56.0-alpha.1
+	github.com/gotd/td v0.56.0
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/povilasv/prommod v0.0.12
@@ -36,6 +36,7 @@ require (
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blevesearch/bleve_index_api v1.0.1 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
+	github.com/blevesearch/gtreap v0.1.1 // indirect
 	github.com/blevesearch/mmap-go v1.0.3 // indirect
 	github.com/blevesearch/scorch_segment_api/v2 v2.1.0 // indirect
 	github.com/blevesearch/segment v0.9.0 // indirect
@@ -55,7 +56,7 @@ require (
 	github.com/cockroachdb/sentry-go v0.6.1-cockroachdb.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/go-faster/jx v0.32.1 // indirect
+	github.com/go-faster/jx v0.32.2 // indirect
 	github.com/go-faster/xor v0.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
@@ -65,7 +66,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gotd/ige v0.2.2 // indirect
 	github.com/gotd/neo v0.1.5 // indirect
-	github.com/klauspost/compress v1.14.2 // indirect
+	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
@@ -79,11 +80,10 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/segmentio/asm v1.1.3 // indirect
-	github.com/steveyen/gtreap v0.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e // indirect
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
