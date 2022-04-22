@@ -1,6 +1,7 @@
 echobot
 .idea
 /bot
+cmd/bot/bot
 
 kubeconfig
 
