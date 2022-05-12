@@ -45,7 +45,7 @@ jobs:
             release-go-
 
       - name: Docker log in
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
