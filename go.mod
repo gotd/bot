@@ -8,7 +8,7 @@ require (
 	github.com/brpaz/echozap v1.1.2
 	github.com/cockroachdb/pebble v0.0.0-20211125005712-9791c0f4c052
 	github.com/dustin/go-humanize v1.0.0
-	github.com/go-faster/errors v0.5.0
+	github.com/go-faster/errors v0.6.1
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.12.0
 	github.com/gotd/getdoc v0.7.0
