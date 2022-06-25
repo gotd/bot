@@ -3,10 +3,12 @@ apiVersion: v1
 metadata:
   namespace: gotd
   name: bot
+  labels:
+    app: status
+    prometheus: "true"
 spec:
   selector:
     app: bot
-    prometheus: "true"
   ports:
     - port: 80
       protocol: TCP
