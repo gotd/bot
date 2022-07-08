@@ -130,7 +130,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 			gaps, logger.Named("updates"),
 		),
 		Middlewares: []telegram.Middleware{
-			// mts.Middleware, // HACK(ernado): fix contrib
+			mts.Middleware,
 			updhook.UpdateHook(func(ctx context.Context, u tg.UpdatesClass) error {
 				go func() {
 					if err := gaps.Handle(ctx, u); err != nil {
