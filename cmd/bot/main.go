@@ -15,7 +15,7 @@ func main() {
 	app.Run(func(ctx context.Context, lg *zap.Logger) error {
 		m, err := app.NewMetrics(lg, app.Config{
 			Name:      "bot",
-			Namespace: "faster",
+			Namespace: "gotd",
 			Addr:      os.Getenv("METRICS_ADDR"),
 		})
 		if err != nil {
