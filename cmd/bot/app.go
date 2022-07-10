@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/go-faster/errors"
 	"github.com/google/go-github/v42/github"
+	"github.com/gotd/td/telegram/message/peer"
+	"github.com/gotd/td/telegram/message/styling"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	bolt "go.etcd.io/bbolt"
@@ -25,17 +28,16 @@ import (
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/updates"
 	updhook "github.com/gotd/td/telegram/updates/hook"
 	"github.com/gotd/td/tg"
 
+	"github.com/gotd/bot/internal/app"
 	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/docs"
 	"github.com/gotd/bot/internal/gentext"
 	"github.com/gotd/bot/internal/gh"
-	"github.com/gotd/bot/internal/metrics"
 	"github.com/gotd/bot/internal/storage"
 )
 
@@ -55,15 +57,15 @@ type App struct {
 	mux     dispatch.MessageMux
 	bot     *dispatch.Bot
 
-	gpt2   gentext.Net
-	gpt3   gentext.Net
-	github *github.Client
-	http   *http.Client
-	mts    metrics.Metrics
-	logger *zap.Logger
+	gpt2    gentext.Net
+	gpt3    gentext.Net
+	github  *github.Client
+	http    *http.Client
+	metrics *app.Metrics
+	logger  *zap.Logger
 }
 
-func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
+func InitApp(m *app.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	// Reading app id from env (never hardcode it!).
 	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
 	if err != nil {
@@ -130,7 +132,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 			gaps, logger.Named("updates"),
 		),
 		Middlewares: []telegram.Middleware{
-			mts.Middleware,
+			m.Middleware,
 			updhook.UpdateHook(func(ctx context.Context, u tg.UpdatesClass) error {
 				go func() {
 					if err := gaps.Handle(ctx, u); err != nil {
@@ -151,7 +153,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	}
 
 	mux := dispatch.NewMessageMux()
-	var h dispatch.MessageHandler = metrics.NewMiddleware(mux, dd, mts, metrics.MiddlewareOptions{
+	var h dispatch.MessageHandler = app.NewMiddleware(mux, dd, m, app.MiddlewareOptions{
 		BotAPI: botapi.NewClient(token, botapi.Options{
 			HTTPClient: httpClient,
 		}),
@@ -165,7 +167,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		Register(dispatcher).
 		OnMessage(h)
 
-	app := &App{
+	a := &App{
 		client:       client,
 		token:        token,
 		raw:          raw,
@@ -178,7 +180,7 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		mux:          mux,
 		bot:          b,
 		http:         httpClient,
-		mts:          mts,
+		metrics:      m,
 		logger:       logger,
 	}
 
@@ -187,31 +189,31 @@ func InitApp(mts metrics.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "create search")
 		}
-		app.index = search
+		a.index = search
 		b.OnInline(docs.New(search))
 	}
 
-	gpt2, err := setupGPT2(app.http)
+	gpt2, err := setupGPT2(a.http)
 	if err != nil {
 		return nil, errors.Wrap(err, "setup gpt2")
 	}
-	app.gpt2 = gpt2
+	a.gpt2 = gpt2
 
-	gpt3, err := setupGPT3(app.http)
+	gpt3, err := setupGPT3(a.http)
 	if err != nil {
 		return nil, errors.Wrap(err, "setup gpt3")
 	}
-	app.gpt3 = gpt3
+	a.gpt3 = gpt3
 
 	if v, ok := os.LookupEnv("GITHUB_APP_ID"); ok {
 		ghClient, err := setupGithub(v, httpTransport)
 		if err != nil {
 			return nil, errors.Wrap(err, "setup github")
 		}
-		app.github = ghClient
+		a.github = ghClient
 	}
 
-	return app, nil
+	return a, nil
 }
 
 func (b *App) Close() error {
@@ -314,8 +316,23 @@ func (b *App) Run(ctx context.Context) error {
 				if err != nil {
 					return errors.Wrap(err, "resolve")
 				}
-				if _, err := b.sender.To(p).Textf(ctx,
-					"Started (%s, layer: %d)", metrics.GetVersion(), tg.Layer); err != nil {
+				info, _ := debug.ReadBuildInfo()
+				var commit string
+				for _, c := range info.Settings {
+					switch c.Key {
+					case "vcs.revision":
+						commit = c.Value[:7]
+					}
+				}
+				var options []message.StyledTextOption
+				options = append(options,
+					styling.Plain("🚀 Started "),
+					styling.Italic(fmt.Sprintf("(%s, %s, layer: %d) ",
+						info.GoVersion, app.GetVersion(), tg.Layer),
+					),
+					styling.Code(commit),
+				)
+				if _, err := b.sender.To(p).StyledText(ctx, options...); err != nil {
 					return errors.Wrap(err, "send")
 				}
 			}
@@ -327,20 +344,20 @@ func (b *App) Run(ctx context.Context) error {
 	return group.Wait()
 }
 
-func runBot(ctx context.Context, mts metrics.Metrics, logger *zap.Logger) (rerr error) {
-	app, err := InitApp(mts, logger)
+func runBot(ctx context.Context, m *app.Metrics, logger *zap.Logger) (rerr error) {
+	a, err := InitApp(m, logger)
 	if err != nil {
 		return errors.Wrap(err, "initialize")
 	}
 	defer func() {
-		multierr.AppendInto(&rerr, app.Close())
+		multierr.AppendInto(&rerr, a.Close())
 	}()
 
-	if err := setupBot(app); err != nil {
+	if err := setupBot(a); err != nil {
 		return errors.Wrap(err, "setup")
 	}
 
-	if err := app.Run(ctx); err != nil {
+	if err := a.Run(ctx); err != nil {
 		return errors.Wrap(err, "run")
 	}
 	return nil

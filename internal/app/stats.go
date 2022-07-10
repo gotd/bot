@@ -1,4 +1,4 @@
-package metrics
+package app
 
 import (
 	"context"
@@ -14,11 +14,11 @@ import (
 
 // Handler implements stats request handler.
 type Handler struct {
-	metrics Metrics
+	metrics *Metrics
 }
 
 // NewHandler creates new Handler.
-func NewHandler(m Metrics) Handler {
+func NewHandler(m *Metrics) Handler {
 	return Handler{metrics: m}
 }
 
