@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.13.0
 	github.com/gotd/getdoc v0.11.0
-	github.com/gotd/td v0.65.0
+	github.com/gotd/td v0.66.0
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/povilasv/prommod v0.0.12
@@ -64,7 +64,7 @@ require (
 	github.com/cockroachdb/sentry-go v0.6.1-cockroachdb.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/go-faster/jx v0.38.1 // indirect
+	github.com/go-faster/jx v0.39.0 // indirect
 	github.com/go-faster/xor v0.3.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
