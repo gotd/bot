@@ -11,8 +11,8 @@ require (
 	github.com/go-faster/errors v0.6.1
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.13.0
-	github.com/gotd/getdoc v0.12.0
-	github.com/gotd/td v0.66.0
+	github.com/gotd/getdoc v0.14.0
+	github.com/gotd/td v0.68.0
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.8.0
 	github.com/povilasv/prommod v0.0.12
@@ -99,7 +99,7 @@ require (
 	go.uber.org/ratelimit v0.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e // indirect
-	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
