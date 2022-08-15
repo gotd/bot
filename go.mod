@@ -11,7 +11,7 @@ require (
 	github.com/go-faster/errors v0.6.1
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.13.0
-	github.com/gotd/getdoc v0.12.0
+	github.com/gotd/getdoc v0.14.0
 	github.com/gotd/td v0.66.0
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.8.0
