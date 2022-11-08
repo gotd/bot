@@ -16,7 +16,7 @@ require (
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/povilasv/prommod v0.0.12
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/stretchr/testify v1.8.1
 	go.etcd.io/bbolt v1.3.6
 	go.opentelemetry.io/otel v1.11.1
