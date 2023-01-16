@@ -7,7 +7,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.3
 	github.com/cockroachdb/pebble v0.0.0-20220107203702-aa376a819bf6
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/go-faster/errors v0.6.1
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.13.0
