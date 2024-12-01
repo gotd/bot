@@ -1,0 +1,67 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: gotd
+  name: bot
+  labels:
+    app.kubernetes.io/name: bot
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+      name: http-bot
+    - port: 8081
+      protocol: TCP
+      targetPort: 8081
+      name: http-api
+    - port: 8090
+      protocol: TCP
+      targetPort: 8090
+      name: metrics
+  selector:
+    app.kubernetes.io/name: bot
+  sessionAffinity: None
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bot
+  namespace: gotd
+  labels:
+    app.kubernetes.io/name: bot
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: bot.go-faster.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bot
+            port:
+              name: http-bot
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  namespace: gotd
+  labels:
+    app.kubernetes.io/name: bot
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.go-faster.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bot
+                port:
+                  name: http-api

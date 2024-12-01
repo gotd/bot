@@ -1,0 +1,177 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: gotd
+  name: bot
+  labels:
+    app.kubernetes.io/name: bot
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bot
+        service.opentelemetry.io/name: gotd.bot
+    spec:
+      volumes:
+        - name: atlas
+          secret:
+            secretName: atlas
+      initContainers:
+        - name: migrate
+          image: ghcr.io/gotd/bot/migrate:main
+          volumeMounts:
+            - mountPath: "/root/.config/"
+              name: atlas
+              readOnly: true
+          args:
+            - --config
+            - file://root/.config/atlas.hcl
+            - --env
+            - prod
+            - migrate
+            - apply
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64M
+            limits:
+              cpu: 500m
+              memory: 128M
+      containers:
+        - name: bot
+          image: ghcr.io/gotd/bot:main
+          args:
+            - server
+          startupProbe:
+            httpGet:
+              path: /probe/startup
+              port: http-bot
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /probe/ready
+              port: http-bot
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          ports:
+            - containerPort: 8090
+              protocol: TCP
+              name: metrics
+            - containerPort: 8080
+              protocol: TCP
+              name: http-bot
+            - containerPort: 8081
+              protocol: TCP
+              name: http-api
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256M
+            limits:
+              cpu: "3"
+              memory: 2G
+          env:
+            - name: GOMEMLIMIT
+              value: "2048MiB"
+            - name: GOMAXPROCS
+              value: "3"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: "grpc"
+            - name: OTEL_METRICS_EXPORTER
+              value: "prometheus"
+            - name: OTEL_EXPORTER_PROMETHEUS_PORT
+              value: "8090"
+            - name: OTEL_EXPORTER_PROMETHEUS_HOST
+              value: "0.0.0.0"
+            - name: PPROF_ADDR
+              value: "0.0.0.0:8090"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=gotd.bot"
+            - name: OTEL_LOG_LEVEL
+              value: "DEBUG"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector.monitoring.svc.cluster.local:4317"
+            - name: HOME
+              value: /cache
+            - name: HTTP_BOT_ADDR
+              value: 0.0.0.0:8080
+            - name: HTTP_API_ADDR
+              value: 0.0.0.0:8081
+            - name: TG_NOTIFY_GROUP
+              value: go_faster_news
+            - name: TG_DEPLOY_NOTIFY_GROUP
+              value: go_faster_news
+            - name: BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: BOT_TOKEN
+            - name: APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: APP_ID
+            - name: APP_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: APP_HASH
+            - name: GITHUB_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: GITHUB_PRIVATE_KEY
+            - name: GITHUB_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: GITHUB_SECRET
+            - name: GITHUB_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: GITHUB_APP_ID
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: GITHUB_CLIENT_ID
+            - name: GITHUB_INSTALLATION_ID
+              value: "26766968"
+            - name: OPENAI_PROXY
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: OPENAI_PROXY
+            - name: OPENAI_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: OPENAI_TOKEN
+            - name: CLICKHOUSE_ADDR
+              value: chendpoint-db.clickhouse.svc.cluster.local:9000
+            - name: CLICKHOUSE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: CLICKHOUSE_USER
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: CLICKHOUSE_PASSWORD
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: bot
+                  key: DATABASE_URL

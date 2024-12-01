@@ -7,7 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_TAG: ghcr.io/${{ github.repository }}
+  KUBECTL_VERSION: v1.29.7
 
 jobs:
   deploy:
@@ -19,96 +20,101 @@ jobs:
     env:
       KUBECONFIG: /tmp/kubeconfig
 
+    # Skip deploy commit message contains #skip
+    if: ${{ !contains(github.event.head_commit.message, '!skip') }}
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.19
+          go-version: "1.23.x"
+          cache: false
 
       - name: Get Go environment
         id: go-env
         run: |
-          echo "::set-output name=cache::$(go env GOCACHE)"
-          echo "::set-output name=modcache::$(go env GOMODCACHE)"
+          echo "cache=$(go env GOCACHE)" >> $GITHUB_ENV
+          echo "modcache=$(go env GOMODCACHE)" >> $GITHUB_ENV
+          echo "goversion=$(go env GOVERSION)" >> $GITHUB_ENV
 
       - name: Set up cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
-            ${{ steps.go-env.outputs.cache }}
-            ${{ steps.go-env.outputs.modcache }}
-          key: release-go-${{ hashFiles('**/go.sum') }}
+            ${{ env.cache }}
+            ${{ env.modcache }}
+          key: release-${{ runner.os }}-go-${{ env.goversion }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            release-go-
+            release-${{ runner.os }}-go-${{ env.goversion }}
 
       - name: Docker log in
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Image metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
-            type=edge,branch=main
-            type=sha
+      - name: Get short commit SHA
+        id: var
+        shell: bash
+        run: |
+          echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Go build
         env:
           CGO_ENABLED: 0
         run: go build -v ./cmd/bot
 
-      - name: Image build
-        uses: docker/build-push-action@v3
+      - name: Application image
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: "${{ env.IMAGE_TAG }}:${{ env.sha }}"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Get short commit SHA
-        id: var
-        shell: bash
-        run: |
-          echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+      - name: Migrate image
+        uses: docker/build-push-action@v6
+        with:
+          file: migrate.Dockerfile
+          push: true
+          tags: "${{ env.IMAGE_TAG }}/migrate:${{ env.sha }}"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Generate deployment with SHA version
-        run: sed 's/bot:main/bot:sha-${{ steps.var.outputs.sha }}/g' deployment.yml > deployment.release.yml
+        run: sed 's/:main/:${{ env.sha }}/g' .k8s/deployment.yml > .k8s/deployment.release.yml
 
       - name: Set up kubectl cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/kubectl
-          key: kubectl-v1.22.4
+          key: kubectl-${{ env.KUBECTL_VERSION }}
 
       - name: Check kubectl
         id: "kubectl"
-        uses: andstor/file-existence-action@v2
+        uses: andstor/file-existence-action@v3
         with:
           files: /tmp/kubectl
 
       - name: Download kubectl
         if: steps.kubectl.outputs.files_exists != 'true'
         run: |
-          wget -O /tmp/kubectl "https://dl.k8s.io/release/v1.22.4/bin/linux/amd64/kubectl"
+          wget -O /tmp/kubectl "https://dl.k8s.io/release/${{ env.KUBECTL_VERSION }}/bin/linux/amd64/kubectl"
           chmod +x /tmp/kubectl
 
       - name: Setup kubeconfig
         env:
-          KUBECONFIG_GPG_PASS: ${{ secrets.KUBECONFIG_GPG_PASS }}
-        run: ./kubeconfig.sh
+          KUBE: ${{ secrets.KUBE }}
+        run: .k8s/kubeconfig.sh
 
       - name: Deploy
         run: |
-          /tmp/kubectl apply -f deployment.release.yml
-          /tmp/kubectl -n gotd rollout status deployment/bot
+          /tmp/kubectl apply -f .k8s/deployment.release.yml -f .k8s/service.yaml
+          /tmp/kubectl -n gotd rollout status deployment/bot --timeout=10m
