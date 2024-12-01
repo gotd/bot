@@ -277,6 +277,9 @@ func (b *App) Run(ctx context.Context) error {
 				if _, err := au.Bot(ctx, b.token); err != nil {
 					return errors.Wrap(err, "login")
 				}
+				b.logger.Info("Bot logged in",
+					zap.String("name", status.User.Username),
+				)
 			} else {
 				b.logger.Info("Bot login restored",
 					zap.String("name", status.User.Username),
@@ -315,12 +318,7 @@ func (b *App) Run(ctx context.Context) error {
 				}
 			}
 
-			self, err := b.client.Self(ctx)
-			if err != nil {
-				return errors.Wrap(err, "self")
-			}
-
-			return b.gaps.Run(ctx, b.client.API(), self.ID, updates.AuthOptions{IsBot: true})
+			return b.gaps.Run(ctx, b.client.API(), status.User.ID, updates.AuthOptions{IsBot: status.User.Bot})
 		})
 	})
 	return group.Wait()
