@@ -277,12 +277,6 @@ func (b *App) Run(ctx context.Context) error {
 				if _, err := au.Bot(ctx, b.token); err != nil {
 					return errors.Wrap(err, "login")
 				}
-
-				// Refresh auth status.
-				status, err = au.Status(ctx)
-				if err != nil {
-					return errors.Wrap(err, "auth status")
-				}
 			} else {
 				b.logger.Info("Bot login restored",
 					zap.String("name", status.User.Username),
