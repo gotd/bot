@@ -14,9 +14,18 @@ import (
 	"github.com/brpaz/echozap"
 	"github.com/cockroachdb/pebble"
 	"github.com/go-faster/errors"
+	"github.com/go-faster/sdk/app"
 	"github.com/google/go-github/v42/github"
+	"github.com/gotd/contrib/oteltg"
+	"github.com/gotd/td/session"
+	"github.com/gotd/td/telegram"
+	"github.com/gotd/td/telegram/downloader"
+	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/message/styling"
+	"github.com/gotd/td/telegram/updates"
+	updhook "github.com/gotd/td/telegram/updates/hook"
+	"github.com/gotd/td/tg"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	bolt "go.etcd.io/bbolt"
@@ -24,19 +33,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/gotd/td/session"
-	"github.com/gotd/td/telegram"
-	"github.com/gotd/td/telegram/downloader"
-	"github.com/gotd/td/telegram/message"
-	"github.com/gotd/td/telegram/updates"
-	updhook "github.com/gotd/td/telegram/updates/hook"
-	"github.com/gotd/td/tg"
-
-	"github.com/gotd/bot/internal/app"
+	iapp "github.com/gotd/bot/internal/app"
 	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/docs"
-	"github.com/gotd/bot/internal/gentext"
 	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/storage"
 )
@@ -57,19 +57,21 @@ type App struct {
 	mux     dispatch.MessageMux
 	bot     *dispatch.Bot
 
-	gpt2    gentext.Net
-	gpt3    gentext.Net
-	github  *github.Client
-	http    *http.Client
-	metrics *app.Metrics
-	logger  *zap.Logger
+	github *github.Client
+	http   *http.Client
+	logger *zap.Logger
 }
 
-func InitApp(m *app.Metrics, logger *zap.Logger) (_ *App, rerr error) {
+func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	// Reading app id from env (never hardcode it!).
 	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
 	if err != nil {
 		return nil, errors.Wrapf(err, "APP_ID not set or invalid %q", os.Getenv("APP_ID"))
+	}
+
+	mw, err := oteltg.New(m.MeterProvider(), m.TracerProvider())
+	if err != nil {
+		return nil, errors.Wrap(err, "oteltg")
 	}
 
 	appHash := os.Getenv("APP_HASH")
@@ -132,7 +134,7 @@ func InitApp(m *app.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 			gaps, logger.Named("updates"),
 		),
 		Middlewares: []telegram.Middleware{
-			m.Middleware,
+			mw,
 			updhook.UpdateHook(func(ctx context.Context, u tg.UpdatesClass) error {
 				go func() {
 					if err := gaps.Handle(ctx, u); err != nil {
@@ -153,7 +155,7 @@ func InitApp(m *app.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	}
 
 	mux := dispatch.NewMessageMux()
-	var h dispatch.MessageHandler = app.NewMiddleware(mux, dd, m, app.MiddlewareOptions{
+	var h dispatch.MessageHandler = iapp.NewMiddleware(mux, dd, mm, iapp.MiddlewareOptions{
 		BotAPI: botapi.NewClient(token, botapi.Options{
 			HTTPClient: httpClient,
 		}),
@@ -180,7 +182,6 @@ func InitApp(m *app.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		mux:          mux,
 		bot:          b,
 		http:         httpClient,
-		metrics:      m,
 		logger:       logger,
 	}
 
@@ -192,18 +193,6 @@ func InitApp(m *app.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 		a.index = search
 		b.OnInline(docs.New(search))
 	}
-
-	gpt2, err := setupGPT2(a.http)
-	if err != nil {
-		return nil, errors.Wrap(err, "setup gpt2")
-	}
-	a.gpt2 = gpt2
-
-	gpt3, err := setupGPT3(a.http)
-	if err != nil {
-		return nil, errors.Wrap(err, "setup gpt3")
-	}
-	a.gpt3 = gpt3
 
 	if v, ok := os.LookupEnv("GITHUB_APP_ID"); ok {
 		ghClient, err := setupGithub(v, httpTransport)
@@ -300,11 +289,6 @@ func (b *App) Run(ctx context.Context) error {
 				)
 			}
 
-			if err := b.gaps.Auth(ctx, b.raw, status.User.ID, status.User.Bot, false); err != nil {
-				return err
-			}
-			defer func() { _ = b.gaps.Logout() }()
-
 			if _, disableRegister := os.LookupEnv("DISABLE_COMMAND_REGISTER"); !disableRegister {
 				if err := b.mux.RegisterCommands(ctx, b.raw); err != nil {
 					return errors.Wrap(err, "register commands")
@@ -328,7 +312,7 @@ func (b *App) Run(ctx context.Context) error {
 				options = append(options,
 					styling.Plain("🚀 Started "),
 					styling.Italic(fmt.Sprintf("(%s, %s, layer: %d) ",
-						info.GoVersion, app.GetVersion(), tg.Layer),
+						info.GoVersion, iapp.GetVersion(), tg.Layer),
 					),
 					styling.Code(commit),
 				)
@@ -337,15 +321,19 @@ func (b *App) Run(ctx context.Context) error {
 				}
 			}
 
-			<-ctx.Done()
-			return ctx.Err()
+			self, err := b.client.Self(ctx)
+			if err != nil {
+				return errors.Wrap(err, "self")
+			}
+
+			return b.gaps.Run(ctx, b.client.API(), self.ID, updates.AuthOptions{IsBot: true})
 		})
 	})
 	return group.Wait()
 }
 
-func runBot(ctx context.Context, m *app.Metrics, logger *zap.Logger) (rerr error) {
-	a, err := InitApp(m, logger)
+func runBot(ctx context.Context, m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (rerr error) {
+	a, err := InitApp(m, mm, logger)
 	if err != nil {
 		return errors.Wrap(err, "initialize")
 	}

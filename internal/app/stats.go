@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/dustin/go-humanize"
 	"github.com/gotd/td/tg"
 
 	"github.com/gotd/bot/internal/dispatch"
@@ -14,21 +12,16 @@ import (
 
 // Handler implements stats request handler.
 type Handler struct {
-	metrics *Metrics
 }
 
 // NewHandler creates new Handler.
-func NewHandler(m *Metrics) Handler {
-	return Handler{metrics: m}
+func NewHandler() Handler {
+	return Handler{}
 }
 
 func (h Handler) stats() string {
 	var w strings.Builder
 	fmt.Fprintf(&w, "Statistics:\n\n")
-	fmt.Fprintln(&w, "Messages:", h.metrics.Messages.Load())
-	fmt.Fprintln(&w, "Responses:", h.metrics.Responses.Load())
-	fmt.Fprintln(&w, "Media:", humanize.IBytes(uint64(h.metrics.MediaBytes.Load())))
-	fmt.Fprintln(&w, "Uptime:", time.Since(h.metrics.Start).Round(time.Second))
 	fmt.Fprintln(&w, "TL Layer version:", tg.Layer)
 	if v := GetVersion(); v != "" {
 		fmt.Fprintln(&w, "Version:", v)

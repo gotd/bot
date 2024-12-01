@@ -2,33 +2,30 @@ package main
 
 import (
 	"context"
-	"os"
 
 	"github.com/go-faster/errors"
+	"github.com/go-faster/sdk/app"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 
-	"github.com/gotd/bot/internal/app"
+	iapp "github.com/gotd/bot/internal/app"
 )
 
 func main() {
-	app.Run(func(ctx context.Context, lg *zap.Logger) error {
-		m, err := app.NewMetrics(lg, app.Config{
-			Name:      "bot",
-			Namespace: "gotd",
-			Addr:      os.Getenv("METRICS_ADDR"),
-		})
-		if err != nil {
-			return errors.Wrap(err, "metrics")
+	app.Run(func(ctx context.Context, lg *zap.Logger, m *app.Metrics) error {
+		mx := &iapp.Metrics{}
+		{
+			var err error
+			meter := m.MeterProvider().Meter("gotd.bot")
+			if mx.Bytes, err = meter.Int64Counter("gotd.bot.bytes"); err != nil {
+				return errors.Wrap(err, "bytes")
+			}
+			if mx.Messages, err = meter.Int64Counter("gotd.bot.messages"); err != nil {
+				return errors.Wrap(err, "messages")
+			}
+			if mx.Responses, err = meter.Int64Counter("gotd.bot.responses"); err != nil {
+				return errors.Wrap(err, "responses")
+			}
 		}
-		g, ctx := errgroup.WithContext(ctx)
-		g.Go(func() error {
-			return runBot(ctx, m, lg.Named("bot"))
-		})
-		g.Go(func() error {
-			return m.Run(ctx)
-		})
-
-		return g.Wait()
+		return runBot(ctx, m, mx, lg.Named("bot"))
 	})
 }

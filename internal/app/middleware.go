@@ -8,6 +8,8 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/gotd/td/fileid"
+	"github.com/gotd/td/telegram"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/gotd/td/telegram/downloader"
@@ -16,6 +18,13 @@ import (
 	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 )
+
+type Metrics struct {
+	Messages   metric.Int64Counter
+	Responses  metric.Int64Counter
+	Bytes      metric.Int64Counter
+	Middleware telegram.Middleware
+}
 
 type Middleware struct {
 	next       dispatch.MessageHandler
@@ -65,7 +74,10 @@ func maxSize(sizes []tg.PhotoSizeClass) string {
 func (m Middleware) downloadMedia(ctx context.Context, rpc *tg.Client, loc tg.InputFileLocationClass) error {
 	h := sha256.New()
 	w := &metricWriter{
-		Increase: m.metrics.MediaBytes.Add,
+		Increase: func(n int64) int64 {
+			m.metrics.Bytes.Add(ctx, n)
+			return n
+		},
 	}
 
 	if _, err := m.downloader.Download(rpc, loc).
@@ -151,7 +163,7 @@ func (m Middleware) handleMedia(ctx context.Context, rpc *tg.Client, msg *tg.Mes
 
 // OnMessage implements dispatch.MessageHandler.
 func (m Middleware) OnMessage(ctx context.Context, e dispatch.MessageEvent) error {
-	m.metrics.Messages.Inc()
+	m.metrics.Messages.Add(ctx, 1)
 
 	if err := m.next.OnMessage(ctx, e); err != nil {
 		return err
@@ -161,6 +173,6 @@ func (m Middleware) OnMessage(ctx context.Context, e dispatch.MessageEvent) erro
 		return errors.Wrap(err, "handle media")
 	}
 
-	m.metrics.Responses.Inc()
+	m.metrics.Responses.Add(ctx, 1)
 	return nil
 }

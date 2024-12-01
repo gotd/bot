@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 
@@ -29,7 +30,7 @@ type BoltState struct {
 
 func NewBoltState(db *bolt.DB) *BoltState { return &BoltState{db} }
 
-func (s *BoltState) GetState(userID int64) (state updates.State, found bool, err error) {
+func (s *BoltState) GetState(ctx context.Context, userID int64) (state updates.State, found bool, err error) {
 	tx, err := s.db.Begin(false)
 	if err != nil {
 		return updates.State{}, false, err
@@ -65,7 +66,7 @@ func (s *BoltState) GetState(userID int64) (state updates.State, found bool, err
 	}, true, nil
 }
 
-func (s *BoltState) SetState(userID int64, state updates.State) error {
+func (s *BoltState) SetState(ctx context.Context, userID int64, state updates.State) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -92,7 +93,7 @@ func (s *BoltState) SetState(userID int64, state updates.State) error {
 	})
 }
 
-func (s *BoltState) SetPts(userID int64, pts int) error {
+func (s *BoltState) SetPts(ctx context.Context, userID int64, pts int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -107,7 +108,7 @@ func (s *BoltState) SetPts(userID int64, pts int) error {
 	})
 }
 
-func (s *BoltState) SetQts(userID int64, qts int) error {
+func (s *BoltState) SetQts(ctx context.Context, userID int64, qts int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -122,7 +123,7 @@ func (s *BoltState) SetQts(userID int64, qts int) error {
 	})
 }
 
-func (s *BoltState) SetDate(userID int64, date int) error {
+func (s *BoltState) SetDate(ctx context.Context, userID int64, date int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -137,7 +138,7 @@ func (s *BoltState) SetDate(userID int64, date int) error {
 	})
 }
 
-func (s *BoltState) SetSeq(userID int64, seq int) error {
+func (s *BoltState) SetSeq(ctx context.Context, userID int64, seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -152,7 +153,7 @@ func (s *BoltState) SetSeq(userID int64, seq int) error {
 	})
 }
 
-func (s *BoltState) SetDateSeq(userID int64, date, seq int) error {
+func (s *BoltState) SetDateSeq(ctx context.Context, userID int64, date, seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -170,7 +171,7 @@ func (s *BoltState) SetDateSeq(userID int64, date, seq int) error {
 	})
 }
 
-func (s *BoltState) GetChannelPts(userID, channelID int64) (int, bool, error) {
+func (s *BoltState) GetChannelPts(ctx context.Context, userID, channelID int64) (int, bool, error) {
 	tx, err := s.db.Begin(false)
 	if err != nil {
 		return 0, false, err
@@ -195,7 +196,7 @@ func (s *BoltState) GetChannelPts(userID, channelID int64) (int, bool, error) {
 	return b2i(pts), true, nil
 }
 
-func (s *BoltState) SetChannelPts(userID, channelID int64, pts int) error {
+func (s *BoltState) SetChannelPts(ctx context.Context, userID, channelID int64, pts int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -210,7 +211,7 @@ func (s *BoltState) SetChannelPts(userID, channelID int64, pts int) error {
 	})
 }
 
-func (s *BoltState) ForEachChannels(userID int64, f func(channelID int64, pts int) error) error {
+func (s *BoltState) ForEachChannels(ctx context.Context, userID int64, f func(ctx context.Context, channelID int64, pts int) error) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		user, err := tx.CreateBucketIfNotExists(i642b(userID))
 		if err != nil {
@@ -223,7 +224,7 @@ func (s *BoltState) ForEachChannels(userID int64, f func(channelID int64, pts in
 		}
 
 		return channels.ForEach(func(k, v []byte) error {
-			return f(b2i64(k), b2i(v))
+			return f(ctx, b2i64(k), b2i(v))
 		})
 	})
 }
