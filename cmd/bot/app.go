@@ -43,8 +43,7 @@ type App struct {
 	raw    *tg.Client
 	sender *message.Sender
 
-	stateStorage *BoltState
-	dispatcher   tg.UpdateDispatcher
+	dispatcher tg.UpdateDispatcher
 
 	db      *pebble.DB
 	index   *docs.Search
@@ -245,10 +244,6 @@ func (b *App) Run(ctx context.Context) error {
 					return errors.Wrap(err, "login")
 				}
 				b.logger.Info("Bot logged in")
-				status, err = au.Status(ctx)
-				if err != nil {
-					return errors.Wrap(err, "auth status")
-				}
 			} else {
 				b.logger.Info("Bot login restored",
 					zap.String("name", status.User.Username),
