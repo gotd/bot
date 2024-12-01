@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,12 +22,9 @@ import (
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/telegram/message/peer"
 	"github.com/gotd/td/telegram/message/styling"
-	"github.com/gotd/td/telegram/updates"
-	updhook "github.com/gotd/td/telegram/updates/hook"
 	"github.com/gotd/td/tg"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	bolt "go.etcd.io/bbolt"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -48,7 +44,6 @@ type App struct {
 	sender *message.Sender
 
 	stateStorage *BoltState
-	gaps         *updates.Manager
 	dispatcher   tg.UpdateDispatcher
 
 	db      *pebble.DB
@@ -94,16 +89,6 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 		return nil, errors.Wrap(err, "mkdir")
 	}
 
-	stateDb, err := bolt.Open(filepath.Join(sessionDir, "gaps-state.bbolt"), fs.ModePerm, bolt.DefaultOptions)
-	if err != nil {
-		return nil, errors.Wrap(err, "state database")
-	}
-	defer func() {
-		if rerr != nil {
-			multierr.AppendInto(&rerr, stateDb.Close())
-		}
-	}()
-
 	db, err := pebble.Open(
 		filepath.Join(sessionDir, fmt.Sprintf("bot.%s.state", tokHash(token))),
 		&pebble.Options{},
@@ -118,31 +103,15 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 	}()
 	msgIDStore := storage.NewMsgID(db)
 
-	stateStorage := NewBoltState(stateDb)
 	dispatcher := tg.NewUpdateDispatcher()
-	gaps := updates.New(updates.Config{
-		Handler: dispatcher,
-		Storage: stateStorage,
-		Logger:  logger.Named("gaps"),
-	})
 	client := telegram.NewClient(appID, appHash, telegram.Options{
 		Logger: logger.Named("client"),
 		SessionStorage: &session.FileStorage{
 			Path: filepath.Join(sessionDir, sessionFileName(token)),
 		},
-		UpdateHandler: dispatch.NewLoggedDispatcher(
-			gaps, logger.Named("updates"),
-		),
+		UpdateHandler: dispatcher,
 		Middlewares: []telegram.Middleware{
 			mw,
-			updhook.UpdateHook(func(ctx context.Context, u tg.UpdatesClass) error {
-				go func() {
-					if err := gaps.Handle(ctx, u); err != nil {
-						logger.Error("Handle RPC response update error", zap.Error(err))
-					}
-				}()
-				return nil
-			}),
 		},
 	})
 	raw := client.API()
@@ -170,19 +139,17 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 		OnMessage(h)
 
 	a := &App{
-		client:       client,
-		token:        token,
-		raw:          raw,
-		sender:       sender,
-		stateStorage: stateStorage,
-		gaps:         gaps,
-		dispatcher:   dispatcher,
-		db:           db,
-		storage:      msgIDStore,
-		mux:          mux,
-		bot:          b,
-		http:         httpClient,
-		logger:       logger,
+		client:     client,
+		token:      token,
+		raw:        raw,
+		sender:     sender,
+		dispatcher: dispatcher,
+		db:         db,
+		storage:    msgIDStore,
+		mux:        mux,
+		bot:        b,
+		http:       httpClient,
+		logger:     logger,
 	}
 
 	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
@@ -206,7 +173,7 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 }
 
 func (b *App) Close() error {
-	err := multierr.Append(b.stateStorage.db.Close(), b.db.Close())
+	err := b.db.Close()
 	if b.index != nil {
 		err = multierr.Append(err, b.index.Close())
 	}
@@ -320,7 +287,8 @@ func (b *App) Run(ctx context.Context) error {
 				}
 			}
 
-			return b.gaps.Run(ctx, b.client.API(), status.User.ID, updates.AuthOptions{IsBot: status.User.Bot})
+			<-ctx.Done()
+			return ctx.Err()
 		})
 	})
 	return group.Wait()

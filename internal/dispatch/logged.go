@@ -17,10 +17,9 @@ type LoggedDispatcher struct {
 }
 
 // NewLoggedDispatcher creates new update logging middleware.
-func NewLoggedDispatcher(next telegram.UpdateHandler, log *zap.Logger) LoggedDispatcher {
+func NewLoggedDispatcher(log *zap.Logger) LoggedDispatcher {
 	return LoggedDispatcher{
-		handler: next,
-		log:     log,
+		log: log,
 	}
 }
 
