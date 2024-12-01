@@ -35,7 +35,7 @@ jobs:
           echo "::set-output name=modcache::$(go env GOMODCACHE)"
 
       - name: Set up cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ${{ steps.go-env.outputs.cache }}
@@ -86,7 +86,7 @@ jobs:
         run: sed 's/bot:main/bot:sha-${{ steps.var.outputs.sha }}/g' deployment.yml > deployment.release.yml
 
       - name: Set up kubectl cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/kubectl
           key: kubectl-v1.22.4
