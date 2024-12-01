@@ -93,7 +93,7 @@ jobs:
 
       - name: Check kubectl
         id: "kubectl"
-        uses: andstor/file-existence-action@v2
+        uses: andstor/file-existence-action@v3
         with:
           files: /tmp/kubectl
 
