@@ -277,9 +277,7 @@ func (b *App) Run(ctx context.Context) error {
 				if _, err := au.Bot(ctx, b.token); err != nil {
 					return errors.Wrap(err, "login")
 				}
-				b.logger.Info("Bot logged in",
-					zap.String("name", status.User.Username),
-				)
+				b.logger.Info("Bot logged in")
 			} else {
 				b.logger.Info("Bot login restored",
 					zap.String("name", status.User.Username),
