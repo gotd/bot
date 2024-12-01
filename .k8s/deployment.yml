@@ -106,9 +106,9 @@ spec:
             - name: HTTP_API_ADDR
               value: 0.0.0.0:8081
             - name: TG_NOTIFY_GROUP
-              value: gotd_test
+              value: gotd_deploys
             - name: TG_DEPLOY_NOTIFY_GROUP
-              value: gotd_test
+              value: gotd_deploys
             - name: BOT_TOKEN
               valueFrom:
                 secretKeyRef:

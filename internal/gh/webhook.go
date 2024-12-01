@@ -10,8 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/gotd/td/telegram/message/peer"
-
 	"github.com/gotd/td/telegram/message"
 	"github.com/gotd/td/tg"
 
@@ -112,7 +110,7 @@ func (h Webhook) processEvent(e echo.Context, event interface{}, log *zap.Logger
 }
 
 func (h Webhook) notifyPeer(ctx context.Context) (tg.InputPeerClass, error) {
-	p, err := h.sender.ResolveDomain(h.notifyGroup, peer.OnlyChannel).AsInputPeer(ctx)
+	p, err := h.sender.ResolveDomain(h.notifyGroup).AsInputPeer(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve")
 	}
