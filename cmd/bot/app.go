@@ -14,10 +14,12 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/go-faster/errors"
 	"github.com/go-faster/sdk/app"
+	"github.com/go-faster/sdk/zctx"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/go-github/v42/github"
 	"github.com/gotd/contrib/oteltg"
 	tgredis "github.com/gotd/contrib/redis"
+	"github.com/gotd/td/bin"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
@@ -114,6 +116,11 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 		SessionStorage: tgredis.NewSessionStorage(r, "gotd_bot_session"),
 		UpdateHandler:  dispatcher,
 		Middlewares: []telegram.Middleware{
+			telegram.MiddlewareFunc(func(next tg.Invoker) telegram.InvokeFunc {
+				return func(ctx context.Context, input bin.Encoder, output bin.Decoder) error {
+					return next.Invoke(zctx.Base(ctx, logger), input, output)
+				}
+			}),
 			mw,
 		},
 	})
