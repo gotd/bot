@@ -282,6 +282,11 @@ func (b *App) Run(ctx context.Context) error {
 				}
 			}
 
+			b.logger.Info("Bot started")
+			defer func() {
+				b.logger.Info("Bot stopped")
+			}()
+
 			<-ctx.Done()
 			return ctx.Err()
 		})

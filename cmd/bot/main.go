@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"runtime/debug"
+	"time"
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/sdk/app"
@@ -12,6 +14,14 @@ import (
 
 func main() {
 	app.Run(func(ctx context.Context, lg *zap.Logger, m *app.Metrics) error {
+		defer func() {
+			if r := recover(); r != nil {
+				lg.Error("panic", zap.Any("recover", r))
+				debug.PrintStack()
+			}
+			lg.Info("Stopping")
+			<-time.After(time.Second)
+		}()
 		mx := &iapp.Metrics{}
 		{
 			var err error
