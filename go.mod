@@ -11,6 +11,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.0
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/sdk v0.15.2
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.20.0
 	github.com/gotd/getdoc v0.43.0
@@ -58,6 +59,7 @@ require (
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
 	github.com/go-faster/jx v1.1.0 // indirect
 	github.com/go-faster/xor v1.0.0 // indirect
