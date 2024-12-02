@@ -14,7 +14,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-github/v42 v42.0.0
 	github.com/gotd/contrib v0.20.0
-	github.com/gotd/getdoc v0.43.0
+	github.com/gotd/getdoc v0.44.0
 	github.com/gotd/td v0.113.0
 	github.com/gotd/tl v0.4.0
 	github.com/labstack/echo/v4 v4.12.0
