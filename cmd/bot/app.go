@@ -208,6 +208,13 @@ func (b *App) Run(ctx context.Context) error {
 			echozap.ZapLogger(logger.Named("requests")),
 		)
 
+		e.GET("/probe/startup", func(c echo.Context) error {
+			return c.String(http.StatusOK, "ok")
+		})
+		e.GET("/probe/ready", func(c echo.Context) error {
+			return c.String(http.StatusOK, "ok")
+		})
+
 		e.GET("/status", func(c echo.Context) error {
 			return c.String(http.StatusOK, "ok")
 		})
