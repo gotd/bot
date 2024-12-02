@@ -14,9 +14,10 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/go-faster/errors"
 	"github.com/go-faster/sdk/app"
+	"github.com/go-redis/redis/v8"
 	"github.com/google/go-github/v42/github"
 	"github.com/gotd/contrib/oteltg"
-	"github.com/gotd/td/session"
+	tgredis "github.com/gotd/contrib/redis"
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/downloader"
 	"github.com/gotd/td/telegram/message"
@@ -54,6 +55,7 @@ type App struct {
 	github *github.Client
 	http   *http.Client
 	logger *zap.Logger
+	cache  *redis.Client
 }
 
 func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr error) {
@@ -77,6 +79,10 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 	if token == "" {
 		return nil, errors.New("no BOT_TOKEN provided")
 	}
+
+	r := redis.NewClient(&redis.Options{
+		Addr: "redis:6379",
+	})
 
 	// Setting up session storage.
 	home, err := os.UserHomeDir()
@@ -104,11 +110,9 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 
 	dispatcher := tg.NewUpdateDispatcher()
 	client := telegram.NewClient(appID, appHash, telegram.Options{
-		Logger: logger.Named("client"),
-		SessionStorage: &session.FileStorage{
-			Path: filepath.Join(sessionDir, sessionFileName(token)),
-		},
-		UpdateHandler: dispatcher,
+		Logger:         logger.Named("client"),
+		SessionStorage: tgredis.NewSessionStorage(r, "gotd_bot_session"),
+		UpdateHandler:  dispatcher,
 		Middlewares: []telegram.Middleware{
 			mw,
 		},
@@ -149,6 +153,7 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 		bot:        b,
 		http:       httpClient,
 		logger:     logger,
+		cache:      r,
 	}
 
 	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
