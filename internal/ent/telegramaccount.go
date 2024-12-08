@@ -19,9 +19,9 @@ type TelegramAccount struct {
 	// Phone number without +
 	ID string `json:"id,omitempty"`
 	// Code holds the value of the "code" field.
-	Code string `json:"code,omitempty"`
+	Code *string `json:"code,omitempty"`
 	// CodeAt holds the value of the "code_at" field.
-	CodeAt time.Time `json:"code_at,omitempty"`
+	CodeAt *time.Time `json:"code_at,omitempty"`
 	// State holds the value of the "state" field.
 	State telegramaccount.State `json:"state,omitempty"`
 	// Status holds the value of the "status" field.
@@ -67,13 +67,15 @@ func (ta *TelegramAccount) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field code", values[i])
 			} else if value.Valid {
-				ta.Code = value.String
+				ta.Code = new(string)
+				*ta.Code = value.String
 			}
 		case telegramaccount.FieldCodeAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field code_at", values[i])
 			} else if value.Valid {
-				ta.CodeAt = value.Time
+				ta.CodeAt = new(time.Time)
+				*ta.CodeAt = value.Time
 			}
 		case telegramaccount.FieldState:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -129,11 +131,15 @@ func (ta *TelegramAccount) String() string {
 	var builder strings.Builder
 	builder.WriteString("TelegramAccount(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", ta.ID))
-	builder.WriteString("code=")
-	builder.WriteString(ta.Code)
+	if v := ta.Code; v != nil {
+		builder.WriteString("code=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("code_at=")
-	builder.WriteString(ta.CodeAt.Format(time.ANSIC))
+	if v := ta.CodeAt; v != nil {
+		builder.WriteString("code_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("state=")
 	builder.WriteString(fmt.Sprintf("%v", ta.State))

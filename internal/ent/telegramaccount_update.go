@@ -42,6 +42,12 @@ func (tau *TelegramAccountUpdate) SetNillableCode(s *string) *TelegramAccountUpd
 	return tau
 }
 
+// ClearCode clears the value of the "code" field.
+func (tau *TelegramAccountUpdate) ClearCode() *TelegramAccountUpdate {
+	tau.mutation.ClearCode()
+	return tau
+}
+
 // SetCodeAt sets the "code_at" field.
 func (tau *TelegramAccountUpdate) SetCodeAt(t time.Time) *TelegramAccountUpdate {
 	tau.mutation.SetCodeAt(t)
@@ -53,6 +59,12 @@ func (tau *TelegramAccountUpdate) SetNillableCodeAt(t *time.Time) *TelegramAccou
 	if t != nil {
 		tau.SetCodeAt(*t)
 	}
+	return tau
+}
+
+// ClearCodeAt clears the value of the "code_at" field.
+func (tau *TelegramAccountUpdate) ClearCodeAt() *TelegramAccountUpdate {
+	tau.mutation.ClearCodeAt()
 	return tau
 }
 
@@ -87,6 +99,12 @@ func (tau *TelegramAccountUpdate) SetNillableStatus(s *string) *TelegramAccountU
 // SetSession sets the "session" field.
 func (tau *TelegramAccountUpdate) SetSession(b []byte) *TelegramAccountUpdate {
 	tau.mutation.SetSession(b)
+	return tau
+}
+
+// ClearSession clears the value of the "session" field.
+func (tau *TelegramAccountUpdate) ClearSession() *TelegramAccountUpdate {
+	tau.mutation.ClearSession()
 	return tau
 }
 
@@ -147,8 +165,14 @@ func (tau *TelegramAccountUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := tau.mutation.Code(); ok {
 		_spec.SetField(telegramaccount.FieldCode, field.TypeString, value)
 	}
+	if tau.mutation.CodeCleared() {
+		_spec.ClearField(telegramaccount.FieldCode, field.TypeString)
+	}
 	if value, ok := tau.mutation.CodeAt(); ok {
 		_spec.SetField(telegramaccount.FieldCodeAt, field.TypeTime, value)
+	}
+	if tau.mutation.CodeAtCleared() {
+		_spec.ClearField(telegramaccount.FieldCodeAt, field.TypeTime)
 	}
 	if value, ok := tau.mutation.State(); ok {
 		_spec.SetField(telegramaccount.FieldState, field.TypeEnum, value)
@@ -158,6 +182,9 @@ func (tau *TelegramAccountUpdate) sqlSave(ctx context.Context) (n int, err error
 	}
 	if value, ok := tau.mutation.Session(); ok {
 		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
+	}
+	if tau.mutation.SessionCleared() {
+		_spec.ClearField(telegramaccount.FieldSession, field.TypeBytes)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -193,6 +220,12 @@ func (tauo *TelegramAccountUpdateOne) SetNillableCode(s *string) *TelegramAccoun
 	return tauo
 }
 
+// ClearCode clears the value of the "code" field.
+func (tauo *TelegramAccountUpdateOne) ClearCode() *TelegramAccountUpdateOne {
+	tauo.mutation.ClearCode()
+	return tauo
+}
+
 // SetCodeAt sets the "code_at" field.
 func (tauo *TelegramAccountUpdateOne) SetCodeAt(t time.Time) *TelegramAccountUpdateOne {
 	tauo.mutation.SetCodeAt(t)
@@ -204,6 +237,12 @@ func (tauo *TelegramAccountUpdateOne) SetNillableCodeAt(t *time.Time) *TelegramA
 	if t != nil {
 		tauo.SetCodeAt(*t)
 	}
+	return tauo
+}
+
+// ClearCodeAt clears the value of the "code_at" field.
+func (tauo *TelegramAccountUpdateOne) ClearCodeAt() *TelegramAccountUpdateOne {
+	tauo.mutation.ClearCodeAt()
 	return tauo
 }
 
@@ -238,6 +277,12 @@ func (tauo *TelegramAccountUpdateOne) SetNillableStatus(s *string) *TelegramAcco
 // SetSession sets the "session" field.
 func (tauo *TelegramAccountUpdateOne) SetSession(b []byte) *TelegramAccountUpdateOne {
 	tauo.mutation.SetSession(b)
+	return tauo
+}
+
+// ClearSession clears the value of the "session" field.
+func (tauo *TelegramAccountUpdateOne) ClearSession() *TelegramAccountUpdateOne {
+	tauo.mutation.ClearSession()
 	return tauo
 }
 
@@ -328,8 +373,14 @@ func (tauo *TelegramAccountUpdateOne) sqlSave(ctx context.Context) (_node *Teleg
 	if value, ok := tauo.mutation.Code(); ok {
 		_spec.SetField(telegramaccount.FieldCode, field.TypeString, value)
 	}
+	if tauo.mutation.CodeCleared() {
+		_spec.ClearField(telegramaccount.FieldCode, field.TypeString)
+	}
 	if value, ok := tauo.mutation.CodeAt(); ok {
 		_spec.SetField(telegramaccount.FieldCodeAt, field.TypeTime, value)
+	}
+	if tauo.mutation.CodeAtCleared() {
+		_spec.ClearField(telegramaccount.FieldCodeAt, field.TypeTime)
 	}
 	if value, ok := tauo.mutation.State(); ok {
 		_spec.SetField(telegramaccount.FieldState, field.TypeEnum, value)
@@ -339,6 +390,9 @@ func (tauo *TelegramAccountUpdateOne) sqlSave(ctx context.Context) (_node *Teleg
 	}
 	if value, ok := tauo.mutation.Session(); ok {
 		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
+	}
+	if tauo.mutation.SessionCleared() {
+		_spec.ClearField(telegramaccount.FieldSession, field.TypeBytes)
 	}
 	_node = &TelegramAccount{config: tauo.config}
 	_spec.Assign = _node.assignValues

@@ -29,9 +29,25 @@ func (tac *TelegramAccountCreate) SetCode(s string) *TelegramAccountCreate {
 	return tac
 }
 
+// SetNillableCode sets the "code" field if the given value is not nil.
+func (tac *TelegramAccountCreate) SetNillableCode(s *string) *TelegramAccountCreate {
+	if s != nil {
+		tac.SetCode(*s)
+	}
+	return tac
+}
+
 // SetCodeAt sets the "code_at" field.
 func (tac *TelegramAccountCreate) SetCodeAt(t time.Time) *TelegramAccountCreate {
 	tac.mutation.SetCodeAt(t)
+	return tac
+}
+
+// SetNillableCodeAt sets the "code_at" field if the given value is not nil.
+func (tac *TelegramAccountCreate) SetNillableCodeAt(t *time.Time) *TelegramAccountCreate {
+	if t != nil {
+		tac.SetCodeAt(*t)
+	}
 	return tac
 }
 
@@ -110,12 +126,6 @@ func (tac *TelegramAccountCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (tac *TelegramAccountCreate) check() error {
-	if _, ok := tac.mutation.Code(); !ok {
-		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "TelegramAccount.code"`)}
-	}
-	if _, ok := tac.mutation.CodeAt(); !ok {
-		return &ValidationError{Name: "code_at", err: errors.New(`ent: missing required field "TelegramAccount.code_at"`)}
-	}
 	if _, ok := tac.mutation.State(); !ok {
 		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "TelegramAccount.state"`)}
 	}
@@ -126,9 +136,6 @@ func (tac *TelegramAccountCreate) check() error {
 	}
 	if _, ok := tac.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "TelegramAccount.status"`)}
-	}
-	if _, ok := tac.mutation.Session(); !ok {
-		return &ValidationError{Name: "session", err: errors.New(`ent: missing required field "TelegramAccount.session"`)}
 	}
 	return nil
 }
@@ -168,11 +175,11 @@ func (tac *TelegramAccountCreate) createSpec() (*TelegramAccount, *sqlgraph.Crea
 	}
 	if value, ok := tac.mutation.Code(); ok {
 		_spec.SetField(telegramaccount.FieldCode, field.TypeString, value)
-		_node.Code = value
+		_node.Code = &value
 	}
 	if value, ok := tac.mutation.CodeAt(); ok {
 		_spec.SetField(telegramaccount.FieldCodeAt, field.TypeTime, value)
-		_node.CodeAt = value
+		_node.CodeAt = &value
 	}
 	if value, ok := tac.mutation.State(); ok {
 		_spec.SetField(telegramaccount.FieldState, field.TypeEnum, value)
@@ -250,6 +257,12 @@ func (u *TelegramAccountUpsert) UpdateCode() *TelegramAccountUpsert {
 	return u
 }
 
+// ClearCode clears the value of the "code" field.
+func (u *TelegramAccountUpsert) ClearCode() *TelegramAccountUpsert {
+	u.SetNull(telegramaccount.FieldCode)
+	return u
+}
+
 // SetCodeAt sets the "code_at" field.
 func (u *TelegramAccountUpsert) SetCodeAt(v time.Time) *TelegramAccountUpsert {
 	u.Set(telegramaccount.FieldCodeAt, v)
@@ -259,6 +272,12 @@ func (u *TelegramAccountUpsert) SetCodeAt(v time.Time) *TelegramAccountUpsert {
 // UpdateCodeAt sets the "code_at" field to the value that was provided on create.
 func (u *TelegramAccountUpsert) UpdateCodeAt() *TelegramAccountUpsert {
 	u.SetExcluded(telegramaccount.FieldCodeAt)
+	return u
+}
+
+// ClearCodeAt clears the value of the "code_at" field.
+func (u *TelegramAccountUpsert) ClearCodeAt() *TelegramAccountUpsert {
+	u.SetNull(telegramaccount.FieldCodeAt)
 	return u
 }
 
@@ -295,6 +314,12 @@ func (u *TelegramAccountUpsert) SetSession(v []byte) *TelegramAccountUpsert {
 // UpdateSession sets the "session" field to the value that was provided on create.
 func (u *TelegramAccountUpsert) UpdateSession() *TelegramAccountUpsert {
 	u.SetExcluded(telegramaccount.FieldSession)
+	return u
+}
+
+// ClearSession clears the value of the "session" field.
+func (u *TelegramAccountUpsert) ClearSession() *TelegramAccountUpsert {
+	u.SetNull(telegramaccount.FieldSession)
 	return u
 }
 
@@ -360,6 +385,13 @@ func (u *TelegramAccountUpsertOne) UpdateCode() *TelegramAccountUpsertOne {
 	})
 }
 
+// ClearCode clears the value of the "code" field.
+func (u *TelegramAccountUpsertOne) ClearCode() *TelegramAccountUpsertOne {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.ClearCode()
+	})
+}
+
 // SetCodeAt sets the "code_at" field.
 func (u *TelegramAccountUpsertOne) SetCodeAt(v time.Time) *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
@@ -371,6 +403,13 @@ func (u *TelegramAccountUpsertOne) SetCodeAt(v time.Time) *TelegramAccountUpsert
 func (u *TelegramAccountUpsertOne) UpdateCodeAt() *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateCodeAt()
+	})
+}
+
+// ClearCodeAt clears the value of the "code_at" field.
+func (u *TelegramAccountUpsertOne) ClearCodeAt() *TelegramAccountUpsertOne {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.ClearCodeAt()
 	})
 }
 
@@ -413,6 +452,13 @@ func (u *TelegramAccountUpsertOne) SetSession(v []byte) *TelegramAccountUpsertOn
 func (u *TelegramAccountUpsertOne) UpdateSession() *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateSession()
+	})
+}
+
+// ClearSession clears the value of the "session" field.
+func (u *TelegramAccountUpsertOne) ClearSession() *TelegramAccountUpsertOne {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.ClearSession()
 	})
 }
 
@@ -645,6 +691,13 @@ func (u *TelegramAccountUpsertBulk) UpdateCode() *TelegramAccountUpsertBulk {
 	})
 }
 
+// ClearCode clears the value of the "code" field.
+func (u *TelegramAccountUpsertBulk) ClearCode() *TelegramAccountUpsertBulk {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.ClearCode()
+	})
+}
+
 // SetCodeAt sets the "code_at" field.
 func (u *TelegramAccountUpsertBulk) SetCodeAt(v time.Time) *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
@@ -656,6 +709,13 @@ func (u *TelegramAccountUpsertBulk) SetCodeAt(v time.Time) *TelegramAccountUpser
 func (u *TelegramAccountUpsertBulk) UpdateCodeAt() *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateCodeAt()
+	})
+}
+
+// ClearCodeAt clears the value of the "code_at" field.
+func (u *TelegramAccountUpsertBulk) ClearCodeAt() *TelegramAccountUpsertBulk {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.ClearCodeAt()
 	})
 }
 
@@ -698,6 +758,13 @@ func (u *TelegramAccountUpsertBulk) SetSession(v []byte) *TelegramAccountUpsertB
 func (u *TelegramAccountUpsertBulk) UpdateSession() *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateSession()
+	})
+}
+
+// ClearSession clears the value of the "session" field.
+func (u *TelegramAccountUpsertBulk) ClearSession() *TelegramAccountUpsertBulk {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.ClearSession()
 	})
 }
 

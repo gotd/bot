@@ -1242,7 +1242,7 @@ func (m *TelegramAccountMutation) Code() (r string, exists bool) {
 // OldCode returns the old "code" field's value of the TelegramAccount entity.
 // If the TelegramAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TelegramAccountMutation) OldCode(ctx context.Context) (v string, err error) {
+func (m *TelegramAccountMutation) OldCode(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCode is only allowed on UpdateOne operations")
 	}
@@ -1256,9 +1256,22 @@ func (m *TelegramAccountMutation) OldCode(ctx context.Context) (v string, err er
 	return oldValue.Code, nil
 }
 
+// ClearCode clears the value of the "code" field.
+func (m *TelegramAccountMutation) ClearCode() {
+	m.code = nil
+	m.clearedFields[telegramaccount.FieldCode] = struct{}{}
+}
+
+// CodeCleared returns if the "code" field was cleared in this mutation.
+func (m *TelegramAccountMutation) CodeCleared() bool {
+	_, ok := m.clearedFields[telegramaccount.FieldCode]
+	return ok
+}
+
 // ResetCode resets all changes to the "code" field.
 func (m *TelegramAccountMutation) ResetCode() {
 	m.code = nil
+	delete(m.clearedFields, telegramaccount.FieldCode)
 }
 
 // SetCodeAt sets the "code_at" field.
@@ -1278,7 +1291,7 @@ func (m *TelegramAccountMutation) CodeAt() (r time.Time, exists bool) {
 // OldCodeAt returns the old "code_at" field's value of the TelegramAccount entity.
 // If the TelegramAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TelegramAccountMutation) OldCodeAt(ctx context.Context) (v time.Time, err error) {
+func (m *TelegramAccountMutation) OldCodeAt(ctx context.Context) (v *time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCodeAt is only allowed on UpdateOne operations")
 	}
@@ -1292,9 +1305,22 @@ func (m *TelegramAccountMutation) OldCodeAt(ctx context.Context) (v time.Time, e
 	return oldValue.CodeAt, nil
 }
 
+// ClearCodeAt clears the value of the "code_at" field.
+func (m *TelegramAccountMutation) ClearCodeAt() {
+	m.code_at = nil
+	m.clearedFields[telegramaccount.FieldCodeAt] = struct{}{}
+}
+
+// CodeAtCleared returns if the "code_at" field was cleared in this mutation.
+func (m *TelegramAccountMutation) CodeAtCleared() bool {
+	_, ok := m.clearedFields[telegramaccount.FieldCodeAt]
+	return ok
+}
+
 // ResetCodeAt resets all changes to the "code_at" field.
 func (m *TelegramAccountMutation) ResetCodeAt() {
 	m.code_at = nil
+	delete(m.clearedFields, telegramaccount.FieldCodeAt)
 }
 
 // SetState sets the "state" field.
@@ -1400,9 +1426,22 @@ func (m *TelegramAccountMutation) OldSession(ctx context.Context) (v *[]byte, er
 	return oldValue.Session, nil
 }
 
+// ClearSession clears the value of the "session" field.
+func (m *TelegramAccountMutation) ClearSession() {
+	m.session = nil
+	m.clearedFields[telegramaccount.FieldSession] = struct{}{}
+}
+
+// SessionCleared returns if the "session" field was cleared in this mutation.
+func (m *TelegramAccountMutation) SessionCleared() bool {
+	_, ok := m.clearedFields[telegramaccount.FieldSession]
+	return ok
+}
+
 // ResetSession resets all changes to the "session" field.
 func (m *TelegramAccountMutation) ResetSession() {
 	m.session = nil
+	delete(m.clearedFields, telegramaccount.FieldSession)
 }
 
 // Where appends a list predicates to the TelegramAccountMutation builder.
@@ -1565,7 +1604,17 @@ func (m *TelegramAccountMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *TelegramAccountMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(telegramaccount.FieldCode) {
+		fields = append(fields, telegramaccount.FieldCode)
+	}
+	if m.FieldCleared(telegramaccount.FieldCodeAt) {
+		fields = append(fields, telegramaccount.FieldCodeAt)
+	}
+	if m.FieldCleared(telegramaccount.FieldSession) {
+		fields = append(fields, telegramaccount.FieldSession)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1578,6 +1627,17 @@ func (m *TelegramAccountMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *TelegramAccountMutation) ClearField(name string) error {
+	switch name {
+	case telegramaccount.FieldCode:
+		m.ClearCode()
+		return nil
+	case telegramaccount.FieldCodeAt:
+		m.ClearCodeAt()
+		return nil
+	case telegramaccount.FieldSession:
+		m.ClearSession()
+		return nil
+	}
 	return fmt.Errorf("unknown TelegramAccount nullable field %s", name)
 }
 

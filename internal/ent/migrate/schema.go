@@ -45,11 +45,11 @@ var (
 	// TelegramAccountsColumns holds the columns for the "telegram_accounts" table.
 	TelegramAccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString},
-		{Name: "code", Type: field.TypeString},
-		{Name: "code_at", Type: field.TypeTime},
+		{Name: "code", Type: field.TypeString, Nullable: true},
+		{Name: "code_at", Type: field.TypeTime, Nullable: true},
 		{Name: "state", Type: field.TypeEnum, Enums: []string{"New", "CodeSent", "Active", "Error"}, Default: "New"},
 		{Name: "status", Type: field.TypeString},
-		{Name: "session", Type: field.TypeBytes},
+		{Name: "session", Type: field.TypeBytes, Nullable: true},
 	}
 	// TelegramAccountsTable holds the schema information for the "telegram_accounts" table.
 	TelegramAccountsTable = &schema.Table{

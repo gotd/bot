@@ -12,12 +12,18 @@ type TelegramAccount struct {
 func (TelegramAccount) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").Comment("Phone number without +"),
-		field.String("code"),
-		field.Time("code_at"),
+		field.String("code").
+			Optional().
+			Nillable(),
+		field.Time("code_at").
+			Optional().
+			Nillable(),
 		field.Enum("state").
 			Values("New", "CodeSent", "Active", "Error").Default("New"),
 		field.String("status"),
-		field.Bytes("session").Nillable(),
+		field.Bytes("session").
+			Optional().
+			Nillable(),
 	}
 }
 

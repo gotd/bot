@@ -139,6 +139,16 @@ func CodeHasSuffix(v string) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldHasSuffix(FieldCode, v))
 }
 
+// CodeIsNil applies the IsNil predicate on the "code" field.
+func CodeIsNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldIsNull(FieldCode))
+}
+
+// CodeNotNil applies the NotNil predicate on the "code" field.
+func CodeNotNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldNotNull(FieldCode))
+}
+
 // CodeEqualFold applies the EqualFold predicate on the "code" field.
 func CodeEqualFold(v string) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldEqualFold(FieldCode, v))
@@ -187,6 +197,16 @@ func CodeAtLT(v time.Time) predicate.TelegramAccount {
 // CodeAtLTE applies the LTE predicate on the "code_at" field.
 func CodeAtLTE(v time.Time) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldLTE(FieldCodeAt, v))
+}
+
+// CodeAtIsNil applies the IsNil predicate on the "code_at" field.
+func CodeAtIsNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldIsNull(FieldCodeAt))
+}
+
+// CodeAtNotNil applies the NotNil predicate on the "code_at" field.
+func CodeAtNotNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldNotNull(FieldCodeAt))
 }
 
 // StateEQ applies the EQ predicate on the "state" field.
@@ -312,6 +332,16 @@ func SessionLT(v []byte) predicate.TelegramAccount {
 // SessionLTE applies the LTE predicate on the "session" field.
 func SessionLTE(v []byte) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldLTE(FieldSession, v))
+}
+
+// SessionIsNil applies the IsNil predicate on the "session" field.
+func SessionIsNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldIsNull(FieldSession))
+}
+
+// SessionNotNil applies the NotNil predicate on the "session" field.
+func SessionNotNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldNotNull(FieldSession))
 }
 
 // And groups predicates with the AND operator between them.

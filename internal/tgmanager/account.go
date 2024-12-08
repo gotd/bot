@@ -132,7 +132,7 @@ func (a *Account) WaitForCode(ctx context.Context, code *tg.AuthSentCode) (ret s
 			if err != nil {
 				return "", errors.Wrap(err, "get account")
 			}
-			if acc.Code == "" {
+			if acc.Code == nil || acc.CodeAt == nil || *acc.Code == "" {
 				a.lg.Info("Code not received")
 				continue
 			}
@@ -140,7 +140,7 @@ func (a *Account) WaitForCode(ctx context.Context, code *tg.AuthSentCode) (ret s
 				a.lg.Info("Code expired")
 				continue
 			}
-			return acc.Code, nil
+			return *acc.Code, nil
 		}
 	}
 }
