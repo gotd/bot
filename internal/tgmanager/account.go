@@ -64,6 +64,7 @@ func NewAccount(lg *zap.Logger, db *ent.Client, number string) *Account {
 		DCList: dcs.Test(),
 		Logger: lg.Named("client"),
 		SessionStorage: &SessionStorage{
+			id: number,
 			db: db,
 		},
 	})
