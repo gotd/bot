@@ -81,6 +81,10 @@ func (m *Manager) tick(baseCtx context.Context) (rerr error) {
 func (m *Manager) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
+	m.log.Info("Starting manager")
+	defer func() {
+		m.log.Info("Stopping manager")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
