@@ -79,9 +79,9 @@ func Status(v string) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldEQ(FieldStatus, v))
 }
 
-// Session applies equality check predicate on the "session" field. It's identical to SessionEQ.
-func Session(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldEQ(FieldSession, v))
+// SessionData applies equality check predicate on the "session_data" field. It's identical to SessionDataEQ.
+func SessionData(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldEQ(FieldSessionData, v))
 }
 
 // CodeEQ applies the EQ predicate on the "code" field.
@@ -294,54 +294,54 @@ func StatusContainsFold(v string) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldContainsFold(FieldStatus, v))
 }
 
-// SessionEQ applies the EQ predicate on the "session" field.
-func SessionEQ(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldEQ(FieldSession, v))
+// SessionDataEQ applies the EQ predicate on the "session_data" field.
+func SessionDataEQ(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldEQ(FieldSessionData, v))
 }
 
-// SessionNEQ applies the NEQ predicate on the "session" field.
-func SessionNEQ(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldNEQ(FieldSession, v))
+// SessionDataNEQ applies the NEQ predicate on the "session_data" field.
+func SessionDataNEQ(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldNEQ(FieldSessionData, v))
 }
 
-// SessionIn applies the In predicate on the "session" field.
-func SessionIn(vs ...[]byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldIn(FieldSession, vs...))
+// SessionDataIn applies the In predicate on the "session_data" field.
+func SessionDataIn(vs ...[]byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldIn(FieldSessionData, vs...))
 }
 
-// SessionNotIn applies the NotIn predicate on the "session" field.
-func SessionNotIn(vs ...[]byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldNotIn(FieldSession, vs...))
+// SessionDataNotIn applies the NotIn predicate on the "session_data" field.
+func SessionDataNotIn(vs ...[]byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldNotIn(FieldSessionData, vs...))
 }
 
-// SessionGT applies the GT predicate on the "session" field.
-func SessionGT(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldGT(FieldSession, v))
+// SessionDataGT applies the GT predicate on the "session_data" field.
+func SessionDataGT(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldGT(FieldSessionData, v))
 }
 
-// SessionGTE applies the GTE predicate on the "session" field.
-func SessionGTE(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldGTE(FieldSession, v))
+// SessionDataGTE applies the GTE predicate on the "session_data" field.
+func SessionDataGTE(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldGTE(FieldSessionData, v))
 }
 
-// SessionLT applies the LT predicate on the "session" field.
-func SessionLT(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldLT(FieldSession, v))
+// SessionDataLT applies the LT predicate on the "session_data" field.
+func SessionDataLT(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldLT(FieldSessionData, v))
 }
 
-// SessionLTE applies the LTE predicate on the "session" field.
-func SessionLTE(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldLTE(FieldSession, v))
+// SessionDataLTE applies the LTE predicate on the "session_data" field.
+func SessionDataLTE(v []byte) predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldLTE(FieldSessionData, v))
 }
 
-// SessionIsNil applies the IsNil predicate on the "session" field.
-func SessionIsNil() predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldIsNull(FieldSession))
+// SessionDataIsNil applies the IsNil predicate on the "session_data" field.
+func SessionDataIsNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldIsNull(FieldSessionData))
 }
 
-// SessionNotNil applies the NotNil predicate on the "session" field.
-func SessionNotNil() predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldNotNull(FieldSession))
+// SessionDataNotNil applies the NotNil predicate on the "session_data" field.
+func SessionDataNotNil() predicate.TelegramAccount {
+	return predicate.TelegramAccount(sql.FieldNotNull(FieldSessionData))
 }
 
 // And groups predicates with the AND operator between them.

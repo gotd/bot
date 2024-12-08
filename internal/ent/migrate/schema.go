@@ -49,7 +49,7 @@ var (
 		{Name: "code_at", Type: field.TypeTime, Nullable: true},
 		{Name: "state", Type: field.TypeEnum, Enums: []string{"New", "CodeSent", "Active", "Error"}, Default: "New"},
 		{Name: "status", Type: field.TypeString},
-		{Name: "session", Type: field.TypeBytes, Nullable: true},
+		{Name: "session_data", Type: field.TypeBytes, Nullable: true},
 	}
 	// TelegramAccountsTable holds the schema information for the "telegram_accounts" table.
 	TelegramAccountsTable = &schema.Table{

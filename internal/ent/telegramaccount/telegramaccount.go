@@ -21,8 +21,8 @@ const (
 	FieldState = "state"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldSession holds the string denoting the session field in the database.
-	FieldSession = "session"
+	// FieldSessionData holds the string denoting the session_data field in the database.
+	FieldSessionData = "session_data"
 	// Table holds the table name of the telegramaccount in the database.
 	Table = "telegram_accounts"
 )
@@ -34,7 +34,7 @@ var Columns = []string{
 	FieldCodeAt,
 	FieldState,
 	FieldStatus,
-	FieldSession,
+	FieldSessionData,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

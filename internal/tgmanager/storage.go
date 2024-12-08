@@ -19,15 +19,15 @@ func (s SessionStorage) LoadSession(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get account")
 	}
-	if acc.Session == nil || len(*acc.Session) == 0 {
+	if acc.SessionData == nil || len(*acc.SessionData) == 0 {
 		return nil, session.ErrNotFound
 	}
-	return *acc.Session, nil
+	return *acc.SessionData, nil
 }
 
 func (s SessionStorage) StoreSession(ctx context.Context, data []byte) error {
 	_, err := s.db.TelegramAccount.UpdateOneID(s.id).
-		SetSession(data).
+		SetSessionData(data).
 		Save(ctx)
 	if err != nil {
 		return errors.Wrap(err, "update session")

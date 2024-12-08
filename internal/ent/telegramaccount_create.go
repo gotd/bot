@@ -71,9 +71,9 @@ func (tac *TelegramAccountCreate) SetStatus(s string) *TelegramAccountCreate {
 	return tac
 }
 
-// SetSession sets the "session" field.
-func (tac *TelegramAccountCreate) SetSession(b []byte) *TelegramAccountCreate {
-	tac.mutation.SetSession(b)
+// SetSessionData sets the "session_data" field.
+func (tac *TelegramAccountCreate) SetSessionData(b []byte) *TelegramAccountCreate {
+	tac.mutation.SetSessionData(b)
 	return tac
 }
 
@@ -189,9 +189,9 @@ func (tac *TelegramAccountCreate) createSpec() (*TelegramAccount, *sqlgraph.Crea
 		_spec.SetField(telegramaccount.FieldStatus, field.TypeString, value)
 		_node.Status = value
 	}
-	if value, ok := tac.mutation.Session(); ok {
-		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
-		_node.Session = &value
+	if value, ok := tac.mutation.SessionData(); ok {
+		_spec.SetField(telegramaccount.FieldSessionData, field.TypeBytes, value)
+		_node.SessionData = &value
 	}
 	return _node, _spec
 }
@@ -305,21 +305,21 @@ func (u *TelegramAccountUpsert) UpdateStatus() *TelegramAccountUpsert {
 	return u
 }
 
-// SetSession sets the "session" field.
-func (u *TelegramAccountUpsert) SetSession(v []byte) *TelegramAccountUpsert {
-	u.Set(telegramaccount.FieldSession, v)
+// SetSessionData sets the "session_data" field.
+func (u *TelegramAccountUpsert) SetSessionData(v []byte) *TelegramAccountUpsert {
+	u.Set(telegramaccount.FieldSessionData, v)
 	return u
 }
 
-// UpdateSession sets the "session" field to the value that was provided on create.
-func (u *TelegramAccountUpsert) UpdateSession() *TelegramAccountUpsert {
-	u.SetExcluded(telegramaccount.FieldSession)
+// UpdateSessionData sets the "session_data" field to the value that was provided on create.
+func (u *TelegramAccountUpsert) UpdateSessionData() *TelegramAccountUpsert {
+	u.SetExcluded(telegramaccount.FieldSessionData)
 	return u
 }
 
-// ClearSession clears the value of the "session" field.
-func (u *TelegramAccountUpsert) ClearSession() *TelegramAccountUpsert {
-	u.SetNull(telegramaccount.FieldSession)
+// ClearSessionData clears the value of the "session_data" field.
+func (u *TelegramAccountUpsert) ClearSessionData() *TelegramAccountUpsert {
+	u.SetNull(telegramaccount.FieldSessionData)
 	return u
 }
 
@@ -441,24 +441,24 @@ func (u *TelegramAccountUpsertOne) UpdateStatus() *TelegramAccountUpsertOne {
 	})
 }
 
-// SetSession sets the "session" field.
-func (u *TelegramAccountUpsertOne) SetSession(v []byte) *TelegramAccountUpsertOne {
+// SetSessionData sets the "session_data" field.
+func (u *TelegramAccountUpsertOne) SetSessionData(v []byte) *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
-		s.SetSession(v)
+		s.SetSessionData(v)
 	})
 }
 
-// UpdateSession sets the "session" field to the value that was provided on create.
-func (u *TelegramAccountUpsertOne) UpdateSession() *TelegramAccountUpsertOne {
+// UpdateSessionData sets the "session_data" field to the value that was provided on create.
+func (u *TelegramAccountUpsertOne) UpdateSessionData() *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
-		s.UpdateSession()
+		s.UpdateSessionData()
 	})
 }
 
-// ClearSession clears the value of the "session" field.
-func (u *TelegramAccountUpsertOne) ClearSession() *TelegramAccountUpsertOne {
+// ClearSessionData clears the value of the "session_data" field.
+func (u *TelegramAccountUpsertOne) ClearSessionData() *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
-		s.ClearSession()
+		s.ClearSessionData()
 	})
 }
 
@@ -747,24 +747,24 @@ func (u *TelegramAccountUpsertBulk) UpdateStatus() *TelegramAccountUpsertBulk {
 	})
 }
 
-// SetSession sets the "session" field.
-func (u *TelegramAccountUpsertBulk) SetSession(v []byte) *TelegramAccountUpsertBulk {
+// SetSessionData sets the "session_data" field.
+func (u *TelegramAccountUpsertBulk) SetSessionData(v []byte) *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
-		s.SetSession(v)
+		s.SetSessionData(v)
 	})
 }
 
-// UpdateSession sets the "session" field to the value that was provided on create.
-func (u *TelegramAccountUpsertBulk) UpdateSession() *TelegramAccountUpsertBulk {
+// UpdateSessionData sets the "session_data" field to the value that was provided on create.
+func (u *TelegramAccountUpsertBulk) UpdateSessionData() *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
-		s.UpdateSession()
+		s.UpdateSessionData()
 	})
 }
 
-// ClearSession clears the value of the "session" field.
-func (u *TelegramAccountUpsertBulk) ClearSession() *TelegramAccountUpsertBulk {
+// ClearSessionData clears the value of the "session_data" field.
+func (u *TelegramAccountUpsertBulk) ClearSessionData() *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
-		s.ClearSession()
+		s.ClearSessionData()
 	})
 }
 

@@ -1114,7 +1114,7 @@ type TelegramAccountMutation struct {
 	code_at       *time.Time
 	state         *telegramaccount.State
 	status        *string
-	session       *[]byte
+	session_data  *[]byte
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*TelegramAccount, error)
@@ -1395,53 +1395,53 @@ func (m *TelegramAccountMutation) ResetStatus() {
 	m.status = nil
 }
 
-// SetSession sets the "session" field.
-func (m *TelegramAccountMutation) SetSession(b []byte) {
-	m.session = &b
+// SetSessionData sets the "session_data" field.
+func (m *TelegramAccountMutation) SetSessionData(b []byte) {
+	m.session_data = &b
 }
 
-// Session returns the value of the "session" field in the mutation.
-func (m *TelegramAccountMutation) Session() (r []byte, exists bool) {
-	v := m.session
+// SessionData returns the value of the "session_data" field in the mutation.
+func (m *TelegramAccountMutation) SessionData() (r []byte, exists bool) {
+	v := m.session_data
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldSession returns the old "session" field's value of the TelegramAccount entity.
+// OldSessionData returns the old "session_data" field's value of the TelegramAccount entity.
 // If the TelegramAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TelegramAccountMutation) OldSession(ctx context.Context) (v *[]byte, err error) {
+func (m *TelegramAccountMutation) OldSessionData(ctx context.Context) (v *[]byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSession is only allowed on UpdateOne operations")
+		return v, errors.New("OldSessionData is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSession requires an ID field in the mutation")
+		return v, errors.New("OldSessionData requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSession: %w", err)
+		return v, fmt.Errorf("querying old value for OldSessionData: %w", err)
 	}
-	return oldValue.Session, nil
+	return oldValue.SessionData, nil
 }
 
-// ClearSession clears the value of the "session" field.
-func (m *TelegramAccountMutation) ClearSession() {
-	m.session = nil
-	m.clearedFields[telegramaccount.FieldSession] = struct{}{}
+// ClearSessionData clears the value of the "session_data" field.
+func (m *TelegramAccountMutation) ClearSessionData() {
+	m.session_data = nil
+	m.clearedFields[telegramaccount.FieldSessionData] = struct{}{}
 }
 
-// SessionCleared returns if the "session" field was cleared in this mutation.
-func (m *TelegramAccountMutation) SessionCleared() bool {
-	_, ok := m.clearedFields[telegramaccount.FieldSession]
+// SessionDataCleared returns if the "session_data" field was cleared in this mutation.
+func (m *TelegramAccountMutation) SessionDataCleared() bool {
+	_, ok := m.clearedFields[telegramaccount.FieldSessionData]
 	return ok
 }
 
-// ResetSession resets all changes to the "session" field.
-func (m *TelegramAccountMutation) ResetSession() {
-	m.session = nil
-	delete(m.clearedFields, telegramaccount.FieldSession)
+// ResetSessionData resets all changes to the "session_data" field.
+func (m *TelegramAccountMutation) ResetSessionData() {
+	m.session_data = nil
+	delete(m.clearedFields, telegramaccount.FieldSessionData)
 }
 
 // Where appends a list predicates to the TelegramAccountMutation builder.
@@ -1491,8 +1491,8 @@ func (m *TelegramAccountMutation) Fields() []string {
 	if m.status != nil {
 		fields = append(fields, telegramaccount.FieldStatus)
 	}
-	if m.session != nil {
-		fields = append(fields, telegramaccount.FieldSession)
+	if m.session_data != nil {
+		fields = append(fields, telegramaccount.FieldSessionData)
 	}
 	return fields
 }
@@ -1510,8 +1510,8 @@ func (m *TelegramAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.State()
 	case telegramaccount.FieldStatus:
 		return m.Status()
-	case telegramaccount.FieldSession:
-		return m.Session()
+	case telegramaccount.FieldSessionData:
+		return m.SessionData()
 	}
 	return nil, false
 }
@@ -1529,8 +1529,8 @@ func (m *TelegramAccountMutation) OldField(ctx context.Context, name string) (en
 		return m.OldState(ctx)
 	case telegramaccount.FieldStatus:
 		return m.OldStatus(ctx)
-	case telegramaccount.FieldSession:
-		return m.OldSession(ctx)
+	case telegramaccount.FieldSessionData:
+		return m.OldSessionData(ctx)
 	}
 	return nil, fmt.Errorf("unknown TelegramAccount field %s", name)
 }
@@ -1568,12 +1568,12 @@ func (m *TelegramAccountMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
-	case telegramaccount.FieldSession:
+	case telegramaccount.FieldSessionData:
 		v, ok := value.([]byte)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetSession(v)
+		m.SetSessionData(v)
 		return nil
 	}
 	return fmt.Errorf("unknown TelegramAccount field %s", name)
@@ -1611,8 +1611,8 @@ func (m *TelegramAccountMutation) ClearedFields() []string {
 	if m.FieldCleared(telegramaccount.FieldCodeAt) {
 		fields = append(fields, telegramaccount.FieldCodeAt)
 	}
-	if m.FieldCleared(telegramaccount.FieldSession) {
-		fields = append(fields, telegramaccount.FieldSession)
+	if m.FieldCleared(telegramaccount.FieldSessionData) {
+		fields = append(fields, telegramaccount.FieldSessionData)
 	}
 	return fields
 }
@@ -1634,8 +1634,8 @@ func (m *TelegramAccountMutation) ClearField(name string) error {
 	case telegramaccount.FieldCodeAt:
 		m.ClearCodeAt()
 		return nil
-	case telegramaccount.FieldSession:
-		m.ClearSession()
+	case telegramaccount.FieldSessionData:
+		m.ClearSessionData()
 		return nil
 	}
 	return fmt.Errorf("unknown TelegramAccount nullable field %s", name)
@@ -1657,8 +1657,8 @@ func (m *TelegramAccountMutation) ResetField(name string) error {
 	case telegramaccount.FieldStatus:
 		m.ResetStatus()
 		return nil
-	case telegramaccount.FieldSession:
-		m.ResetSession()
+	case telegramaccount.FieldSessionData:
+		m.ResetSessionData()
 		return nil
 	}
 	return fmt.Errorf("unknown TelegramAccount field %s", name)

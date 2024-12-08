@@ -21,7 +21,7 @@ func (TelegramAccount) Fields() []ent.Field {
 		field.Enum("state").
 			Values("New", "CodeSent", "Active", "Error").Default("New"),
 		field.String("status"),
-		field.Bytes("session").
+		field.Bytes("session_data").
 			Optional().
 			Nillable(),
 	}
