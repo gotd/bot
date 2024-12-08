@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: gotd bot api
+  description: gotd bot api
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8080'
+security:
+  - tokenAuth: []
+paths:
+  /health:
+    get:
+      operationId: "getHealth"
+      description: "get health"
+      responses:
+        200:
+          description: Health
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Health"
+        default:
+          $ref:  "#/components/responses/Error"
+  /telegram/account/create:
+    post:
+      security:
+        - tokenAuth: []
+      operationId: "createTelegramAccount"
+      description: "create telegram account"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+              required:
+                - phone_number
+              properties:
+                phone_number:
+                  $ref: "#/components/schemas/TelegramAccountID"
+      responses:
+        200:
+          description: "Telegram account created"
+          content:
+            "application/json":
+              schema:
+                type: object
+                required:
+                  - account_id
+                properties:
+                  account_id:
+                    $ref: "#/components/schemas/TelegramAccountID"
+        default:
+          $ref:  "#/components/responses/Error"
+  /telegram/account/{id}/set_code:
+    post:
+      security:
+        - tokenAuth: []
+      operationId: "setTelegramAccountCode"
+      description: "set telegram account code"
+      parameters:
+        - $ref: "#/components/parameters/TelegramAccountID"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: "Code"
+                  example: "12345"
+                  pattern: "^[0-9]{3,6}$"
+      responses:
+        200:
+          description: "Telegram account code set"
+          content:
+            "application/json":
+              schema:
+                type: object
+                required:
+                  - account_id
+                properties:
+                  account_id:
+                    $ref: "#/components/schemas/TelegramAccountID"
+        default:
+          $ref:  "#/components/responses/Error"
+components:
+  parameters:
+    TelegramAccountID:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/TelegramAccountID"
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Token
+  schemas:
+    TelegramAccountID:
+      type: string
+      pattern: "^[0-9]{7,15}$"
+      example: 71234567890
+    # Error-related schemas.
+    TraceID:
+      type: string
+      description: W3C trace-id
+      pattern: "[[:xdigit:]]{32}"
+      example: 0af7651916cd43dd8448eb211c80319c
+      externalDocs:
+        url: "https://www.w3.org/TR/trace-context/#trace-id"
+        description: "W3C Trace Context specification"
+    SpanID:
+      type: string
+      description: W3C parent-id (span)
+      pattern: "[[:xdigit:]]{16}"
+      example: b7ad6b7169203331
+      externalDocs:
+        url: "https://www.w3.org/TR/trace-context/#parent-id"
+        description: "W3C Trace Context specification"
+    Error:
+      title: Structured error
+      description: Error occurred while processing request
+      externalDocs:
+        url: "https://pfm.pages.gitlab.corp.mail.ru/docs/dev/spec/v2/errors"
+        description: "Structured error specification"
+      type: object
+      required:
+        - error_message
+        - body
+      properties:
+        error_message:
+          type: string
+          description: "Human-readable error message"
+          example: "Something went wrong"
+        trace_id:
+          $ref: "#/components/schemas/TraceID"
+        span_id:
+          $ref: "#/components/schemas/SpanID"
+
+    # Health-related schemas.
+    Health:
+      type: object
+      required:
+        - status
+        - version
+        - commit
+        - build_date
+      properties:
+        status:
+          type: string
+          description: "Health status"
+          example: "ok"
+        version:
+          type: string
+          description: "Service version"
+          example: "1.0.0"
+        commit:
+          type: string
+          description: "Service commit"
+          example: "c1b2d3f4"
+        build_date:
+          type: string
+          description: "Service build date"
+          example: "2022-01-01T00:00:00Z"
+          format: date-time
+  responses:
+    Error:
+      description: Structured error response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
