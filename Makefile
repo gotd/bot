@@ -17,3 +17,6 @@ build:
 check_generated: generate
 	git diff --exit-code
 .PHONY: check_generated
+
+forward_psql:
+	kubectl -n faster port-forward svc/postgresql 15432:5432

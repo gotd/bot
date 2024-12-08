@@ -22,14 +22,12 @@ type TelegramAccount struct {
 	Code string `json:"code,omitempty"`
 	// CodeAt holds the value of the "code_at" field.
 	CodeAt time.Time `json:"code_at,omitempty"`
-	// Data holds the value of the "data" field.
-	Data []byte `json:"data,omitempty"`
 	// State holds the value of the "state" field.
 	State telegramaccount.State `json:"state,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
 	// Session holds the value of the "session" field.
-	Session      []byte `json:"session,omitempty"`
+	Session      *[]byte `json:"session,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -38,7 +36,7 @@ func (*TelegramAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case telegramaccount.FieldData, telegramaccount.FieldSession:
+		case telegramaccount.FieldSession:
 			values[i] = new([]byte)
 		case telegramaccount.FieldID, telegramaccount.FieldCode, telegramaccount.FieldState, telegramaccount.FieldStatus:
 			values[i] = new(sql.NullString)
@@ -77,12 +75,6 @@ func (ta *TelegramAccount) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				ta.CodeAt = value.Time
 			}
-		case telegramaccount.FieldData:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field data", values[i])
-			} else if value != nil {
-				ta.Data = *value
-			}
 		case telegramaccount.FieldState:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field state", values[i])
@@ -99,7 +91,7 @@ func (ta *TelegramAccount) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field session", values[i])
 			} else if value != nil {
-				ta.Session = *value
+				ta.Session = value
 			}
 		default:
 			ta.selectValues.Set(columns[i], values[i])
@@ -143,17 +135,16 @@ func (ta *TelegramAccount) String() string {
 	builder.WriteString("code_at=")
 	builder.WriteString(ta.CodeAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("data=")
-	builder.WriteString(fmt.Sprintf("%v", ta.Data))
-	builder.WriteString(", ")
 	builder.WriteString("state=")
 	builder.WriteString(fmt.Sprintf("%v", ta.State))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(ta.Status)
 	builder.WriteString(", ")
-	builder.WriteString("session=")
-	builder.WriteString(fmt.Sprintf("%v", ta.Session))
+	if v := ta.Session; v != nil {
+		builder.WriteString("session=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

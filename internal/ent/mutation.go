@@ -1112,7 +1112,6 @@ type TelegramAccountMutation struct {
 	id            *string
 	code          *string
 	code_at       *time.Time
-	data          *[]byte
 	state         *telegramaccount.State
 	status        *string
 	session       *[]byte
@@ -1298,42 +1297,6 @@ func (m *TelegramAccountMutation) ResetCodeAt() {
 	m.code_at = nil
 }
 
-// SetData sets the "data" field.
-func (m *TelegramAccountMutation) SetData(b []byte) {
-	m.data = &b
-}
-
-// Data returns the value of the "data" field in the mutation.
-func (m *TelegramAccountMutation) Data() (r []byte, exists bool) {
-	v := m.data
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldData returns the old "data" field's value of the TelegramAccount entity.
-// If the TelegramAccount object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TelegramAccountMutation) OldData(ctx context.Context) (v []byte, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldData is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldData requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldData: %w", err)
-	}
-	return oldValue.Data, nil
-}
-
-// ResetData resets all changes to the "data" field.
-func (m *TelegramAccountMutation) ResetData() {
-	m.data = nil
-}
-
 // SetState sets the "state" field.
 func (m *TelegramAccountMutation) SetState(t telegramaccount.State) {
 	m.state = &t
@@ -1423,7 +1386,7 @@ func (m *TelegramAccountMutation) Session() (r []byte, exists bool) {
 // OldSession returns the old "session" field's value of the TelegramAccount entity.
 // If the TelegramAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TelegramAccountMutation) OldSession(ctx context.Context) (v []byte, err error) {
+func (m *TelegramAccountMutation) OldSession(ctx context.Context) (v *[]byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSession is only allowed on UpdateOne operations")
 	}
@@ -1476,15 +1439,12 @@ func (m *TelegramAccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TelegramAccountMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 5)
 	if m.code != nil {
 		fields = append(fields, telegramaccount.FieldCode)
 	}
 	if m.code_at != nil {
 		fields = append(fields, telegramaccount.FieldCodeAt)
-	}
-	if m.data != nil {
-		fields = append(fields, telegramaccount.FieldData)
 	}
 	if m.state != nil {
 		fields = append(fields, telegramaccount.FieldState)
@@ -1507,8 +1467,6 @@ func (m *TelegramAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.Code()
 	case telegramaccount.FieldCodeAt:
 		return m.CodeAt()
-	case telegramaccount.FieldData:
-		return m.Data()
 	case telegramaccount.FieldState:
 		return m.State()
 	case telegramaccount.FieldStatus:
@@ -1528,8 +1486,6 @@ func (m *TelegramAccountMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCode(ctx)
 	case telegramaccount.FieldCodeAt:
 		return m.OldCodeAt(ctx)
-	case telegramaccount.FieldData:
-		return m.OldData(ctx)
 	case telegramaccount.FieldState:
 		return m.OldState(ctx)
 	case telegramaccount.FieldStatus:
@@ -1558,13 +1514,6 @@ func (m *TelegramAccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCodeAt(v)
-		return nil
-	case telegramaccount.FieldData:
-		v, ok := value.([]byte)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetData(v)
 		return nil
 	case telegramaccount.FieldState:
 		v, ok := value.(telegramaccount.State)
@@ -1641,9 +1590,6 @@ func (m *TelegramAccountMutation) ResetField(name string) error {
 		return nil
 	case telegramaccount.FieldCodeAt:
 		m.ResetCodeAt()
-		return nil
-	case telegramaccount.FieldData:
-		m.ResetData()
 		return nil
 	case telegramaccount.FieldState:
 		m.ResetState()

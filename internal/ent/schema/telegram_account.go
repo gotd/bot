@@ -14,11 +14,10 @@ func (TelegramAccount) Fields() []ent.Field {
 		field.String("id").Comment("Phone number without +"),
 		field.String("code"),
 		field.Time("code_at"),
-		field.Bytes("data"),
 		field.Enum("state").
 			Values("New", "CodeSent", "Active", "Error").Default("New"),
 		field.String("status"),
-		field.Bytes("session"),
+		field.Bytes("session").Nillable(),
 	}
 }
 

@@ -56,12 +56,6 @@ func (tau *TelegramAccountUpdate) SetNillableCodeAt(t *time.Time) *TelegramAccou
 	return tau
 }
 
-// SetData sets the "data" field.
-func (tau *TelegramAccountUpdate) SetData(b []byte) *TelegramAccountUpdate {
-	tau.mutation.SetData(b)
-	return tau
-}
-
 // SetState sets the "state" field.
 func (tau *TelegramAccountUpdate) SetState(t telegramaccount.State) *TelegramAccountUpdate {
 	tau.mutation.SetState(t)
@@ -156,9 +150,6 @@ func (tau *TelegramAccountUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := tau.mutation.CodeAt(); ok {
 		_spec.SetField(telegramaccount.FieldCodeAt, field.TypeTime, value)
 	}
-	if value, ok := tau.mutation.Data(); ok {
-		_spec.SetField(telegramaccount.FieldData, field.TypeBytes, value)
-	}
 	if value, ok := tau.mutation.State(); ok {
 		_spec.SetField(telegramaccount.FieldState, field.TypeEnum, value)
 	}
@@ -213,12 +204,6 @@ func (tauo *TelegramAccountUpdateOne) SetNillableCodeAt(t *time.Time) *TelegramA
 	if t != nil {
 		tauo.SetCodeAt(*t)
 	}
-	return tauo
-}
-
-// SetData sets the "data" field.
-func (tauo *TelegramAccountUpdateOne) SetData(b []byte) *TelegramAccountUpdateOne {
-	tauo.mutation.SetData(b)
 	return tauo
 }
 
@@ -345,9 +330,6 @@ func (tauo *TelegramAccountUpdateOne) sqlSave(ctx context.Context) (_node *Teleg
 	}
 	if value, ok := tauo.mutation.CodeAt(); ok {
 		_spec.SetField(telegramaccount.FieldCodeAt, field.TypeTime, value)
-	}
-	if value, ok := tauo.mutation.Data(); ok {
-		_spec.SetField(telegramaccount.FieldData, field.TypeBytes, value)
 	}
 	if value, ok := tauo.mutation.State(); ok {
 		_spec.SetField(telegramaccount.FieldState, field.TypeEnum, value)

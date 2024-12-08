@@ -1,4 +1,5 @@
-h1:Uz1D7nU7Ke40WxFeh38qv3n8jW7PzPvvpyQMEPZlBX4=
+h1:jVw8mJ9DWJlb82KnZ9XNQD2RFRWrm4g6r1HSeuk85NM=
 20241202075819_init.sql h1:r0lJLQNwt57c2NIRwSmfUM+3yL/2NOZ4seeGxvzgVj0=
 20241208073032_telegram_account.sql h1:ImERWJTnJnTlfPeZjktBmu+f/jDCVRcnZ9Mhep9W52Y=
 20241208082152_telegram_acc_session.sql h1:7zf4FeSz/FDlB0tknYtu1y4PCDa5G55Q5HckDmwJwVA=
+20241208112252_telegram_acc_nillable.sql h1:bpSNEnZ+iExgRcSmNqBJyFvUtPn9pShWmHSPehlrGfo=

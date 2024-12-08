@@ -19,10 +19,10 @@ func (s SessionStorage) LoadSession(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get account")
 	}
-	if len(acc.Session) == 0 {
+	if acc.Session == nil || len(*acc.Session) == 0 {
 		return nil, session.ErrNotFound
 	}
-	return acc.Session, nil
+	return *acc.Session, nil
 }
 
 func (s SessionStorage) StoreSession(ctx context.Context, data []byte) error {

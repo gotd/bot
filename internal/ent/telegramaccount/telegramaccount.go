@@ -17,8 +17,6 @@ const (
 	FieldCode = "code"
 	// FieldCodeAt holds the string denoting the code_at field in the database.
 	FieldCodeAt = "code_at"
-	// FieldData holds the string denoting the data field in the database.
-	FieldData = "data"
 	// FieldState holds the string denoting the state field in the database.
 	FieldState = "state"
 	// FieldStatus holds the string denoting the status field in the database.
@@ -34,7 +32,6 @@ var Columns = []string{
 	FieldID,
 	FieldCode,
 	FieldCodeAt,
-	FieldData,
 	FieldState,
 	FieldStatus,
 	FieldSession,

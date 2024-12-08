@@ -35,12 +35,6 @@ func (tac *TelegramAccountCreate) SetCodeAt(t time.Time) *TelegramAccountCreate 
 	return tac
 }
 
-// SetData sets the "data" field.
-func (tac *TelegramAccountCreate) SetData(b []byte) *TelegramAccountCreate {
-	tac.mutation.SetData(b)
-	return tac
-}
-
 // SetState sets the "state" field.
 func (tac *TelegramAccountCreate) SetState(t telegramaccount.State) *TelegramAccountCreate {
 	tac.mutation.SetState(t)
@@ -122,9 +116,6 @@ func (tac *TelegramAccountCreate) check() error {
 	if _, ok := tac.mutation.CodeAt(); !ok {
 		return &ValidationError{Name: "code_at", err: errors.New(`ent: missing required field "TelegramAccount.code_at"`)}
 	}
-	if _, ok := tac.mutation.Data(); !ok {
-		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "TelegramAccount.data"`)}
-	}
 	if _, ok := tac.mutation.State(); !ok {
 		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "TelegramAccount.state"`)}
 	}
@@ -183,10 +174,6 @@ func (tac *TelegramAccountCreate) createSpec() (*TelegramAccount, *sqlgraph.Crea
 		_spec.SetField(telegramaccount.FieldCodeAt, field.TypeTime, value)
 		_node.CodeAt = value
 	}
-	if value, ok := tac.mutation.Data(); ok {
-		_spec.SetField(telegramaccount.FieldData, field.TypeBytes, value)
-		_node.Data = value
-	}
 	if value, ok := tac.mutation.State(); ok {
 		_spec.SetField(telegramaccount.FieldState, field.TypeEnum, value)
 		_node.State = value
@@ -197,7 +184,7 @@ func (tac *TelegramAccountCreate) createSpec() (*TelegramAccount, *sqlgraph.Crea
 	}
 	if value, ok := tac.mutation.Session(); ok {
 		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
-		_node.Session = value
+		_node.Session = &value
 	}
 	return _node, _spec
 }
@@ -272,18 +259,6 @@ func (u *TelegramAccountUpsert) SetCodeAt(v time.Time) *TelegramAccountUpsert {
 // UpdateCodeAt sets the "code_at" field to the value that was provided on create.
 func (u *TelegramAccountUpsert) UpdateCodeAt() *TelegramAccountUpsert {
 	u.SetExcluded(telegramaccount.FieldCodeAt)
-	return u
-}
-
-// SetData sets the "data" field.
-func (u *TelegramAccountUpsert) SetData(v []byte) *TelegramAccountUpsert {
-	u.Set(telegramaccount.FieldData, v)
-	return u
-}
-
-// UpdateData sets the "data" field to the value that was provided on create.
-func (u *TelegramAccountUpsert) UpdateData() *TelegramAccountUpsert {
-	u.SetExcluded(telegramaccount.FieldData)
 	return u
 }
 
@@ -396,20 +371,6 @@ func (u *TelegramAccountUpsertOne) SetCodeAt(v time.Time) *TelegramAccountUpsert
 func (u *TelegramAccountUpsertOne) UpdateCodeAt() *TelegramAccountUpsertOne {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateCodeAt()
-	})
-}
-
-// SetData sets the "data" field.
-func (u *TelegramAccountUpsertOne) SetData(v []byte) *TelegramAccountUpsertOne {
-	return u.Update(func(s *TelegramAccountUpsert) {
-		s.SetData(v)
-	})
-}
-
-// UpdateData sets the "data" field to the value that was provided on create.
-func (u *TelegramAccountUpsertOne) UpdateData() *TelegramAccountUpsertOne {
-	return u.Update(func(s *TelegramAccountUpsert) {
-		s.UpdateData()
 	})
 }
 
@@ -695,20 +656,6 @@ func (u *TelegramAccountUpsertBulk) SetCodeAt(v time.Time) *TelegramAccountUpser
 func (u *TelegramAccountUpsertBulk) UpdateCodeAt() *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateCodeAt()
-	})
-}
-
-// SetData sets the "data" field.
-func (u *TelegramAccountUpsertBulk) SetData(v []byte) *TelegramAccountUpsertBulk {
-	return u.Update(func(s *TelegramAccountUpsert) {
-		s.SetData(v)
-	})
-}
-
-// UpdateData sets the "data" field to the value that was provided on create.
-func (u *TelegramAccountUpsertBulk) UpdateData() *TelegramAccountUpsertBulk {
-	return u.Update(func(s *TelegramAccountUpsert) {
-		s.UpdateData()
 	})
 }
 

@@ -74,11 +74,6 @@ func CodeAt(v time.Time) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldEQ(FieldCodeAt, v))
 }
 
-// Data applies equality check predicate on the "data" field. It's identical to DataEQ.
-func Data(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldEQ(FieldData, v))
-}
-
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
 func Status(v string) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldEQ(FieldStatus, v))
@@ -192,46 +187,6 @@ func CodeAtLT(v time.Time) predicate.TelegramAccount {
 // CodeAtLTE applies the LTE predicate on the "code_at" field.
 func CodeAtLTE(v time.Time) predicate.TelegramAccount {
 	return predicate.TelegramAccount(sql.FieldLTE(FieldCodeAt, v))
-}
-
-// DataEQ applies the EQ predicate on the "data" field.
-func DataEQ(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldEQ(FieldData, v))
-}
-
-// DataNEQ applies the NEQ predicate on the "data" field.
-func DataNEQ(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldNEQ(FieldData, v))
-}
-
-// DataIn applies the In predicate on the "data" field.
-func DataIn(vs ...[]byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldIn(FieldData, vs...))
-}
-
-// DataNotIn applies the NotIn predicate on the "data" field.
-func DataNotIn(vs ...[]byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldNotIn(FieldData, vs...))
-}
-
-// DataGT applies the GT predicate on the "data" field.
-func DataGT(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldGT(FieldData, v))
-}
-
-// DataGTE applies the GTE predicate on the "data" field.
-func DataGTE(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldGTE(FieldData, v))
-}
-
-// DataLT applies the LT predicate on the "data" field.
-func DataLT(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldLT(FieldData, v))
-}
-
-// DataLTE applies the LTE predicate on the "data" field.
-func DataLTE(v []byte) predicate.TelegramAccount {
-	return predicate.TelegramAccount(sql.FieldLTE(FieldData, v))
 }
 
 // StateEQ applies the EQ predicate on the "state" field.
