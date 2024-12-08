@@ -155,7 +155,7 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 	if err != nil {
 		return nil, errors.Wrap(err, "open database")
 	}
-	manager, err := tgmanager.NewManager(logger, edb, m.MeterProvider(), m.TracerProvider())
+	manager, err := tgmanager.NewManager(logger.Named("tgmanager"), edb, m.MeterProvider(), m.TracerProvider())
 	if err != nil {
 		return nil, errors.Wrap(err, "manager")
 	}
