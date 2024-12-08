@@ -6,7 +6,6 @@ import (
 	"github.com/gotd/bot/internal/app"
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/inspect"
-	"github.com/gotd/bot/internal/tts"
 )
 
 func setupBot(a *App) error {
@@ -48,6 +47,5 @@ func setupBot(a *App) error {
 	a.mux.Handle("/pp", "Pretty print replied message", inspect.Pretty())
 	a.mux.Handle("/json", "Print JSON of replied message", inspect.JSON())
 	a.mux.Handle("/stat", "Version", app.NewHandler())
-	a.mux.Handle("/tts", "Text to speech", tts.New(a.http))
 	return nil
 }
