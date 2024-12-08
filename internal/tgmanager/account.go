@@ -52,11 +52,12 @@ func (codeAuth) Password(_ context.Context) (string, error) {
 	return "", errors.New("password not supported")
 }
 
-func NewAccount(lg *zap.Logger, db *ent.Client, number string) *Account {
+func NewAccount(lg *zap.Logger, db *ent.Client, tracer trace.Tracer, number string) *Account {
 	acc := &Account{
 		lg:     lg.Named("account"),
 		number: number,
 		db:     db,
+		tracer: tracer,
 	}
 
 	// https://github.com/telegramdesktop/tdesktop/blob/dev/docs/api_credentials.md

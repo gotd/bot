@@ -57,7 +57,7 @@ func (m *Manager) tick(baseCtx context.Context) (rerr error) {
 			continue
 		}
 		lg := m.log.With(zap.String("phone", account.ID))
-		a := NewAccount(lg, m.db, account.ID)
+		a := NewAccount(lg, m.db, m.tracer, account.ID)
 
 		m.mux.Lock()
 		m.accounts[account.ID] = a
