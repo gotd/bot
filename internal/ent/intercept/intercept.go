@@ -11,6 +11,7 @@ import (
 	"github.com/gotd/bot/internal/ent/lastchannelmessage"
 	"github.com/gotd/bot/internal/ent/predicate"
 	"github.com/gotd/bot/internal/ent/prnotification"
+	"github.com/gotd/bot/internal/ent/telegramaccount"
 	"github.com/gotd/bot/internal/ent/telegramchannelstate"
 	"github.com/gotd/bot/internal/ent/telegramsession"
 	"github.com/gotd/bot/internal/ent/telegramuserstate"
@@ -126,6 +127,33 @@ func (f TraversePRNotification) Traverse(ctx context.Context, q ent.Query) error
 	return fmt.Errorf("unexpected query type %T. expect *ent.PRNotificationQuery", q)
 }
 
+// The TelegramAccountFunc type is an adapter to allow the use of ordinary function as a Querier.
+type TelegramAccountFunc func(context.Context, *ent.TelegramAccountQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f TelegramAccountFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.TelegramAccountQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.TelegramAccountQuery", q)
+}
+
+// The TraverseTelegramAccount type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseTelegramAccount func(context.Context, *ent.TelegramAccountQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseTelegramAccount) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseTelegramAccount) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.TelegramAccountQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.TelegramAccountQuery", q)
+}
+
 // The TelegramChannelStateFunc type is an adapter to allow the use of ordinary function as a Querier.
 type TelegramChannelStateFunc func(context.Context, *ent.TelegramChannelStateQuery) (ent.Value, error)
 
@@ -214,6 +242,8 @@ func NewQuery(q ent.Query) (Query, error) {
 		return &query[*ent.LastChannelMessageQuery, predicate.LastChannelMessage, lastchannelmessage.OrderOption]{typ: ent.TypeLastChannelMessage, tq: q}, nil
 	case *ent.PRNotificationQuery:
 		return &query[*ent.PRNotificationQuery, predicate.PRNotification, prnotification.OrderOption]{typ: ent.TypePRNotification, tq: q}, nil
+	case *ent.TelegramAccountQuery:
+		return &query[*ent.TelegramAccountQuery, predicate.TelegramAccount, telegramaccount.OrderOption]{typ: ent.TypeTelegramAccount, tq: q}, nil
 	case *ent.TelegramChannelStateQuery:
 		return &query[*ent.TelegramChannelStateQuery, predicate.TelegramChannelState, telegramchannelstate.OrderOption]{typ: ent.TypeTelegramChannelState, tq: q}, nil
 	case *ent.TelegramSessionQuery:

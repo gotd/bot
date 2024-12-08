@@ -12,6 +12,9 @@ type LastChannelMessage func(*sql.Selector)
 // PRNotification is the predicate function for prnotification builders.
 type PRNotification func(*sql.Selector)
 
+// TelegramAccount is the predicate function for telegramaccount builders.
+type TelegramAccount func(*sql.Selector)
+
 // TelegramChannelState is the predicate function for telegramchannelstate builders.
 type TelegramChannelState func(*sql.Selector)
 

@@ -18,6 +18,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/gotd/bot/internal/ent/lastchannelmessage"
 	"github.com/gotd/bot/internal/ent/prnotification"
+	"github.com/gotd/bot/internal/ent/telegramaccount"
 	"github.com/gotd/bot/internal/ent/telegramchannelstate"
 	"github.com/gotd/bot/internal/ent/telegramsession"
 	"github.com/gotd/bot/internal/ent/telegramuserstate"
@@ -32,6 +33,8 @@ type Client struct {
 	LastChannelMessage *LastChannelMessageClient
 	// PRNotification is the client for interacting with the PRNotification builders.
 	PRNotification *PRNotificationClient
+	// TelegramAccount is the client for interacting with the TelegramAccount builders.
+	TelegramAccount *TelegramAccountClient
 	// TelegramChannelState is the client for interacting with the TelegramChannelState builders.
 	TelegramChannelState *TelegramChannelStateClient
 	// TelegramSession is the client for interacting with the TelegramSession builders.
@@ -51,6 +54,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.LastChannelMessage = NewLastChannelMessageClient(c.config)
 	c.PRNotification = NewPRNotificationClient(c.config)
+	c.TelegramAccount = NewTelegramAccountClient(c.config)
 	c.TelegramChannelState = NewTelegramChannelStateClient(c.config)
 	c.TelegramSession = NewTelegramSessionClient(c.config)
 	c.TelegramUserState = NewTelegramUserStateClient(c.config)
@@ -148,6 +152,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:               cfg,
 		LastChannelMessage:   NewLastChannelMessageClient(cfg),
 		PRNotification:       NewPRNotificationClient(cfg),
+		TelegramAccount:      NewTelegramAccountClient(cfg),
 		TelegramChannelState: NewTelegramChannelStateClient(cfg),
 		TelegramSession:      NewTelegramSessionClient(cfg),
 		TelegramUserState:    NewTelegramUserStateClient(cfg),
@@ -172,6 +177,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:               cfg,
 		LastChannelMessage:   NewLastChannelMessageClient(cfg),
 		PRNotification:       NewPRNotificationClient(cfg),
+		TelegramAccount:      NewTelegramAccountClient(cfg),
 		TelegramChannelState: NewTelegramChannelStateClient(cfg),
 		TelegramSession:      NewTelegramSessionClient(cfg),
 		TelegramUserState:    NewTelegramUserStateClient(cfg),
@@ -203,21 +209,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.LastChannelMessage.Use(hooks...)
-	c.PRNotification.Use(hooks...)
-	c.TelegramChannelState.Use(hooks...)
-	c.TelegramSession.Use(hooks...)
-	c.TelegramUserState.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.LastChannelMessage, c.PRNotification, c.TelegramAccount,
+		c.TelegramChannelState, c.TelegramSession, c.TelegramUserState,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.LastChannelMessage.Intercept(interceptors...)
-	c.PRNotification.Intercept(interceptors...)
-	c.TelegramChannelState.Intercept(interceptors...)
-	c.TelegramSession.Intercept(interceptors...)
-	c.TelegramUserState.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.LastChannelMessage, c.PRNotification, c.TelegramAccount,
+		c.TelegramChannelState, c.TelegramSession, c.TelegramUserState,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -227,6 +235,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.LastChannelMessage.mutate(ctx, m)
 	case *PRNotificationMutation:
 		return c.PRNotification.mutate(ctx, m)
+	case *TelegramAccountMutation:
+		return c.TelegramAccount.mutate(ctx, m)
 	case *TelegramChannelStateMutation:
 		return c.TelegramChannelState.mutate(ctx, m)
 	case *TelegramSessionMutation:
@@ -501,6 +511,139 @@ func (c *PRNotificationClient) mutate(ctx context.Context, m *PRNotificationMuta
 		return (&PRNotificationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown PRNotification mutation op: %q", m.Op())
+	}
+}
+
+// TelegramAccountClient is a client for the TelegramAccount schema.
+type TelegramAccountClient struct {
+	config
+}
+
+// NewTelegramAccountClient returns a client for the TelegramAccount from the given config.
+func NewTelegramAccountClient(c config) *TelegramAccountClient {
+	return &TelegramAccountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `telegramaccount.Hooks(f(g(h())))`.
+func (c *TelegramAccountClient) Use(hooks ...Hook) {
+	c.hooks.TelegramAccount = append(c.hooks.TelegramAccount, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `telegramaccount.Intercept(f(g(h())))`.
+func (c *TelegramAccountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TelegramAccount = append(c.inters.TelegramAccount, interceptors...)
+}
+
+// Create returns a builder for creating a TelegramAccount entity.
+func (c *TelegramAccountClient) Create() *TelegramAccountCreate {
+	mutation := newTelegramAccountMutation(c.config, OpCreate)
+	return &TelegramAccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TelegramAccount entities.
+func (c *TelegramAccountClient) CreateBulk(builders ...*TelegramAccountCreate) *TelegramAccountCreateBulk {
+	return &TelegramAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TelegramAccountClient) MapCreateBulk(slice any, setFunc func(*TelegramAccountCreate, int)) *TelegramAccountCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TelegramAccountCreateBulk{err: fmt.Errorf("calling to TelegramAccountClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TelegramAccountCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TelegramAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TelegramAccount.
+func (c *TelegramAccountClient) Update() *TelegramAccountUpdate {
+	mutation := newTelegramAccountMutation(c.config, OpUpdate)
+	return &TelegramAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TelegramAccountClient) UpdateOne(ta *TelegramAccount) *TelegramAccountUpdateOne {
+	mutation := newTelegramAccountMutation(c.config, OpUpdateOne, withTelegramAccount(ta))
+	return &TelegramAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TelegramAccountClient) UpdateOneID(id string) *TelegramAccountUpdateOne {
+	mutation := newTelegramAccountMutation(c.config, OpUpdateOne, withTelegramAccountID(id))
+	return &TelegramAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TelegramAccount.
+func (c *TelegramAccountClient) Delete() *TelegramAccountDelete {
+	mutation := newTelegramAccountMutation(c.config, OpDelete)
+	return &TelegramAccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TelegramAccountClient) DeleteOne(ta *TelegramAccount) *TelegramAccountDeleteOne {
+	return c.DeleteOneID(ta.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TelegramAccountClient) DeleteOneID(id string) *TelegramAccountDeleteOne {
+	builder := c.Delete().Where(telegramaccount.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TelegramAccountDeleteOne{builder}
+}
+
+// Query returns a query builder for TelegramAccount.
+func (c *TelegramAccountClient) Query() *TelegramAccountQuery {
+	return &TelegramAccountQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTelegramAccount},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TelegramAccount entity by its id.
+func (c *TelegramAccountClient) Get(ctx context.Context, id string) (*TelegramAccount, error) {
+	return c.Query().Where(telegramaccount.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TelegramAccountClient) GetX(ctx context.Context, id string) *TelegramAccount {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TelegramAccountClient) Hooks() []Hook {
+	return c.hooks.TelegramAccount
+}
+
+// Interceptors returns the client interceptors.
+func (c *TelegramAccountClient) Interceptors() []Interceptor {
+	return c.inters.TelegramAccount
+}
+
+func (c *TelegramAccountClient) mutate(ctx context.Context, m *TelegramAccountMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TelegramAccountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TelegramAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TelegramAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TelegramAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TelegramAccount mutation op: %q", m.Op())
 	}
 }
 
@@ -938,11 +1081,11 @@ func (c *TelegramUserStateClient) mutate(ctx context.Context, m *TelegramUserSta
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		LastChannelMessage, PRNotification, TelegramChannelState, TelegramSession,
-		TelegramUserState []ent.Hook
+		LastChannelMessage, PRNotification, TelegramAccount, TelegramChannelState,
+		TelegramSession, TelegramUserState []ent.Hook
 	}
 	inters struct {
-		LastChannelMessage, PRNotification, TelegramChannelState, TelegramSession,
-		TelegramUserState []ent.Interceptor
+		LastChannelMessage, PRNotification, TelegramAccount, TelegramChannelState,
+		TelegramSession, TelegramUserState []ent.Interceptor
 	}
 )

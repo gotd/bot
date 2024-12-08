@@ -16,6 +16,8 @@ type Tx struct {
 	LastChannelMessage *LastChannelMessageClient
 	// PRNotification is the client for interacting with the PRNotification builders.
 	PRNotification *PRNotificationClient
+	// TelegramAccount is the client for interacting with the TelegramAccount builders.
+	TelegramAccount *TelegramAccountClient
 	// TelegramChannelState is the client for interacting with the TelegramChannelState builders.
 	TelegramChannelState *TelegramChannelStateClient
 	// TelegramSession is the client for interacting with the TelegramSession builders.
@@ -155,6 +157,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.LastChannelMessage = NewLastChannelMessageClient(tx.config)
 	tx.PRNotification = NewPRNotificationClient(tx.config)
+	tx.TelegramAccount = NewTelegramAccountClient(tx.config)
 	tx.TelegramChannelState = NewTelegramChannelStateClient(tx.config)
 	tx.TelegramSession = NewTelegramSessionClient(tx.config)
 	tx.TelegramUserState = NewTelegramUserStateClient(tx.config)

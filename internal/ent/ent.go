@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/gotd/bot/internal/ent/lastchannelmessage"
 	"github.com/gotd/bot/internal/ent/prnotification"
+	"github.com/gotd/bot/internal/ent/telegramaccount"
 	"github.com/gotd/bot/internal/ent/telegramchannelstate"
 	"github.com/gotd/bot/internal/ent/telegramsession"
 	"github.com/gotd/bot/internal/ent/telegramuserstate"
@@ -79,6 +80,7 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			lastchannelmessage.Table:   lastchannelmessage.ValidColumn,
 			prnotification.Table:       prnotification.ValidColumn,
+			telegramaccount.Table:      telegramaccount.ValidColumn,
 			telegramchannelstate.Table: telegramchannelstate.ValidColumn,
 			telegramsession.Table:      telegramsession.ValidColumn,
 			telegramuserstate.Table:    telegramuserstate.ValidColumn,

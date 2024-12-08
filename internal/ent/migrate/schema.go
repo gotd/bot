@@ -42,6 +42,21 @@ var (
 			},
 		},
 	}
+	// TelegramAccountsColumns holds the columns for the "telegram_accounts" table.
+	TelegramAccountsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "code", Type: field.TypeString},
+		{Name: "code_at", Type: field.TypeTime},
+		{Name: "data", Type: field.TypeBytes},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"New", "CodeSent", "Active", "Error"}},
+		{Name: "status", Type: field.TypeString},
+	}
+	// TelegramAccountsTable holds the schema information for the "telegram_accounts" table.
+	TelegramAccountsTable = &schema.Table{
+		Name:       "telegram_accounts",
+		Columns:    TelegramAccountsColumns,
+		PrimaryKey: []*schema.Column{TelegramAccountsColumns[0]},
+	}
 	// TelegramChannelStatesColumns holds the columns for the "telegram_channel_states" table.
 	TelegramChannelStatesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -99,6 +114,7 @@ var (
 	Tables = []*schema.Table{
 		LastChannelMessagesTable,
 		PrNotificationsTable,
+		TelegramAccountsTable,
 		TelegramChannelStatesTable,
 		TelegramSessionsTable,
 		TelegramUserStatesTable,

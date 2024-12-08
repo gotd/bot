@@ -33,6 +33,18 @@ func (f PRNotificationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PRNotificationMutation", m)
 }
 
+// The TelegramAccountFunc type is an adapter to allow the use of ordinary
+// function as TelegramAccount mutator.
+type TelegramAccountFunc func(context.Context, *ent.TelegramAccountMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TelegramAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TelegramAccountMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TelegramAccountMutation", m)
+}
+
 // The TelegramChannelStateFunc type is an adapter to allow the use of ordinary
 // function as TelegramChannelState mutator.
 type TelegramChannelStateFunc func(context.Context, *ent.TelegramChannelStateMutation) (ent.Value, error)
