@@ -1115,6 +1115,7 @@ type TelegramAccountMutation struct {
 	data          *[]byte
 	state         *telegramaccount.State
 	status        *string
+	session       *[]byte
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*TelegramAccount, error)
@@ -1405,6 +1406,42 @@ func (m *TelegramAccountMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetSession sets the "session" field.
+func (m *TelegramAccountMutation) SetSession(b []byte) {
+	m.session = &b
+}
+
+// Session returns the value of the "session" field in the mutation.
+func (m *TelegramAccountMutation) Session() (r []byte, exists bool) {
+	v := m.session
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSession returns the old "session" field's value of the TelegramAccount entity.
+// If the TelegramAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TelegramAccountMutation) OldSession(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSession is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSession requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSession: %w", err)
+	}
+	return oldValue.Session, nil
+}
+
+// ResetSession resets all changes to the "session" field.
+func (m *TelegramAccountMutation) ResetSession() {
+	m.session = nil
+}
+
 // Where appends a list predicates to the TelegramAccountMutation builder.
 func (m *TelegramAccountMutation) Where(ps ...predicate.TelegramAccount) {
 	m.predicates = append(m.predicates, ps...)
@@ -1439,7 +1476,7 @@ func (m *TelegramAccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TelegramAccountMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.code != nil {
 		fields = append(fields, telegramaccount.FieldCode)
 	}
@@ -1454,6 +1491,9 @@ func (m *TelegramAccountMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, telegramaccount.FieldStatus)
+	}
+	if m.session != nil {
+		fields = append(fields, telegramaccount.FieldSession)
 	}
 	return fields
 }
@@ -1473,6 +1513,8 @@ func (m *TelegramAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.State()
 	case telegramaccount.FieldStatus:
 		return m.Status()
+	case telegramaccount.FieldSession:
+		return m.Session()
 	}
 	return nil, false
 }
@@ -1492,6 +1534,8 @@ func (m *TelegramAccountMutation) OldField(ctx context.Context, name string) (en
 		return m.OldState(ctx)
 	case telegramaccount.FieldStatus:
 		return m.OldStatus(ctx)
+	case telegramaccount.FieldSession:
+		return m.OldSession(ctx)
 	}
 	return nil, fmt.Errorf("unknown TelegramAccount field %s", name)
 }
@@ -1535,6 +1579,13 @@ func (m *TelegramAccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case telegramaccount.FieldSession:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSession(v)
 		return nil
 	}
 	return fmt.Errorf("unknown TelegramAccount field %s", name)
@@ -1599,6 +1650,9 @@ func (m *TelegramAccountMutation) ResetField(name string) error {
 		return nil
 	case telegramaccount.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case telegramaccount.FieldSession:
+		m.ResetSession()
 		return nil
 	}
 	return fmt.Errorf("unknown TelegramAccount field %s", name)

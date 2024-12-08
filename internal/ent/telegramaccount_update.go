@@ -90,6 +90,12 @@ func (tau *TelegramAccountUpdate) SetNillableStatus(s *string) *TelegramAccountU
 	return tau
 }
 
+// SetSession sets the "session" field.
+func (tau *TelegramAccountUpdate) SetSession(b []byte) *TelegramAccountUpdate {
+	tau.mutation.SetSession(b)
+	return tau
+}
+
 // Mutation returns the TelegramAccountMutation object of the builder.
 func (tau *TelegramAccountUpdate) Mutation() *TelegramAccountMutation {
 	return tau.mutation
@@ -158,6 +164,9 @@ func (tau *TelegramAccountUpdate) sqlSave(ctx context.Context) (n int, err error
 	}
 	if value, ok := tau.mutation.Status(); ok {
 		_spec.SetField(telegramaccount.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := tau.mutation.Session(); ok {
+		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -238,6 +247,12 @@ func (tauo *TelegramAccountUpdateOne) SetNillableStatus(s *string) *TelegramAcco
 	if s != nil {
 		tauo.SetStatus(*s)
 	}
+	return tauo
+}
+
+// SetSession sets the "session" field.
+func (tauo *TelegramAccountUpdateOne) SetSession(b []byte) *TelegramAccountUpdateOne {
+	tauo.mutation.SetSession(b)
 	return tauo
 }
 
@@ -339,6 +354,9 @@ func (tauo *TelegramAccountUpdateOne) sqlSave(ctx context.Context) (_node *Teleg
 	}
 	if value, ok := tauo.mutation.Status(); ok {
 		_spec.SetField(telegramaccount.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := tauo.mutation.Session(); ok {
+		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
 	}
 	_node = &TelegramAccount{config: tauo.config}
 	_spec.Assign = _node.assignValues

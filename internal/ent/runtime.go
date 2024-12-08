@@ -27,6 +27,8 @@ func init() {
 	prnotificationDescPullRequestAuthorLogin := prnotificationFields[4].Descriptor()
 	// prnotification.DefaultPullRequestAuthorLogin holds the default value on creation for the pull_request_author_login field.
 	prnotification.DefaultPullRequestAuthorLogin = prnotificationDescPullRequestAuthorLogin.Default.(string)
+	telegramaccountFields := schema.TelegramAccount{}.Fields()
+	_ = telegramaccountFields
 	telegramchannelstateFields := schema.TelegramChannelState{}.Fields()
 	_ = telegramchannelstateFields
 	// telegramchannelstateDescPts is the schema descriptor for pts field.

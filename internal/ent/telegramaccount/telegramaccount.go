@@ -23,6 +23,8 @@ const (
 	FieldState = "state"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldSession holds the string denoting the session field in the database.
+	FieldSession = "session"
 	// Table holds the table name of the telegramaccount in the database.
 	Table = "telegram_accounts"
 )
@@ -35,6 +37,7 @@ var Columns = []string{
 	FieldData,
 	FieldState,
 	FieldStatus,
+	FieldSession,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -49,6 +52,9 @@ func ValidColumn(column string) bool {
 
 // State defines the type for the "state" enum field.
 type State string
+
+// StateNew is the default value of the State enum.
+const DefaultState = StateNew
 
 // State values.
 const (

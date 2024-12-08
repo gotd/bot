@@ -47,9 +47,23 @@ func (tac *TelegramAccountCreate) SetState(t telegramaccount.State) *TelegramAcc
 	return tac
 }
 
+// SetNillableState sets the "state" field if the given value is not nil.
+func (tac *TelegramAccountCreate) SetNillableState(t *telegramaccount.State) *TelegramAccountCreate {
+	if t != nil {
+		tac.SetState(*t)
+	}
+	return tac
+}
+
 // SetStatus sets the "status" field.
 func (tac *TelegramAccountCreate) SetStatus(s string) *TelegramAccountCreate {
 	tac.mutation.SetStatus(s)
+	return tac
+}
+
+// SetSession sets the "session" field.
+func (tac *TelegramAccountCreate) SetSession(b []byte) *TelegramAccountCreate {
+	tac.mutation.SetSession(b)
 	return tac
 }
 
@@ -66,6 +80,7 @@ func (tac *TelegramAccountCreate) Mutation() *TelegramAccountMutation {
 
 // Save creates the TelegramAccount in the database.
 func (tac *TelegramAccountCreate) Save(ctx context.Context) (*TelegramAccount, error) {
+	tac.defaults()
 	return withHooks(ctx, tac.sqlSave, tac.mutation, tac.hooks)
 }
 
@@ -91,6 +106,14 @@ func (tac *TelegramAccountCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (tac *TelegramAccountCreate) defaults() {
+	if _, ok := tac.mutation.State(); !ok {
+		v := telegramaccount.DefaultState
+		tac.mutation.SetState(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (tac *TelegramAccountCreate) check() error {
 	if _, ok := tac.mutation.Code(); !ok {
@@ -112,6 +135,9 @@ func (tac *TelegramAccountCreate) check() error {
 	}
 	if _, ok := tac.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "TelegramAccount.status"`)}
+	}
+	if _, ok := tac.mutation.Session(); !ok {
+		return &ValidationError{Name: "session", err: errors.New(`ent: missing required field "TelegramAccount.session"`)}
 	}
 	return nil
 }
@@ -168,6 +194,10 @@ func (tac *TelegramAccountCreate) createSpec() (*TelegramAccount, *sqlgraph.Crea
 	if value, ok := tac.mutation.Status(); ok {
 		_spec.SetField(telegramaccount.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := tac.mutation.Session(); ok {
+		_spec.SetField(telegramaccount.FieldSession, field.TypeBytes, value)
+		_node.Session = value
 	}
 	return _node, _spec
 }
@@ -278,6 +308,18 @@ func (u *TelegramAccountUpsert) SetStatus(v string) *TelegramAccountUpsert {
 // UpdateStatus sets the "status" field to the value that was provided on create.
 func (u *TelegramAccountUpsert) UpdateStatus() *TelegramAccountUpsert {
 	u.SetExcluded(telegramaccount.FieldStatus)
+	return u
+}
+
+// SetSession sets the "session" field.
+func (u *TelegramAccountUpsert) SetSession(v []byte) *TelegramAccountUpsert {
+	u.Set(telegramaccount.FieldSession, v)
+	return u
+}
+
+// UpdateSession sets the "session" field to the value that was provided on create.
+func (u *TelegramAccountUpsert) UpdateSession() *TelegramAccountUpsert {
+	u.SetExcluded(telegramaccount.FieldSession)
 	return u
 }
 
@@ -399,6 +441,20 @@ func (u *TelegramAccountUpsertOne) UpdateStatus() *TelegramAccountUpsertOne {
 	})
 }
 
+// SetSession sets the "session" field.
+func (u *TelegramAccountUpsertOne) SetSession(v []byte) *TelegramAccountUpsertOne {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.SetSession(v)
+	})
+}
+
+// UpdateSession sets the "session" field to the value that was provided on create.
+func (u *TelegramAccountUpsertOne) UpdateSession() *TelegramAccountUpsertOne {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.UpdateSession()
+	})
+}
+
 // Exec executes the query.
 func (u *TelegramAccountUpsertOne) Exec(ctx context.Context) error {
 	if len(u.create.conflict) == 0 {
@@ -456,6 +512,7 @@ func (tacb *TelegramAccountCreateBulk) Save(ctx context.Context) ([]*TelegramAcc
 	for i := range tacb.builders {
 		func(i int, root context.Context) {
 			builder := tacb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*TelegramAccountMutation)
 				if !ok {
@@ -680,6 +737,20 @@ func (u *TelegramAccountUpsertBulk) SetStatus(v string) *TelegramAccountUpsertBu
 func (u *TelegramAccountUpsertBulk) UpdateStatus() *TelegramAccountUpsertBulk {
 	return u.Update(func(s *TelegramAccountUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetSession sets the "session" field.
+func (u *TelegramAccountUpsertBulk) SetSession(v []byte) *TelegramAccountUpsertBulk {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.SetSession(v)
+	})
+}
+
+// UpdateSession sets the "session" field to the value that was provided on create.
+func (u *TelegramAccountUpsertBulk) UpdateSession() *TelegramAccountUpsertBulk {
+	return u.Update(func(s *TelegramAccountUpsert) {
+		s.UpdateSession()
 	})
 }
 

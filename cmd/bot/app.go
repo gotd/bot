@@ -36,8 +36,10 @@ import (
 	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/docs"
+	"github.com/gotd/bot/internal/entdb"
 	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/storage"
+	"github.com/gotd/bot/internal/tgmanager"
 )
 
 type App struct {
@@ -54,10 +56,11 @@ type App struct {
 	mux     dispatch.MessageMux
 	bot     *dispatch.Bot
 
-	github *github.Client
-	http   *http.Client
-	logger *zap.Logger
-	cache  *redis.Client
+	github  *github.Client
+	http    *http.Client
+	logger  *zap.Logger
+	cache   *redis.Client
+	manager *tgmanager.Manager
 }
 
 func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr error) {
@@ -148,7 +151,16 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 		Register(dispatcher).
 		OnMessage(h)
 
+	edb, err := entdb.Open(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return nil, errors.Wrap(err, "open database")
+	}
+	manager, err := tgmanager.NewManager(logger, edb, m.MeterProvider(), m.TracerProvider())
+	if err != nil {
+		return nil, errors.Wrap(err, "manager")
+	}
 	a := &App{
+		manager:    manager,
 		client:     client,
 		token:      token,
 		raw:        raw,
@@ -193,6 +205,9 @@ func (b *App) Close() error {
 
 func (b *App) Run(ctx context.Context) error {
 	group, ctx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		return b.manager.Run(ctx)
+	})
 
 	if secret, ok := os.LookupEnv("GITHUB_SECRET"); ok {
 		logger := b.logger.Named("webhook")
@@ -310,6 +325,7 @@ func (b *App) Run(ctx context.Context) error {
 			return ctx.Err()
 		})
 	})
+
 	return group.Wait()
 }
 
