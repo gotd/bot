@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 
 	"github.com/ogen-go/ogen/conv"
 	"github.com/ogen-go/ogen/middleware"
@@ -14,6 +15,188 @@ import (
 	"github.com/ogen-go/ogen/uri"
 	"github.com/ogen-go/ogen/validate"
 )
+
+// HeartbeatTelegramAccountParams is parameters of heartbeatTelegramAccount operation.
+type HeartbeatTelegramAccountParams struct {
+	Token  uuid.UUID
+	Forget OptBool
+}
+
+func unpackHeartbeatTelegramAccountParams(packed middleware.Parameters) (params HeartbeatTelegramAccountParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "token",
+			In:   "path",
+		}
+		params.Token = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "forget",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Forget = v.(OptBool)
+		}
+	}
+	return params
+}
+
+func decodeHeartbeatTelegramAccountParams(args [1]string, argsEscaped bool, r *http.Request) (params HeartbeatTelegramAccountParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Decode path: token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.Token = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode query: forget.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "forget",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotForgetVal bool
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToBool(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotForgetVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Forget.SetTo(paramsDotForgetVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "forget",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ReceiveTelegramCodeParams is parameters of receiveTelegramCode operation.
+type ReceiveTelegramCodeParams struct {
+	Token uuid.UUID
+}
+
+func unpackReceiveTelegramCodeParams(packed middleware.Parameters) (params ReceiveTelegramCodeParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "token",
+			In:   "path",
+		}
+		params.Token = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeReceiveTelegramCodeParams(args [1]string, argsEscaped bool, r *http.Request) (params ReceiveTelegramCodeParams, _ error) {
+	// Decode path: token.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "token",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.Token = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "token",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
 
 // SetTelegramAccountCodeParams is parameters of setTelegramAccountCode operation.
 type SetTelegramAccountCodeParams struct {

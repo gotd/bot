@@ -4,7 +4,23 @@ package oas
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
+
+// SetFake set fake values.
+func (s *AcquireTelegramAccountOK) SetFake() {
+	{
+		{
+			s.AccountID.SetFake()
+		}
+	}
+	{
+		{
+			s.Token = uuid.New()
+		}
+	}
+}
 
 // SetFake set fake values.
 func (s *CreateTelegramAccountOK) SetFake() {
@@ -68,10 +84,28 @@ func (s *Health) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *HeartbeatTelegramAccountOK) SetFake() {
+	{
+		{
+			s.AccountID.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *OptSpanID) SetFake() {
 	var elem SpanID
 	{
 		elem.SetFake()
+	}
+	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *OptString) SetFake() {
+	var elem string
+	{
+		elem = "string"
 	}
 	s.SetTo(elem)
 }
@@ -83,6 +117,15 @@ func (s *OptTraceID) SetFake() {
 		elem.SetFake()
 	}
 	s.SetTo(elem)
+}
+
+// SetFake set fake values.
+func (s *ReceiveTelegramCodeOK) SetFake() {
+	{
+		{
+			s.Code.SetFake()
+		}
+	}
 }
 
 // SetFake set fake values.

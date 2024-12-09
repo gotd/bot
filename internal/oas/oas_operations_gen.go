@@ -6,7 +6,10 @@ package oas
 type OperationName = string
 
 const (
-	CreateTelegramAccountOperation  OperationName = "CreateTelegramAccount"
-	GetHealthOperation              OperationName = "GetHealth"
-	SetTelegramAccountCodeOperation OperationName = "SetTelegramAccountCode"
+	AcquireTelegramAccountOperation   OperationName = "AcquireTelegramAccount"
+	CreateTelegramAccountOperation    OperationName = "CreateTelegramAccount"
+	GetHealthOperation                OperationName = "GetHealth"
+	HeartbeatTelegramAccountOperation OperationName = "HeartbeatTelegramAccount"
+	ReceiveTelegramCodeOperation      OperationName = "ReceiveTelegramCode"
+	SetTelegramAccountCodeOperation   OperationName = "SetTelegramAccountCode"
 )

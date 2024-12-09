@@ -82,9 +82,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				elem = origElem
-			case 't': // Prefix: "telegram/account/"
+			case 't': // Prefix: "telegram/"
 				origElem := elem
-				if l := len("telegram/account/"); len(elem) >= l && elem[0:l] == "telegram/account/" {
+				if l := len("telegram/"); len(elem) >= l && elem[0:l] == "telegram/" {
 					elem = elem[l:]
 				} else {
 					break
@@ -94,58 +94,150 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case 'c': // Prefix: "create"
+				case 'a': // Prefix: "account/"
 					origElem := elem
-					if l := len("create"); len(elem) >= l && elem[0:l] == "create" {
+					if l := len("account/"); len(elem) >= l && elem[0:l] == "account/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "POST":
-							s.handleCreateTelegramAccountRequest([0]string{}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "POST")
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "acquire"
+						origElem := elem
+						if l := len("acquire"); len(elem) >= l && elem[0:l] == "acquire" {
+							elem = elem[l:]
+						} else {
+							break
 						}
 
-						return
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleAcquireTelegramAccountRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+						elem = origElem
+					case 'c': // Prefix: "create"
+						origElem := elem
+						if l := len("create"); len(elem) >= l && elem[0:l] == "create" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleCreateTelegramAccountRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+						elem = origElem
+					case 'h': // Prefix: "heartbeat/"
+						origElem := elem
+						if l := len("heartbeat/"); len(elem) >= l && elem[0:l] == "heartbeat/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "token"
+						// Leaf parameter
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleHeartbeatTelegramAccountRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+						elem = origElem
+					}
+					// Param: "id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/set_code"
+						origElem := elem
+						if l := len("/set_code"); len(elem) >= l && elem[0:l] == "/set_code" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleSetTelegramAccountCodeRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+						elem = origElem
 					}
 
 					elem = origElem
-				}
-				// Param: "id"
-				// Match until "/"
-				idx := strings.IndexByte(elem, '/')
-				if idx < 0 {
-					idx = len(elem)
-				}
-				args[0] = elem[:idx]
-				elem = elem[idx:]
-
-				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/set_code"
+				case 'c': // Prefix: "code/receive/"
 					origElem := elem
-					if l := len("/set_code"); len(elem) >= l && elem[0:l] == "/set_code" {
+					if l := len("code/receive/"); len(elem) >= l && elem[0:l] == "code/receive/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
+					// Param: "token"
+					// Leaf parameter
+					args[0] = elem
+					elem = ""
+
 					if len(elem) == 0 {
 						// Leaf node.
 						switch r.Method {
-						case "POST":
-							s.handleSetTelegramAccountCodeRequest([1]string{
+						case "GET":
+							s.handleReceiveTelegramCodeRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
-							s.notAllowed(w, r, "POST")
+							s.notAllowed(w, r, "GET")
 						}
 
 						return
@@ -275,9 +367,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				}
 
 				elem = origElem
-			case 't': // Prefix: "telegram/account/"
+			case 't': // Prefix: "telegram/"
 				origElem := elem
-				if l := len("telegram/account/"); len(elem) >= l && elem[0:l] == "telegram/account/" {
+				if l := len("telegram/"); len(elem) >= l && elem[0:l] == "telegram/" {
 					elem = elem[l:]
 				} else {
 					break
@@ -287,61 +379,161 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case 'c': // Prefix: "create"
+				case 'a': // Prefix: "account/"
 					origElem := elem
-					if l := len("create"); len(elem) >= l && elem[0:l] == "create" {
+					if l := len("account/"); len(elem) >= l && elem[0:l] == "account/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "POST":
-							r.name = CreateTelegramAccountOperation
-							r.summary = ""
-							r.operationID = "createTelegramAccount"
-							r.pathPattern = "/telegram/account/create"
-							r.args = args
-							r.count = 0
-							return r, true
-						default:
-							return
+						break
+					}
+					switch elem[0] {
+					case 'a': // Prefix: "acquire"
+						origElem := elem
+						if l := len("acquire"); len(elem) >= l && elem[0:l] == "acquire" {
+							elem = elem[l:]
+						} else {
+							break
 						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = AcquireTelegramAccountOperation
+								r.summary = ""
+								r.operationID = "acquireTelegramAccount"
+								r.pathPattern = "/telegram/account/acquire"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					case 'c': // Prefix: "create"
+						origElem := elem
+						if l := len("create"); len(elem) >= l && elem[0:l] == "create" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = CreateTelegramAccountOperation
+								r.summary = ""
+								r.operationID = "createTelegramAccount"
+								r.pathPattern = "/telegram/account/create"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					case 'h': // Prefix: "heartbeat/"
+						origElem := elem
+						if l := len("heartbeat/"); len(elem) >= l && elem[0:l] == "heartbeat/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "token"
+						// Leaf parameter
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = HeartbeatTelegramAccountOperation
+								r.summary = ""
+								r.operationID = "heartbeatTelegramAccount"
+								r.pathPattern = "/telegram/account/heartbeat/{token}"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					}
+					// Param: "id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/set_code"
+						origElem := elem
+						if l := len("/set_code"); len(elem) >= l && elem[0:l] == "/set_code" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "POST":
+								r.name = SetTelegramAccountCodeOperation
+								r.summary = ""
+								r.operationID = "setTelegramAccountCode"
+								r.pathPattern = "/telegram/account/{id}/set_code"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
 					}
 
 					elem = origElem
-				}
-				// Param: "id"
-				// Match until "/"
-				idx := strings.IndexByte(elem, '/')
-				if idx < 0 {
-					idx = len(elem)
-				}
-				args[0] = elem[:idx]
-				elem = elem[idx:]
-
-				if len(elem) == 0 {
-					break
-				}
-				switch elem[0] {
-				case '/': // Prefix: "/set_code"
+				case 'c': // Prefix: "code/receive/"
 					origElem := elem
-					if l := len("/set_code"); len(elem) >= l && elem[0:l] == "/set_code" {
+					if l := len("code/receive/"); len(elem) >= l && elem[0:l] == "code/receive/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
+					// Param: "token"
+					// Leaf parameter
+					args[0] = elem
+					elem = ""
+
 					if len(elem) == 0 {
 						// Leaf node.
 						switch method {
-						case "POST":
-							r.name = SetTelegramAccountCodeOperation
+						case "GET":
+							r.name = ReceiveTelegramCodeOperation
 							r.summary = ""
-							r.operationID = "setTelegramAccountCode"
-							r.pathPattern = "/telegram/account/{id}/set_code"
+							r.operationID = "receiveTelegramCode"
+							r.pathPattern = "/telegram/code/receive/{token}"
 							r.args = args
 							r.count = 1
 							return r, true

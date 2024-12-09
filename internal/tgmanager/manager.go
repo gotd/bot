@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -21,7 +22,126 @@ type Manager struct {
 	tracer trace.Tracer
 
 	accounts map[string]*Account
+	leases   map[string]*Lease
 	mux      sync.Mutex
+}
+
+var ErrNoLease = errors.New("no accounts available")
+
+// LeaseCode returns account code for lease.
+// If account is not leased, returns ErrNoLease.
+// If code is not received yet, returns empty string.
+func (m *Manager) LeaseCode(ctx context.Context, token uuid.UUID) (string, error) {
+	ctx, span := m.tracer.Start(ctx, "LeaseCode")
+	defer func() {
+		span.End()
+	}()
+
+	m.mux.Lock()
+	var lease *Lease
+	for _, l := range m.leases {
+		if l.Token != token {
+			continue
+		}
+		lease = l
+	}
+	m.mux.Unlock()
+
+	if lease == nil {
+		return "", errors.Wrap(ErrNoLease, "no account with token")
+	}
+
+	acc, err := m.db.TelegramAccount.Get(ctx, lease.Account)
+	if err != nil {
+		return "", errors.Wrap(err, "get account")
+	}
+
+	if acc.CodeAt == nil || acc.Code == nil {
+		return "", nil
+	}
+	if acc.CodeAt.Before(lease.Start) {
+		return "", nil
+	}
+
+	return *acc.Code, nil
+}
+
+// Forget lease.
+func (m *Manager) Forget(token uuid.UUID) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	var toForget string
+	for phone, lease := range m.leases {
+		if lease.Token == token {
+			toForget = phone
+			break
+		}
+	}
+	if toForget == "" {
+		return
+	}
+	delete(m.leases, toForget)
+}
+
+// Acquire new lease.
+func (m *Manager) Acquire() (*Lease, error) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	if len(m.accounts) == 0 {
+		return nil, errors.Wrap(ErrNoLease, "no accounts")
+	}
+
+	for phone := range m.accounts {
+		if _, ok := m.leases[phone]; ok {
+			// Already leased.
+			continue
+		}
+		lease := &Lease{
+			Account: phone,
+			Token:   uuid.New(),
+			Start:   time.Now(),
+			Until:   time.Now().Add(time.Second * 15),
+		}
+		m.leases[phone] = lease
+		return lease, nil
+	}
+
+	return nil, errors.Wrap(ErrNoLease, "all accounts leased")
+}
+
+func (m *Manager) tickLease(now time.Time) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	var toDelete []string
+	for phone, lease := range m.leases {
+		if lease.Until.After(now) {
+			continue
+		}
+		m.log.Info("Lease expired",
+			zap.String("phone", phone),
+			zap.Stringer("token", lease.Token),
+		)
+		toDelete = append(toDelete, phone)
+	}
+
+	for _, phone := range toDelete {
+		delete(m.leases, phone)
+	}
+	m.log.Info("Lease cleanup done",
+		zap.Int("deleted", len(toDelete)),
+		zap.Int("total", len(m.leases)),
+	)
+}
+
+// Lease for telegram account.
+type Lease struct {
+	Account string
+	Token   uuid.UUID
+	Start   time.Time
+	Until   time.Time
 }
 
 func NewManager(log *zap.Logger, db *ent.Client, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Manager, error) {

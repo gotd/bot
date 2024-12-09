@@ -5,10 +5,38 @@ package oas
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
+}
+
+type AcquireTelegramAccountOK struct {
+	AccountID TelegramAccountID `json:"account_id"`
+	// Access token.
+	Token uuid.UUID `json:"token"`
+}
+
+// GetAccountID returns the value of AccountID.
+func (s *AcquireTelegramAccountOK) GetAccountID() TelegramAccountID {
+	return s.AccountID
+}
+
+// GetToken returns the value of Token.
+func (s *AcquireTelegramAccountOK) GetToken() uuid.UUID {
+	return s.Token
+}
+
+// SetAccountID sets the value of AccountID.
+func (s *AcquireTelegramAccountOK) SetAccountID(val TelegramAccountID) {
+	s.AccountID = val
+}
+
+// SetToken sets the value of Token.
+func (s *AcquireTelegramAccountOK) SetToken(val uuid.UUID) {
+	s.Token = val
 }
 
 type CreateTelegramAccountOK struct {
@@ -156,6 +184,66 @@ func (s *Health) SetBuildDate(val time.Time) {
 	s.BuildDate = val
 }
 
+type HeartbeatTelegramAccountOK struct {
+	AccountID TelegramAccountID `json:"account_id"`
+}
+
+// GetAccountID returns the value of AccountID.
+func (s *HeartbeatTelegramAccountOK) GetAccountID() TelegramAccountID {
+	return s.AccountID
+}
+
+// SetAccountID sets the value of AccountID.
+func (s *HeartbeatTelegramAccountOK) SetAccountID(val TelegramAccountID) {
+	s.AccountID = val
+}
+
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSpanID returns new OptSpanID with value set to v.
 func NewOptSpanID(v SpanID) OptSpanID {
 	return OptSpanID{
@@ -196,6 +284,52 @@ func (o OptSpanID) Get() (v SpanID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSpanID) Or(d SpanID) SpanID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptString returns new OptString with value set to v.
+func NewOptString(v string) OptString {
+	return OptString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptString is optional string.
+type OptString struct {
+	Value string
+	Set   bool
+}
+
+// IsSet returns true if OptString was set.
+func (o OptString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptString) SetTo(v string) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptString) Get() (v string, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptString) Or(d string) string {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -246,6 +380,21 @@ func (o OptTraceID) Or(d TraceID) TraceID {
 		return v
 	}
 	return d
+}
+
+type ReceiveTelegramCodeOK struct {
+	// Code.
+	Code OptString `json:"code"`
+}
+
+// GetCode returns the value of Code.
+func (s *ReceiveTelegramCodeOK) GetCode() OptString {
+	return s.Code
+}
+
+// SetCode sets the value of Code.
+func (s *ReceiveTelegramCodeOK) SetCode(val OptString) {
+	s.Code = val
 }
 
 type SetTelegramAccountCodeOK struct {

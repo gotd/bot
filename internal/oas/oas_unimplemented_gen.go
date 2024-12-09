@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AcquireTelegramAccount implements acquireTelegramAccount operation.
+//
+// Acquire telegram account.
+//
+// POST /telegram/account/acquire
+func (UnimplementedHandler) AcquireTelegramAccount(ctx context.Context) (r *AcquireTelegramAccountOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateTelegramAccount implements createTelegramAccount operation.
 //
 // Create telegram account.
@@ -28,6 +37,24 @@ func (UnimplementedHandler) CreateTelegramAccount(ctx context.Context, req *Crea
 //
 // GET /health
 func (UnimplementedHandler) GetHealth(ctx context.Context) (r *Health, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// HeartbeatTelegramAccount implements heartbeatTelegramAccount operation.
+//
+// Heartbeat telegram account.
+//
+// GET /telegram/account/heartbeat/{token}
+func (UnimplementedHandler) HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (r *HeartbeatTelegramAccountOK, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ReceiveTelegramCode implements receiveTelegramCode operation.
+//
+// Receive telegram code.
+//
+// GET /telegram/code/receive/{token}
+func (UnimplementedHandler) ReceiveTelegramCode(ctx context.Context, params ReceiveTelegramCodeParams) (r *ReceiveTelegramCodeOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

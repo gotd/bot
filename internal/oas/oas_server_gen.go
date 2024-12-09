@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AcquireTelegramAccount implements acquireTelegramAccount operation.
+	//
+	// Acquire telegram account.
+	//
+	// POST /telegram/account/acquire
+	AcquireTelegramAccount(ctx context.Context) (*AcquireTelegramAccountOK, error)
 	// CreateTelegramAccount implements createTelegramAccount operation.
 	//
 	// Create telegram account.
@@ -20,6 +26,18 @@ type Handler interface {
 	//
 	// GET /health
 	GetHealth(ctx context.Context) (*Health, error)
+	// HeartbeatTelegramAccount implements heartbeatTelegramAccount operation.
+	//
+	// Heartbeat telegram account.
+	//
+	// GET /telegram/account/heartbeat/{token}
+	HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (*HeartbeatTelegramAccountOK, error)
+	// ReceiveTelegramCode implements receiveTelegramCode operation.
+	//
+	// Receive telegram code.
+	//
+	// GET /telegram/code/receive/{token}
+	ReceiveTelegramCode(ctx context.Context, params ReceiveTelegramCodeParams) (*ReceiveTelegramCodeOK, error)
 	// SetTelegramAccountCode implements setTelegramAccountCode operation.
 	//
 	// Set telegram account code.

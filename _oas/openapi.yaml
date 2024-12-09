@@ -88,6 +88,87 @@ paths:
                     $ref: "#/components/schemas/TelegramAccountID"
         default:
           $ref:  "#/components/responses/Error"
+  /telegram/account/heartbeat/{token}:
+    get:
+      operationId: "heartbeatTelegramAccount"
+      description: "heartbeat telegram account"
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: forget
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: "Telegram account heartbeat"
+          content:
+            "application/json":
+              schema:
+                type: object
+                required:
+                  - account_id
+                properties:
+                  account_id:
+                    $ref: "#/components/schemas/TelegramAccountID"
+        default:
+          $ref:  "#/components/responses/Error"
+  /telegram/code/receive/{token}:
+    get:
+      operationId: "receiveTelegramCode"
+      description: "receive telegram code"
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: "Telegram code received"
+          content:
+            "application/json":
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    description: "Code"
+                    example: "12345"
+                    pattern: "^[0-9]{3,6}$"
+        default:
+          $ref:  "#/components/responses/Error"
+  /telegram/account/acquire:
+    post:
+      security:
+        - tokenAuth: []
+      operationId: "acquireTelegramAccount"
+      description: "acquire telegram account"
+      responses:
+        200:
+          description: "Telegram account acquired"
+          content:
+            "application/json":
+              schema:
+                type: object
+                required:
+                  - account_id
+                  - token
+                properties:
+                  account_id:
+                    $ref: "#/components/schemas/TelegramAccountID"
+                  token:
+                    type: string
+                    description: "Access token"
+                    format: uuid
+        default:
+          $ref:  "#/components/responses/Error"
 components:
   parameters:
     TelegramAccountID:

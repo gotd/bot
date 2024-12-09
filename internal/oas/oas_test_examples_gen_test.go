@@ -11,6 +11,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestAcquireTelegramAccountOK_EncodeDecode(t *testing.T) {
+	var typ AcquireTelegramAccountOK
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AcquireTelegramAccountOK
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestCreateTelegramAccountOK_EncodeDecode(t *testing.T) {
 	var typ CreateTelegramAccountOK
 	typ.SetFake()
@@ -57,6 +69,30 @@ func TestHealth_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 Health
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestHeartbeatTelegramAccountOK_EncodeDecode(t *testing.T) {
+	var typ HeartbeatTelegramAccountOK
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 HeartbeatTelegramAccountOK
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestReceiveTelegramCodeOK_EncodeDecode(t *testing.T) {
+	var typ ReceiveTelegramCodeOK
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 ReceiveTelegramCodeOK
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestSetTelegramAccountCodeOK_EncodeDecode(t *testing.T) {
