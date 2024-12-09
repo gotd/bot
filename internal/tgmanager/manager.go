@@ -148,6 +148,7 @@ func (m *Manager) tickLease(now time.Time) {
 	m.log.Info("Lease cleanup done",
 		zap.Int("deleted", len(toDelete)),
 		zap.Int("total", len(m.leases)),
+		zap.Int("accounts", len(m.accounts)),
 	)
 }
 
