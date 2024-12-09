@@ -77,7 +77,7 @@ func TestIntegration(t *testing.T) {
 	if _, ok := os.LookupEnv("GITHUB_TOKEN"); !ok {
 		t.Skip("no token")
 	}
-	if ok, _ := strconv.ParseBool("E2E"); !ok {
+	if ok, _ := strconv.ParseBool(os.Getenv("E2E")); !ok {
 		t.Skip("E2E=1 not set")
 	}
 
