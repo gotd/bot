@@ -40,7 +40,7 @@ jobs:
 
       - name: Run test
         env:
-          E2E: "0"
+          E2E: "1"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_JOB_ID: ${{ github.job }}
         run: go test -timeout 15m -v ./...
