@@ -108,8 +108,9 @@ func TestIntegration(t *testing.T) {
 
 	lg := zaptest.NewLogger(t)
 	au := codeAuth{
-		phone: string(res.AccountID),
-		token: res.Token,
+		phone:  string(res.AccountID),
+		token:  res.Token,
+		client: client,
 	}
 	tgc := telegram.NewClient(17349, "344583e45741c457fe1862106095a5eb", telegram.Options{
 		DCList: dcs.Test(),
