@@ -106,6 +106,14 @@ func TestIntegration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	t.Logf("Acquired account: %v", res.AccountID)
+	t.Cleanup(func() {
+		_ = client.HeartbeatTelegramAccount(ctx, oas.HeartbeatTelegramAccountParams{
+			Token:  res.Token,
+			Forget: oas.NewOptBool(true),
+		})
+	})
+
 	lg := zaptest.NewLogger(t)
 	au := codeAuth{
 		phone:  string(res.AccountID),
