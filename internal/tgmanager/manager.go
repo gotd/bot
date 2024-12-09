@@ -168,6 +168,7 @@ func NewManager(log *zap.Logger, db *ent.Client, meterProvider metric.MeterProvi
 		meter:    meter,
 		tracer:   tracer,
 		accounts: make(map[string]*Account),
+		leases:   make(map[string]*Lease),
 	}, nil
 }
 
