@@ -162,14 +162,46 @@ type Lease struct {
 func NewManager(log *zap.Logger, db *ent.Client, meterProvider metric.MeterProvider, tracerProvider trace.TracerProvider) (*Manager, error) {
 	meter := meterProvider.Meter("bot.gotd.dev/tgmanager")
 	tracer := tracerProvider.Tracer("bot.gotd.dev/tgmanager")
-	return &Manager{
+	mgr := &Manager{
 		log:      log,
 		db:       db,
 		meter:    meter,
 		tracer:   tracer,
 		accounts: make(map[string]*Account),
 		leases:   make(map[string]*Lease),
-	}, nil
+	}
+
+	accountsTotal, err := meter.Int64ObservableGauge("accounts.total")
+	if err != nil {
+		return nil, errors.Wrap(err, "create observable gauge")
+	}
+	accountsLeased, err := meter.Int64ObservableGauge("accounts.leased")
+	if err != nil {
+		return nil, errors.Wrap(err, "create observable gauge")
+	}
+	accountsFree, err := meter.Int64ObservableGauge("accounts.free")
+	if err != nil {
+		return nil, errors.Wrap(err, "create observable gauge")
+	}
+
+	if _, err := meter.RegisterCallback(func(ctx context.Context, observer metric.Observer) error {
+		mgr.mux.Lock()
+		defer mgr.mux.Unlock()
+
+		total := int64(len(mgr.accounts))
+		leased := int64(len(mgr.leases))
+		free := total - leased
+
+		observer.ObserveInt64(accountsTotal, total)
+		observer.ObserveInt64(accountsLeased, leased)
+		observer.ObserveInt64(accountsFree, free)
+
+		return nil
+	}); err != nil {
+		return nil, errors.Wrap(err, "register callback")
+	}
+
+	return mgr, nil
 }
 
 func (m *Manager) tick(baseCtx context.Context) (rerr error) {
