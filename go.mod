@@ -9,6 +9,7 @@ require (
 	github.com/blevesearch/bleve/v2 v2.4.3
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.3
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cockroachdb/pebble v1.1.2
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.1.0
@@ -63,7 +64,6 @@ require (
 	github.com/blevesearch/zapx/v14 v14.3.10 // indirect
 	github.com/blevesearch/zapx/v15 v15.3.16 // indirect
 	github.com/blevesearch/zapx/v16 v16.1.8 // indirect
-	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cockroachdb/errors v1.11.3 // indirect
 	github.com/cockroachdb/fifo v0.0.0-20240606204812-0bbfbd93a7ce // indirect
