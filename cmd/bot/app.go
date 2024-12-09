@@ -258,7 +258,7 @@ func (b *App) Run(ctx context.Context) error {
 
 		mux := http.NewServeMux()
 		mux.Handle("/", e)
-		mux.Handle("/api", b.srv)
+		mux.Handle("/api/", b.srv)
 
 		server := http.Server{
 			Addr:    httpAddr,
