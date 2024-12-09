@@ -17,7 +17,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.6.0
-	github.com/gotd/contrib v0.20.0
+	github.com/gotd/contrib v0.21.0
 	github.com/gotd/getdoc v0.44.0
 	github.com/gotd/td v0.115.0
 	github.com/gotd/tl v0.4.0
