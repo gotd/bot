@@ -168,6 +168,9 @@ func (m *Manager) tick(baseCtx context.Context) (rerr error) {
 		span.End()
 	}()
 
+	now := time.Now()
+	m.tickLease(now)
+
 	accounts, err := m.db.TelegramAccount.Query().All(ctx)
 	if err != nil {
 		return errors.Wrap(err, "query accounts")
