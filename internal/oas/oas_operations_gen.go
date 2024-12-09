@@ -7,9 +7,7 @@ type OperationName = string
 
 const (
 	AcquireTelegramAccountOperation   OperationName = "AcquireTelegramAccount"
-	CreateTelegramAccountOperation    OperationName = "CreateTelegramAccount"
 	GetHealthOperation                OperationName = "GetHealth"
 	HeartbeatTelegramAccountOperation OperationName = "HeartbeatTelegramAccount"
 	ReceiveTelegramCodeOperation      OperationName = "ReceiveTelegramCode"
-	SetTelegramAccountCodeOperation   OperationName = "SetTelegramAccountCode"
 )

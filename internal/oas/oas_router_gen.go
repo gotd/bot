@@ -49,9 +49,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/"
+		case '/': // Prefix: "/api/"
 			origElem := elem
-			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+			if l := len("/api/"); len(elem) >= l && elem[0:l] == "/api/" {
 				elem = elem[l:]
 			} else {
 				break
@@ -127,27 +127,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						}
 
 						elem = origElem
-					case 'c': // Prefix: "create"
-						origElem := elem
-						if l := len("create"); len(elem) >= l && elem[0:l] == "create" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleCreateTelegramAccountRequest([0]string{}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-
-						elem = origElem
 					case 'h': // Prefix: "heartbeat/"
 						origElem := elem
 						if l := len("heartbeat/"); len(elem) >= l && elem[0:l] == "heartbeat/" {
@@ -170,43 +149,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								}, elemIsEscaped, w, r)
 							default:
 								s.notAllowed(w, r, "GET")
-							}
-
-							return
-						}
-
-						elem = origElem
-					}
-					// Param: "id"
-					// Match until "/"
-					idx := strings.IndexByte(elem, '/')
-					if idx < 0 {
-						idx = len(elem)
-					}
-					args[0] = elem[:idx]
-					elem = elem[idx:]
-
-					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case '/': // Prefix: "/set_code"
-						origElem := elem
-						if l := len("/set_code"); len(elem) >= l && elem[0:l] == "/set_code" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleSetTelegramAccountCodeRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
 							}
 
 							return
@@ -330,9 +272,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/"
+		case '/': // Prefix: "/api/"
 			origElem := elem
-			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+			if l := len("/api/"); len(elem) >= l && elem[0:l] == "/api/" {
 				elem = elem[l:]
 			} else {
 				break
@@ -357,7 +299,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.name = GetHealthOperation
 						r.summary = ""
 						r.operationID = "getHealth"
-						r.pathPattern = "/health"
+						r.pathPattern = "/api/health"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -406,32 +348,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								r.name = AcquireTelegramAccountOperation
 								r.summary = ""
 								r.operationID = "acquireTelegramAccount"
-								r.pathPattern = "/telegram/account/acquire"
-								r.args = args
-								r.count = 0
-								return r, true
-							default:
-								return
-							}
-						}
-
-						elem = origElem
-					case 'c': // Prefix: "create"
-						origElem := elem
-						if l := len("create"); len(elem) >= l && elem[0:l] == "create" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = CreateTelegramAccountOperation
-								r.summary = ""
-								r.operationID = "createTelegramAccount"
-								r.pathPattern = "/telegram/account/create"
+								r.pathPattern = "/api/telegram/account/acquire"
 								r.args = args
 								r.count = 0
 								return r, true
@@ -461,46 +378,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								r.name = HeartbeatTelegramAccountOperation
 								r.summary = ""
 								r.operationID = "heartbeatTelegramAccount"
-								r.pathPattern = "/telegram/account/heartbeat/{token}"
-								r.args = args
-								r.count = 1
-								return r, true
-							default:
-								return
-							}
-						}
-
-						elem = origElem
-					}
-					// Param: "id"
-					// Match until "/"
-					idx := strings.IndexByte(elem, '/')
-					if idx < 0 {
-						idx = len(elem)
-					}
-					args[0] = elem[:idx]
-					elem = elem[idx:]
-
-					if len(elem) == 0 {
-						break
-					}
-					switch elem[0] {
-					case '/': // Prefix: "/set_code"
-						origElem := elem
-						if l := len("/set_code"); len(elem) >= l && elem[0:l] == "/set_code" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = SetTelegramAccountCodeOperation
-								r.summary = ""
-								r.operationID = "setTelegramAccountCode"
-								r.pathPattern = "/telegram/account/{id}/set_code"
+								r.pathPattern = "/api/telegram/account/heartbeat/{token}"
 								r.args = args
 								r.count = 1
 								return r, true
@@ -533,7 +411,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							r.name = ReceiveTelegramCodeOperation
 							r.summary = ""
 							r.operationID = "receiveTelegramCode"
-							r.pathPattern = "/telegram/code/receive/{token}"
+							r.pathPattern = "/api/telegram/code/receive/{token}"
 							r.args = args
 							r.count = 1
 							return r, true

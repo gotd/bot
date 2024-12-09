@@ -12,38 +12,26 @@ type Handler interface {
 	//
 	// Acquire telegram account.
 	//
-	// POST /telegram/account/acquire
-	AcquireTelegramAccount(ctx context.Context) (*AcquireTelegramAccountOK, error)
-	// CreateTelegramAccount implements createTelegramAccount operation.
-	//
-	// Create telegram account.
-	//
-	// POST /telegram/account/create
-	CreateTelegramAccount(ctx context.Context, req *CreateTelegramAccountReq) (*CreateTelegramAccountOK, error)
+	// POST /api/telegram/account/acquire
+	AcquireTelegramAccount(ctx context.Context, req *AcquireTelegramAccountReq) (*AcquireTelegramAccountOK, error)
 	// GetHealth implements getHealth operation.
 	//
 	// Get health.
 	//
-	// GET /health
+	// GET /api/health
 	GetHealth(ctx context.Context) (*Health, error)
 	// HeartbeatTelegramAccount implements heartbeatTelegramAccount operation.
 	//
 	// Heartbeat telegram account.
 	//
-	// GET /telegram/account/heartbeat/{token}
-	HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (*HeartbeatTelegramAccountOK, error)
+	// GET /api/telegram/account/heartbeat/{token}
+	HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) error
 	// ReceiveTelegramCode implements receiveTelegramCode operation.
 	//
 	// Receive telegram code.
 	//
-	// GET /telegram/code/receive/{token}
+	// GET /api/telegram/code/receive/{token}
 	ReceiveTelegramCode(ctx context.Context, params ReceiveTelegramCodeParams) (*ReceiveTelegramCodeOK, error)
-	// SetTelegramAccountCode implements setTelegramAccountCode operation.
-	//
-	// Set telegram account code.
-	//
-	// POST /telegram/account/{id}/set_code
-	SetTelegramAccountCode(ctx context.Context, req *SetTelegramAccountCodeReq, params SetTelegramAccountCodeParams) (*SetTelegramAccountCodeOK, error)
 	// NewError creates *ErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.

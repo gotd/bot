@@ -80,6 +80,10 @@ func TestIntegration(t *testing.T) {
 	if ok, _ := strconv.ParseBool("E2E"); !ok {
 		t.Skip("E2E=1 not set")
 	}
+
+	jobID, err := strconv.Atoi(os.Getenv("GITHUB_JOB_ID"))
+	require.NoError(t, err)
+
 	ctx := context.Background()
 	client, err := oas.NewClient("https://bot.gotd.dev", securitySource{})
 	require.NoError(t, err)
@@ -88,9 +92,15 @@ func TestIntegration(t *testing.T) {
 	bo.MaxElapsedTime = time.Minute
 	bo.MaxInterval = time.Second
 
-	res, err := backoff.RetryWithData(func() (*oas.AcquireTelegramAccountOK, error) {
-		return client.AcquireTelegramAccount(ctx)
-	}, bo)
+	res, err := backoff.RetryNotifyWithData(func() (*oas.AcquireTelegramAccountOK, error) {
+		return client.AcquireTelegramAccount(ctx, &oas.AcquireTelegramAccountReq{
+			RepoOwner: "gotd",
+			RepoName:  "bot",
+			JobID:     jobID,
+		})
+	}, bo, func(err error, duration time.Duration) {
+		t.Logf("Error: %v, retrying in %v", err, duration)
+	})
 	require.NoError(t, err)
 
 	lg := zaptest.NewLogger(t)

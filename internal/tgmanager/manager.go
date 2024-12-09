@@ -66,6 +66,21 @@ func (m *Manager) LeaseCode(ctx context.Context, token uuid.UUID) (string, error
 	return *acc.Code, nil
 }
 
+// Heartbeat updates lease expiration time.
+func (m *Manager) Heartbeat(token uuid.UUID) error {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	for _, lease := range m.leases {
+		if lease.Token != token {
+			continue
+		}
+		lease.Until = time.Now().Add(time.Second * 15)
+		return nil
+	}
+	return errors.Wrap(ErrNoLease, "no account with token")
+}
+
 // Forget lease.
 func (m *Manager) Forget(token uuid.UUID) {
 	m.mux.Lock()

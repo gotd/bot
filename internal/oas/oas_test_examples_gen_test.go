@@ -23,8 +23,8 @@ func TestAcquireTelegramAccountOK_EncodeDecode(t *testing.T) {
 	var typ2 AcquireTelegramAccountOK
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
-func TestCreateTelegramAccountOK_EncodeDecode(t *testing.T) {
-	var typ CreateTelegramAccountOK
+func TestAcquireTelegramAccountReq_EncodeDecode(t *testing.T) {
+	var typ AcquireTelegramAccountReq
 	typ.SetFake()
 
 	e := jx.Encoder{}
@@ -32,19 +32,7 @@ func TestCreateTelegramAccountOK_EncodeDecode(t *testing.T) {
 	data := e.Bytes()
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
-	var typ2 CreateTelegramAccountOK
-	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
-}
-func TestCreateTelegramAccountReq_EncodeDecode(t *testing.T) {
-	var typ CreateTelegramAccountReq
-	typ.SetFake()
-
-	e := jx.Encoder{}
-	typ.Encode(&e)
-	data := e.Bytes()
-	require.True(t, std.Valid(data), "Encoded: %s", data)
-
-	var typ2 CreateTelegramAccountReq
+	var typ2 AcquireTelegramAccountReq
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestError_EncodeDecode(t *testing.T) {
@@ -71,18 +59,6 @@ func TestHealth_EncodeDecode(t *testing.T) {
 	var typ2 Health
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
-func TestHeartbeatTelegramAccountOK_EncodeDecode(t *testing.T) {
-	var typ HeartbeatTelegramAccountOK
-	typ.SetFake()
-
-	e := jx.Encoder{}
-	typ.Encode(&e)
-	data := e.Bytes()
-	require.True(t, std.Valid(data), "Encoded: %s", data)
-
-	var typ2 HeartbeatTelegramAccountOK
-	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
-}
 func TestReceiveTelegramCodeOK_EncodeDecode(t *testing.T) {
 	var typ ReceiveTelegramCodeOK
 	typ.SetFake()
@@ -93,30 +69,6 @@ func TestReceiveTelegramCodeOK_EncodeDecode(t *testing.T) {
 	require.True(t, std.Valid(data), "Encoded: %s", data)
 
 	var typ2 ReceiveTelegramCodeOK
-	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
-}
-func TestSetTelegramAccountCodeOK_EncodeDecode(t *testing.T) {
-	var typ SetTelegramAccountCodeOK
-	typ.SetFake()
-
-	e := jx.Encoder{}
-	typ.Encode(&e)
-	data := e.Bytes()
-	require.True(t, std.Valid(data), "Encoded: %s", data)
-
-	var typ2 SetTelegramAccountCodeOK
-	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
-}
-func TestSetTelegramAccountCodeReq_EncodeDecode(t *testing.T) {
-	var typ SetTelegramAccountCodeReq
-	typ.SetFake()
-
-	e := jx.Encoder{}
-	typ.Encode(&e)
-	data := e.Bytes()
-	require.True(t, std.Valid(data), "Encoded: %s", data)
-
-	var typ2 SetTelegramAccountCodeReq
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
 func TestSpanID_EncodeDecode(t *testing.T) {

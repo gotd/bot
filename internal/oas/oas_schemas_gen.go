@@ -39,32 +39,43 @@ func (s *AcquireTelegramAccountOK) SetToken(val uuid.UUID) {
 	s.Token = val
 }
 
-type CreateTelegramAccountOK struct {
-	AccountID TelegramAccountID `json:"account_id"`
+type AcquireTelegramAccountReq struct {
+	// Repository owner.
+	RepoOwner string `json:"repo_owner"`
+	// Repository name.
+	RepoName string `json:"repo_name"`
+	// Job ID.
+	JobID int `json:"job_id"`
 }
 
-// GetAccountID returns the value of AccountID.
-func (s *CreateTelegramAccountOK) GetAccountID() TelegramAccountID {
-	return s.AccountID
+// GetRepoOwner returns the value of RepoOwner.
+func (s *AcquireTelegramAccountReq) GetRepoOwner() string {
+	return s.RepoOwner
 }
 
-// SetAccountID sets the value of AccountID.
-func (s *CreateTelegramAccountOK) SetAccountID(val TelegramAccountID) {
-	s.AccountID = val
+// GetRepoName returns the value of RepoName.
+func (s *AcquireTelegramAccountReq) GetRepoName() string {
+	return s.RepoName
 }
 
-type CreateTelegramAccountReq struct {
-	PhoneNumber TelegramAccountID `json:"phone_number"`
+// GetJobID returns the value of JobID.
+func (s *AcquireTelegramAccountReq) GetJobID() int {
+	return s.JobID
 }
 
-// GetPhoneNumber returns the value of PhoneNumber.
-func (s *CreateTelegramAccountReq) GetPhoneNumber() TelegramAccountID {
-	return s.PhoneNumber
+// SetRepoOwner sets the value of RepoOwner.
+func (s *AcquireTelegramAccountReq) SetRepoOwner(val string) {
+	s.RepoOwner = val
 }
 
-// SetPhoneNumber sets the value of PhoneNumber.
-func (s *CreateTelegramAccountReq) SetPhoneNumber(val TelegramAccountID) {
-	s.PhoneNumber = val
+// SetRepoName sets the value of RepoName.
+func (s *AcquireTelegramAccountReq) SetRepoName(val string) {
+	s.RepoName = val
+}
+
+// SetJobID sets the value of JobID.
+func (s *AcquireTelegramAccountReq) SetJobID(val int) {
+	s.JobID = val
 }
 
 // Error occurred while processing request.
@@ -184,19 +195,8 @@ func (s *Health) SetBuildDate(val time.Time) {
 	s.BuildDate = val
 }
 
-type HeartbeatTelegramAccountOK struct {
-	AccountID TelegramAccountID `json:"account_id"`
-}
-
-// GetAccountID returns the value of AccountID.
-func (s *HeartbeatTelegramAccountOK) GetAccountID() TelegramAccountID {
-	return s.AccountID
-}
-
-// SetAccountID sets the value of AccountID.
-func (s *HeartbeatTelegramAccountOK) SetAccountID(val TelegramAccountID) {
-	s.AccountID = val
-}
+// HeartbeatTelegramAccountOK is response for HeartbeatTelegramAccount operation.
+type HeartbeatTelegramAccountOK struct{}
 
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
@@ -394,35 +394,6 @@ func (s *ReceiveTelegramCodeOK) GetCode() OptString {
 
 // SetCode sets the value of Code.
 func (s *ReceiveTelegramCodeOK) SetCode(val OptString) {
-	s.Code = val
-}
-
-type SetTelegramAccountCodeOK struct {
-	AccountID TelegramAccountID `json:"account_id"`
-}
-
-// GetAccountID returns the value of AccountID.
-func (s *SetTelegramAccountCodeOK) GetAccountID() TelegramAccountID {
-	return s.AccountID
-}
-
-// SetAccountID sets the value of AccountID.
-func (s *SetTelegramAccountCodeOK) SetAccountID(val TelegramAccountID) {
-	s.AccountID = val
-}
-
-type SetTelegramAccountCodeReq struct {
-	// Code.
-	Code string `json:"code"`
-}
-
-// GetCode returns the value of Code.
-func (s *SetTelegramAccountCodeReq) GetCode() string {
-	return s.Code
-}
-
-// SetCode sets the value of Code.
-func (s *SetTelegramAccountCodeReq) SetCode(val string) {
 	s.Code = val
 }
 

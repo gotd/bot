@@ -17,17 +17,8 @@ var _ Handler = UnimplementedHandler{}
 //
 // Acquire telegram account.
 //
-// POST /telegram/account/acquire
-func (UnimplementedHandler) AcquireTelegramAccount(ctx context.Context) (r *AcquireTelegramAccountOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CreateTelegramAccount implements createTelegramAccount operation.
-//
-// Create telegram account.
-//
-// POST /telegram/account/create
-func (UnimplementedHandler) CreateTelegramAccount(ctx context.Context, req *CreateTelegramAccountReq) (r *CreateTelegramAccountOK, _ error) {
+// POST /api/telegram/account/acquire
+func (UnimplementedHandler) AcquireTelegramAccount(ctx context.Context, req *AcquireTelegramAccountReq) (r *AcquireTelegramAccountOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -35,7 +26,7 @@ func (UnimplementedHandler) CreateTelegramAccount(ctx context.Context, req *Crea
 //
 // Get health.
 //
-// GET /health
+// GET /api/health
 func (UnimplementedHandler) GetHealth(ctx context.Context) (r *Health, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -44,26 +35,17 @@ func (UnimplementedHandler) GetHealth(ctx context.Context) (r *Health, _ error) 
 //
 // Heartbeat telegram account.
 //
-// GET /telegram/account/heartbeat/{token}
-func (UnimplementedHandler) HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (r *HeartbeatTelegramAccountOK, _ error) {
-	return r, ht.ErrNotImplemented
+// GET /api/telegram/account/heartbeat/{token}
+func (UnimplementedHandler) HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) error {
+	return ht.ErrNotImplemented
 }
 
 // ReceiveTelegramCode implements receiveTelegramCode operation.
 //
 // Receive telegram code.
 //
-// GET /telegram/code/receive/{token}
+// GET /api/telegram/code/receive/{token}
 func (UnimplementedHandler) ReceiveTelegramCode(ctx context.Context, params ReceiveTelegramCodeParams) (r *ReceiveTelegramCodeOK, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// SetTelegramAccountCode implements setTelegramAccountCode operation.
-//
-// Set telegram account code.
-//
-// POST /telegram/account/{id}/set_code
-func (UnimplementedHandler) SetTelegramAccountCode(ctx context.Context, req *SetTelegramAccountCodeReq, params SetTelegramAccountCodeParams) (r *SetTelegramAccountCodeOK, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

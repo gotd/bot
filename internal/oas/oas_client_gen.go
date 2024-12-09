@@ -28,38 +28,26 @@ type Invoker interface {
 	//
 	// Acquire telegram account.
 	//
-	// POST /telegram/account/acquire
-	AcquireTelegramAccount(ctx context.Context) (*AcquireTelegramAccountOK, error)
-	// CreateTelegramAccount invokes createTelegramAccount operation.
-	//
-	// Create telegram account.
-	//
-	// POST /telegram/account/create
-	CreateTelegramAccount(ctx context.Context, request *CreateTelegramAccountReq) (*CreateTelegramAccountOK, error)
+	// POST /api/telegram/account/acquire
+	AcquireTelegramAccount(ctx context.Context, request *AcquireTelegramAccountReq) (*AcquireTelegramAccountOK, error)
 	// GetHealth invokes getHealth operation.
 	//
 	// Get health.
 	//
-	// GET /health
+	// GET /api/health
 	GetHealth(ctx context.Context) (*Health, error)
 	// HeartbeatTelegramAccount invokes heartbeatTelegramAccount operation.
 	//
 	// Heartbeat telegram account.
 	//
-	// GET /telegram/account/heartbeat/{token}
-	HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (*HeartbeatTelegramAccountOK, error)
+	// GET /api/telegram/account/heartbeat/{token}
+	HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) error
 	// ReceiveTelegramCode invokes receiveTelegramCode operation.
 	//
 	// Receive telegram code.
 	//
-	// GET /telegram/code/receive/{token}
+	// GET /api/telegram/code/receive/{token}
 	ReceiveTelegramCode(ctx context.Context, params ReceiveTelegramCodeParams) (*ReceiveTelegramCodeOK, error)
-	// SetTelegramAccountCode invokes setTelegramAccountCode operation.
-	//
-	// Set telegram account code.
-	//
-	// POST /telegram/account/{id}/set_code
-	SetTelegramAccountCode(ctx context.Context, request *SetTelegramAccountCodeReq, params SetTelegramAccountCodeParams) (*SetTelegramAccountCodeOK, error)
 }
 
 // Client implements OAS client.
@@ -120,17 +108,17 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 //
 // Acquire telegram account.
 //
-// POST /telegram/account/acquire
-func (c *Client) AcquireTelegramAccount(ctx context.Context) (*AcquireTelegramAccountOK, error) {
-	res, err := c.sendAcquireTelegramAccount(ctx)
+// POST /api/telegram/account/acquire
+func (c *Client) AcquireTelegramAccount(ctx context.Context, request *AcquireTelegramAccountReq) (*AcquireTelegramAccountOK, error) {
+	res, err := c.sendAcquireTelegramAccount(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendAcquireTelegramAccount(ctx context.Context) (res *AcquireTelegramAccountOK, err error) {
+func (c *Client) sendAcquireTelegramAccount(ctx context.Context, request *AcquireTelegramAccountReq) (res *AcquireTelegramAccountOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("acquireTelegramAccount"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/telegram/account/acquire"),
+		semconv.HTTPRouteKey.String("/api/telegram/account/acquire"),
 	}
 
 	// Run stopwatch.
@@ -163,13 +151,16 @@ func (c *Client) sendAcquireTelegramAccount(ctx context.Context) (res *AcquireTe
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/telegram/account/acquire"
+	pathParts[0] = "/api/telegram/account/acquire"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
 	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeAcquireTelegramAccountRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
 
 	{
@@ -221,119 +212,11 @@ func (c *Client) sendAcquireTelegramAccount(ctx context.Context) (res *AcquireTe
 	return result, nil
 }
 
-// CreateTelegramAccount invokes createTelegramAccount operation.
-//
-// Create telegram account.
-//
-// POST /telegram/account/create
-func (c *Client) CreateTelegramAccount(ctx context.Context, request *CreateTelegramAccountReq) (*CreateTelegramAccountOK, error) {
-	res, err := c.sendCreateTelegramAccount(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendCreateTelegramAccount(ctx context.Context, request *CreateTelegramAccountReq) (res *CreateTelegramAccountOK, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createTelegramAccount"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/telegram/account/create"),
-	}
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, CreateTelegramAccountOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/telegram/account/create"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeCreateTelegramAccountRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:TokenAuth"
-			switch err := c.securityTokenAuth(ctx, CreateTelegramAccountOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"TokenAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeCreateTelegramAccountResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
 // GetHealth invokes getHealth operation.
 //
 // Get health.
 //
-// GET /health
+// GET /api/health
 func (c *Client) GetHealth(ctx context.Context) (*Health, error) {
 	res, err := c.sendGetHealth(ctx)
 	return res, err
@@ -343,7 +226,7 @@ func (c *Client) sendGetHealth(ctx context.Context) (res *Health, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getHealth"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/health"),
+		semconv.HTTPRouteKey.String("/api/health"),
 	}
 
 	// Run stopwatch.
@@ -376,7 +259,7 @@ func (c *Client) sendGetHealth(ctx context.Context) (res *Health, err error) {
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/health"
+	pathParts[0] = "/api/health"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -438,17 +321,17 @@ func (c *Client) sendGetHealth(ctx context.Context) (res *Health, err error) {
 //
 // Heartbeat telegram account.
 //
-// GET /telegram/account/heartbeat/{token}
-func (c *Client) HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (*HeartbeatTelegramAccountOK, error) {
-	res, err := c.sendHeartbeatTelegramAccount(ctx, params)
-	return res, err
+// GET /api/telegram/account/heartbeat/{token}
+func (c *Client) HeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) error {
+	_, err := c.sendHeartbeatTelegramAccount(ctx, params)
+	return err
 }
 
 func (c *Client) sendHeartbeatTelegramAccount(ctx context.Context, params HeartbeatTelegramAccountParams) (res *HeartbeatTelegramAccountOK, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("heartbeatTelegramAccount"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/telegram/account/heartbeat/{token}"),
+		semconv.HTTPRouteKey.String("/api/telegram/account/heartbeat/{token}"),
 	}
 
 	// Run stopwatch.
@@ -481,7 +364,7 @@ func (c *Client) sendHeartbeatTelegramAccount(ctx context.Context, params Heartb
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [2]string
-	pathParts[0] = "/telegram/account/heartbeat/"
+	pathParts[0] = "/api/telegram/account/heartbeat/"
 	{
 		// Encode "token" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -582,7 +465,7 @@ func (c *Client) sendHeartbeatTelegramAccount(ctx context.Context, params Heartb
 //
 // Receive telegram code.
 //
-// GET /telegram/code/receive/{token}
+// GET /api/telegram/code/receive/{token}
 func (c *Client) ReceiveTelegramCode(ctx context.Context, params ReceiveTelegramCodeParams) (*ReceiveTelegramCodeOK, error) {
 	res, err := c.sendReceiveTelegramCode(ctx, params)
 	return res, err
@@ -592,7 +475,7 @@ func (c *Client) sendReceiveTelegramCode(ctx context.Context, params ReceiveTele
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("receiveTelegramCode"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/telegram/code/receive/{token}"),
+		semconv.HTTPRouteKey.String("/api/telegram/code/receive/{token}"),
 	}
 
 	// Run stopwatch.
@@ -625,7 +508,7 @@ func (c *Client) sendReceiveTelegramCode(ctx context.Context, params ReceiveTele
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [2]string
-	pathParts[0] = "/telegram/code/receive/"
+	pathParts[0] = "/api/telegram/code/receive/"
 	{
 		// Encode "token" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -694,136 +577,6 @@ func (c *Client) sendReceiveTelegramCode(ctx context.Context, params ReceiveTele
 
 	stage = "DecodeResponse"
 	result, err := decodeReceiveTelegramCodeResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// SetTelegramAccountCode invokes setTelegramAccountCode operation.
-//
-// Set telegram account code.
-//
-// POST /telegram/account/{id}/set_code
-func (c *Client) SetTelegramAccountCode(ctx context.Context, request *SetTelegramAccountCodeReq, params SetTelegramAccountCodeParams) (*SetTelegramAccountCodeOK, error) {
-	res, err := c.sendSetTelegramAccountCode(ctx, request, params)
-	return res, err
-}
-
-func (c *Client) sendSetTelegramAccountCode(ctx context.Context, request *SetTelegramAccountCodeReq, params SetTelegramAccountCodeParams) (res *SetTelegramAccountCodeOK, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("setTelegramAccountCode"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/telegram/account/{id}/set_code"),
-	}
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, SetTelegramAccountCodeOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/telegram/account/"
-	{
-		// Encode "id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			if unwrapped := string(params.ID); true {
-				return e.EncodeValue(conv.StringToString(unwrapped))
-			}
-			return nil
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	pathParts[2] = "/set_code"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeSetTelegramAccountCodeRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:TokenAuth"
-			switch err := c.securityTokenAuth(ctx, SetTelegramAccountCodeOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"TokenAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeSetTelegramAccountCodeResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

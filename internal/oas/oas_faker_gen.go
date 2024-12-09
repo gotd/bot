@@ -23,19 +23,20 @@ func (s *AcquireTelegramAccountOK) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *CreateTelegramAccountOK) SetFake() {
+func (s *AcquireTelegramAccountReq) SetFake() {
 	{
 		{
-			s.AccountID.SetFake()
+			s.RepoOwner = "string"
 		}
 	}
-}
-
-// SetFake set fake values.
-func (s *CreateTelegramAccountReq) SetFake() {
 	{
 		{
-			s.PhoneNumber.SetFake()
+			s.RepoName = "string"
+		}
+	}
+	{
+		{
+			s.JobID = int(0)
 		}
 	}
 }
@@ -84,15 +85,6 @@ func (s *Health) SetFake() {
 }
 
 // SetFake set fake values.
-func (s *HeartbeatTelegramAccountOK) SetFake() {
-	{
-		{
-			s.AccountID.SetFake()
-		}
-	}
-}
-
-// SetFake set fake values.
 func (s *OptSpanID) SetFake() {
 	var elem SpanID
 	{
@@ -124,24 +116,6 @@ func (s *ReceiveTelegramCodeOK) SetFake() {
 	{
 		{
 			s.Code.SetFake()
-		}
-	}
-}
-
-// SetFake set fake values.
-func (s *SetTelegramAccountCodeOK) SetFake() {
-	{
-		{
-			s.AccountID.SetFake()
-		}
-	}
-}
-
-// SetFake set fake values.
-func (s *SetTelegramAccountCodeReq) SetFake() {
-	{
-		{
-			s.Code = "string"
 		}
 	}
 }

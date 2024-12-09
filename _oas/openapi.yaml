@@ -8,7 +8,7 @@ servers:
 security:
   - tokenAuth: []
 paths:
-  /health:
+  /api/health:
     get:
       operationId: "getHealth"
       description: "get health"
@@ -21,74 +21,7 @@ paths:
                 $ref: "#/components/schemas/Health"
         default:
           $ref:  "#/components/responses/Error"
-  /telegram/account/create:
-    post:
-      security:
-        - tokenAuth: []
-      operationId: "createTelegramAccount"
-      description: "create telegram account"
-      requestBody:
-        required: true
-        content:
-          "application/json":
-            schema:
-              type: object
-              required:
-                - phone_number
-              properties:
-                phone_number:
-                  $ref: "#/components/schemas/TelegramAccountID"
-      responses:
-        200:
-          description: "Telegram account created"
-          content:
-            "application/json":
-              schema:
-                type: object
-                required:
-                  - account_id
-                properties:
-                  account_id:
-                    $ref: "#/components/schemas/TelegramAccountID"
-        default:
-          $ref:  "#/components/responses/Error"
-  /telegram/account/{id}/set_code:
-    post:
-      security:
-        - tokenAuth: []
-      operationId: "setTelegramAccountCode"
-      description: "set telegram account code"
-      parameters:
-        - $ref: "#/components/parameters/TelegramAccountID"
-      requestBody:
-        required: true
-        content:
-          "application/json":
-            schema:
-              type: object
-              required:
-                - code
-              properties:
-                code:
-                  type: string
-                  description: "Code"
-                  example: "12345"
-                  pattern: "^[0-9]{3,6}$"
-      responses:
-        200:
-          description: "Telegram account code set"
-          content:
-            "application/json":
-              schema:
-                type: object
-                required:
-                  - account_id
-                properties:
-                  account_id:
-                    $ref: "#/components/schemas/TelegramAccountID"
-        default:
-          $ref:  "#/components/responses/Error"
-  /telegram/account/heartbeat/{token}:
+  /api/telegram/account/heartbeat/{token}:
     get:
       operationId: "heartbeatTelegramAccount"
       description: "heartbeat telegram account"
@@ -107,18 +40,9 @@ paths:
       responses:
         200:
           description: "Telegram account heartbeat"
-          content:
-            "application/json":
-              schema:
-                type: object
-                required:
-                  - account_id
-                properties:
-                  account_id:
-                    $ref: "#/components/schemas/TelegramAccountID"
         default:
           $ref:  "#/components/responses/Error"
-  /telegram/code/receive/{token}:
+  /api/telegram/code/receive/{token}:
     get:
       operationId: "receiveTelegramCode"
       description: "receive telegram code"
@@ -144,12 +68,39 @@ paths:
                     pattern: "^[0-9]{3,6}$"
         default:
           $ref:  "#/components/responses/Error"
-  /telegram/account/acquire:
+  /api/telegram/account/acquire:
     post:
       security:
         - tokenAuth: []
       operationId: "acquireTelegramAccount"
       description: "acquire telegram account"
+      requestBody:
+        required: true
+        description: Info about current github workflow job
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - repo_owner
+                - repo_name
+                - commit_sha
+                - job_id
+                - job_run_id
+                - job_run_number
+              properties:
+                repo_owner:
+                  type: string
+                  description: "Repository owner"
+                  example: "owner"
+                repo_name:
+                  type: string
+                  description: "Repository name"
+                  example: "repo"
+                job_id:
+                  type: integer
+                  description: "Job ID"
+                  example: 123456789
       responses:
         200:
           description: "Telegram account acquired"

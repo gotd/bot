@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,12 +33,14 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/gotd/bot/internal/api"
 	iapp "github.com/gotd/bot/internal/app"
 	"github.com/gotd/bot/internal/botapi"
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/docs"
 	"github.com/gotd/bot/internal/entdb"
 	"github.com/gotd/bot/internal/gh"
+	"github.com/gotd/bot/internal/oas"
 	"github.com/gotd/bot/internal/storage"
 	"github.com/gotd/bot/internal/tgmanager"
 )
@@ -61,6 +64,7 @@ type App struct {
 	logger  *zap.Logger
 	cache   *redis.Client
 	manager *tgmanager.Manager
+	srv     *oas.Server
 }
 
 func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr error) {
@@ -159,6 +163,15 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 	if err != nil {
 		return nil, errors.Wrap(err, "manager")
 	}
+	handler := api.NewHandler(manager)
+	srv, err := oas.NewServer(handler, handler,
+		oas.WithTracerProvider(m.TracerProvider()),
+		oas.WithMeterProvider(m.MeterProvider()),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "oas")
+	}
+
 	a := &App{
 		manager:    manager,
 		client:     client,
@@ -173,6 +186,7 @@ func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr
 		http:       httpClient,
 		logger:     logger,
 		cache:      r,
+		srv:        srv,
 	}
 
 	if schemaPath, ok := os.LookupEnv("SCHEMA_PATH"); ok {
@@ -242,9 +256,16 @@ func (b *App) Run(ctx context.Context) error {
 		})
 		webhook.RegisterRoutes(e)
 
+		mux := http.NewServeMux()
+		mux.Handle("/", e)
+		mux.Handle("/api", b.srv)
+
 		server := http.Server{
 			Addr:    httpAddr,
-			Handler: e,
+			Handler: mux,
+			BaseContext: func(listener net.Listener) context.Context {
+				return zctx.Base(ctx, b.logger)
+			},
 		}
 		group.Go(func() error {
 			logger.Info("ListenAndServe", zap.String("addr", server.Addr))
