@@ -43,4 +43,6 @@ jobs:
           E2E: "1"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_JOB_ID: ${{ github.job }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: go test -timeout 15m -v -run TestIntegration ./...

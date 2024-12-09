@@ -81,8 +81,9 @@ func TestIntegration(t *testing.T) {
 		t.Skip("E2E=1 not set")
 	}
 
-	jobID, err := strconv.Atoi(os.Getenv("GITHUB_JOB_ID"))
-	require.NoError(t, err)
+	jobID := os.Getenv("GITHUB_JOB_ID")
+	runID, _ := strconv.ParseInt(os.Getenv("GITHUB_RUN_ID"), 10, 64)
+	attempt, _ := strconv.Atoi(os.Getenv("GITHUB_RUN_ATTEMPT"))
 
 	ctx := context.Background()
 	client, err := oas.NewClient("https://bot.gotd.dev", securitySource{})
@@ -94,9 +95,11 @@ func TestIntegration(t *testing.T) {
 
 	res, err := backoff.RetryNotifyWithData(func() (*oas.AcquireTelegramAccountOK, error) {
 		return client.AcquireTelegramAccount(ctx, &oas.AcquireTelegramAccountReq{
-			RepoOwner: "gotd",
-			RepoName:  "bot",
-			JobID:     jobID,
+			RepoOwner:  "gotd",
+			RepoName:   "bot",
+			RunID:      runID,
+			Job:        jobID,
+			RunAttempt: attempt,
 		})
 	}, bo, func(err error, duration time.Duration) {
 		t.Logf("Error: %v, retrying in %v", err, duration)

@@ -36,7 +36,17 @@ func (s *AcquireTelegramAccountReq) SetFake() {
 	}
 	{
 		{
-			s.JobID = int(0)
+			s.Job = "string"
+		}
+	}
+	{
+		{
+			s.RunID = int64(0)
+		}
+	}
+	{
+		{
+			s.RunAttempt = int(0)
 		}
 	}
 }

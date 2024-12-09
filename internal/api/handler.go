@@ -33,13 +33,13 @@ func (h Handler) AcquireTelegramAccount(ctx context.Context, req *oas.AcquireTel
 	if err != nil {
 		return nil, errors.Wrap(err, "get repo")
 	}
-	job, _, err := client.Actions.GetWorkflowJobByID(ctx, req.RepoOwner, req.RepoName, int64(req.JobID))
+	wr, _, err := client.Actions.GetWorkflowRunByID(ctx, req.RepoOwner, req.RepoName, req.RunID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get job")
 	}
 	zctx.From(ctx).Info("AcquireTelegramAccount",
 		zap.String("repo", repo.GetFullName()),
-		zap.String("job", job.GetName()),
+		zap.String("run", wr.GetName()),
 	)
 
 	lease, err := h.manager.Acquire()

@@ -45,7 +45,9 @@ type AcquireTelegramAccountReq struct {
 	// Repository name.
 	RepoName string `json:"repo_name"`
 	// Job ID.
-	JobID int `json:"job_id"`
+	Job        string `json:"job"`
+	RunID      int64  `json:"run_id"`
+	RunAttempt int    `json:"run_attempt"`
 }
 
 // GetRepoOwner returns the value of RepoOwner.
@@ -58,9 +60,19 @@ func (s *AcquireTelegramAccountReq) GetRepoName() string {
 	return s.RepoName
 }
 
-// GetJobID returns the value of JobID.
-func (s *AcquireTelegramAccountReq) GetJobID() int {
-	return s.JobID
+// GetJob returns the value of Job.
+func (s *AcquireTelegramAccountReq) GetJob() string {
+	return s.Job
+}
+
+// GetRunID returns the value of RunID.
+func (s *AcquireTelegramAccountReq) GetRunID() int64 {
+	return s.RunID
+}
+
+// GetRunAttempt returns the value of RunAttempt.
+func (s *AcquireTelegramAccountReq) GetRunAttempt() int {
+	return s.RunAttempt
 }
 
 // SetRepoOwner sets the value of RepoOwner.
@@ -73,9 +85,19 @@ func (s *AcquireTelegramAccountReq) SetRepoName(val string) {
 	s.RepoName = val
 }
 
-// SetJobID sets the value of JobID.
-func (s *AcquireTelegramAccountReq) SetJobID(val int) {
-	s.JobID = val
+// SetJob sets the value of Job.
+func (s *AcquireTelegramAccountReq) SetJob(val string) {
+	s.Job = val
+}
+
+// SetRunID sets the value of RunID.
+func (s *AcquireTelegramAccountReq) SetRunID(val int64) {
+	s.RunID = val
+}
+
+// SetRunAttempt sets the value of RunAttempt.
+func (s *AcquireTelegramAccountReq) SetRunAttempt(val int) {
+	s.RunAttempt = val
 }
 
 // Error occurred while processing request.

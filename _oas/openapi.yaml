@@ -83,9 +83,9 @@ paths:
                 - repo_owner
                 - repo_name
                 - commit_sha
-                - job_id
-                - job_run_id
-                - job_run_number
+                - job
+                - run_id
+                - run_attempt
               properties:
                 repo_owner:
                   type: string
@@ -95,10 +95,14 @@ paths:
                   type: string
                   description: "Repository name"
                   example: "repo"
-                job_id:
-                  type: integer
+                job:
+                  type: string
                   description: "Job ID"
-                  example: 123456789
+                run_id:
+                  type: integer
+                  format: int64
+                run_attempt:
+                  type: integer
       responses:
         200:
           description: "Telegram account acquired"
