@@ -1,6 +1,7 @@
 module github.com/gotd/bot
 
-go 1.23.0
+go 1.23.3
+
 require (
 	entgo.io/ent v0.14.1
 	github.com/blevesearch/bleve/v2 v2.4.3
