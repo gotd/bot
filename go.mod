@@ -20,7 +20,7 @@ require (
 	github.com/gotd/td v0.116.0
 	github.com/gotd/tl v0.4.0
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/labstack/echo/v4 v4.13.1
+	github.com/labstack/echo/v4 v4.13.2
 	github.com/ogen-go/ent2ogen v0.0.0-20230913015246-1d588150cabc
 	github.com/ogen-go/ogen v1.8.1
 	github.com/stretchr/testify v1.10.0
