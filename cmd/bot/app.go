@@ -39,7 +39,6 @@ import (
 	"github.com/gotd/bot/internal/dispatch"
 	"github.com/gotd/bot/internal/docs"
 	"github.com/gotd/bot/internal/entdb"
-	"github.com/gotd/bot/internal/gh"
 	"github.com/gotd/bot/internal/oas"
 	"github.com/gotd/bot/internal/storage"
 	"github.com/gotd/bot/internal/tgmanager"
@@ -223,66 +222,56 @@ func (b *App) Run(ctx context.Context) error {
 		return b.manager.Run(ctx)
 	})
 
-	if secret, ok := os.LookupEnv("GITHUB_SECRET"); ok {
-		logger := b.logger.Named("webhook")
-
-		httpAddr := os.Getenv("HTTP_ADDR")
-		if httpAddr == "" {
-			httpAddr = "localhost:8080"
-		}
-
-		webhook := gh.NewWebhook(b.storage, b.sender, secret).
-			WithLogger(logger)
-		if notifyGroup, ok := os.LookupEnv("TG_NOTIFY_GROUP"); ok {
-			webhook = webhook.WithNotifyGroup(notifyGroup)
-		}
-
-		e := echo.New()
-		e.Use(
-			middleware.Recover(),
-			middleware.RequestID(),
-			echozap.ZapLogger(logger.Named("requests")),
-		)
-
-		e.GET("/probe/startup", func(c echo.Context) error {
-			return c.String(http.StatusOK, "ok")
-		})
-		e.GET("/probe/ready", func(c echo.Context) error {
-			return c.String(http.StatusOK, "ok")
-		})
-
-		e.GET("/status", func(c echo.Context) error {
-			return c.String(http.StatusOK, "ok")
-		})
-		webhook.RegisterRoutes(e)
-
-		mux := http.NewServeMux()
-		mux.Handle("/", e)
-		mux.Handle("/api/", b.srv)
-
-		server := http.Server{
-			Addr:    httpAddr,
-			Handler: mux,
-			BaseContext: func(listener net.Listener) context.Context {
-				return zctx.Base(ctx, b.logger)
-			},
-		}
-		group.Go(func() error {
-			logger.Info("ListenAndServe", zap.String("addr", server.Addr))
-			return server.ListenAndServe()
-		})
-		group.Go(func() error {
-			<-ctx.Done()
-			shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			defer cancel()
-
-			logger.Info("Shutdown", zap.String("addr", server.Addr))
-			if err := server.Shutdown(shutCtx); err != nil {
-				return multierr.Append(err, server.Close())
-			}
-			return nil
-		})
+	httpAddr := os.Getenv("HTTP_ADDR")
+	if httpAddr == "" {
+		httpAddr = "localhost:8080"
 	}
+
+	logger := b.logger.Named("http")
+	e := echo.New()
+	e.Use(
+		middleware.Recover(),
+		middleware.RequestID(),
+		echozap.ZapLogger(logger.Named("requests")),
+	)
+
+	e.GET("/probe/startup", func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+	e.GET("/probe/ready", func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
+	e.GET("/status", func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
+	mux := http.NewServeMux()
+	mux.Handle("/", e)
+	mux.Handle("/api/", b.srv)
+
+	server := http.Server{
+		Addr:    httpAddr,
+		Handler: mux,
+		BaseContext: func(listener net.Listener) context.Context {
+			return zctx.Base(ctx, b.logger)
+		},
+	}
+	group.Go(func() error {
+		logger.Info("ListenAndServe", zap.String("addr", server.Addr))
+		return server.ListenAndServe()
+	})
+	group.Go(func() error {
+		<-ctx.Done()
+		shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+
+		logger.Info("Shutdown", zap.String("addr", server.Addr))
+		if err := server.Shutdown(shutCtx); err != nil {
+			return multierr.Append(err, server.Close())
+		}
+		return nil
+	})
 
 	group.Go(func() error {
 		return b.client.Run(ctx, func(ctx context.Context) error {
