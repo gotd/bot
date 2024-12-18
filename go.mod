@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/google/uuid v1.6.0
 	github.com/gotd/contrib v0.21.0
-	github.com/gotd/getdoc v0.44.0
+	github.com/gotd/getdoc v0.45.0
 	github.com/gotd/td v0.116.0
 	github.com/gotd/tl v0.4.0
 	github.com/jackc/pgx/v5 v5.7.1
