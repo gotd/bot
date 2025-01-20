@@ -11,7 +11,5 @@ on:
 jobs:
   test:
     uses: go-faster/x/.github/workflows/test.yml@main
-  commit:
-    uses: go-faster/x/.github/workflows/commit.yml@main
   lint:
     uses: go-faster/x/.github/workflows/lint.yml@main
