@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	app.Run(func(ctx context.Context, lg *zap.Logger, m *app.Metrics) error {
+	app.Run(func(ctx context.Context, lg *zap.Logger, m *app.Telemetry) error {
 		defer func() {
 			if r := recover(); r != nil {
 				lg.Error("panic", zap.Any("recover", r))

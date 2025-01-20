@@ -66,7 +66,7 @@ type App struct {
 	srv     *oas.Server
 }
 
-func InitApp(m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr error) {
+func InitApp(m *app.Telemetry, mm *iapp.Metrics, logger *zap.Logger) (_ *App, rerr error) {
 	// Reading app id from env (never hardcode it!).
 	appID, err := strconv.Atoi(os.Getenv("APP_ID"))
 	if err != nil {
@@ -339,7 +339,7 @@ func (b *App) Run(ctx context.Context) error {
 	return group.Wait()
 }
 
-func runBot(ctx context.Context, m *app.Metrics, mm *iapp.Metrics, logger *zap.Logger) (rerr error) {
+func runBot(ctx context.Context, m *app.Telemetry, mm *iapp.Metrics, logger *zap.Logger) (rerr error) {
 	a, err := InitApp(m, mm, logger)
 	if err != nil {
 		return errors.Wrap(err, "initialize")
