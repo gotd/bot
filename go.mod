@@ -8,7 +8,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.3
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/cockroachdb/pebble v1.1.3
+	github.com/cockroachdb/pebble v1.1.4
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.1.0
 	github.com/go-faster/sdk v0.18.0
