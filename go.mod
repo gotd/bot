@@ -3,7 +3,7 @@ module github.com/gotd/bot
 go 1.23.3
 
 require (
-	entgo.io/ent v0.14.2
+	entgo.io/ent v0.14.3
 	github.com/blevesearch/bleve/v2 v2.4.4
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/brpaz/echozap v1.1.3
